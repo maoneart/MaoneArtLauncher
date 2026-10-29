@@ -145,17 +145,6 @@ fun AppListItem(
                     color = Color.White
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-
-        // Favorite Indicator
-        if (app.isFavorite) {
-            Icon(
-                imageVector = Icons.Rounded.Star,
-                contentDescription = null,
-                tint = FlowOrange.copy(alpha = 0.85f),
-                modifier = Modifier.size(16.dp)
-            )
         }
     }
 }

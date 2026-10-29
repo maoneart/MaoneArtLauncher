@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -110,7 +111,7 @@ fun HomeScreen(
                 viewModel.openSettings(false)
             }
             uiState.isSearching -> {
-                viewModel.onSearchQueryChange("")
+                viewModel.setSearchActive(false)
             }
             uiState.selectedCategoryId != "all" -> {
                 viewModel.selectCategory("all")
@@ -175,6 +176,8 @@ fun HomeScreen(
                 FlowSearchBar(
                     query = uiState.searchQuery,
                     onQueryChange = viewModel::onSearchQueryChange,
+                    autoFocus = uiState.isSearching,
+                    onCloseClick = if (uiState.searchAsIcon) { { viewModel.setSearchActive(false) } } else null,
                     onSearchAction = {
                         if (uiState.displayApps.isNotEmpty()) {
                             viewModel.launchApp(uiState.displayApps.first())
@@ -397,19 +400,20 @@ fun HomeScreen(
             }
         }
 
-        // Floating Google/Search Button (Active when searchAsIcon is true and not searching, like in Bug photo)
+        // Floating Google/Search Button (Active when searchAsIcon is true and not searching, comfortably above system navbar)
         if (uiState.searchAsIcon && !uiState.isSearching) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 28.dp)
+                    .navigationBarsPadding()
+                    .padding(end = 20.dp, bottom = 48.dp)
                     .size(52.dp)
                     .shadow(14.dp, CircleShape)
                     .clip(CircleShape)
                     .background(Color(0xEE1A1B20))
                     .border(1.2.dp, Color(0x3300E5FF), CircleShape)
                     .clickable {
-                        viewModel.onSearchQueryChange("")
+                        viewModel.setSearchActive(true)
                     },
                 contentAlignment = Alignment.Center
             ) {

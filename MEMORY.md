@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.15)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.16)
 
 ---
 
@@ -141,3 +141,10 @@
       - *Background Murni Transparan*: Menghilangkan gradasi gelap sehingga wallpaper asli pengguna tampil bening 100%.
       - *Sembunyikan Baris Kategori*: Menyembunyikan chip bar kategori untuk tampilan vertikal murni.
       - *Sembunyikan Scroller Alfabet*: Opsi menyembunyikan scroller huruf A-Z.
+  - **Penyempurnaan Tombol Search "G" di Atas Navbar & Hapus Ikon Bintang Favorit (Release v1.0.16)**:
+    - **Pembersihan Ikon Bintang Favorit**:
+      - Menghapus ikon bintang kuning di baris item aplikasi ([`AppListItem.kt`](file:///sdcard/www/MaoneArtLauncher/app/src/main/java/id/maoneart/flow/ui/components/AppListItem.kt)), karena daftar aplikasi sudah memiliki header teks "FAVORIT". Tampilan item kini lebih bersih dan lega.
+    - **Kalibrasi Posisi Tombol Search "G" di Atas Navbar**:
+      - Menerapkan `navigationBarsPadding()` dengan padding `bottom = 48.dp` pada tombol logo "G" di pojok kanan bawah agar posisinya terangkat nyaman di atas navigasi/gesture bar Android dan tidak tertutup.
+    - **Aktivasi Search Otomatis Saat Tombol "G" Diklik**:
+      - Memperbaiki event klik tombol "G" via `viewModel.setSearchActive(true)`. Saat tombol disentuh, `isSearching` langsung aktif, `FlowSearchBar` meluncur keluar di bagian atas dengan `autoFocus` keyboard, dan tombol close `✕` disediakan untuk menutup search bar kembali.

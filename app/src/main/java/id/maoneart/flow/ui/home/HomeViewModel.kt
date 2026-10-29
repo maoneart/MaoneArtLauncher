@@ -78,6 +78,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _isSearchActive = MutableStateFlow(false)
+    val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
+
     private val _selectedCategoryId = MutableStateFlow("all")
     val selectedCategoryId: StateFlow<String> = _selectedCategoryId.asStateFlow()
 
@@ -206,10 +209,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<HomeUiState> = combine(
         appsWithCategoriesFlow,
         settingsFlow,
-        combine(_searchQuery, _selectedCategoryId) { q, c -> Pair(q, c) },
+        combine(_searchQuery, _selectedCategoryId, _isSearchActive) { q, c, active -> Triple(q, c, active) },
         _selectedApp,
         _isSettingsOpen
-    ) { appsData, (appearance, general), (query, catId), selApp, isSettingsOpen ->
+    ) { appsData, (appearance, general), (query, catId, isSearchActive), selApp, isSettingsOpen ->
 
         val visibleApps = appsData.apps
         val favoritesList = visibleApps.filter { it.isFavorite }
@@ -250,7 +253,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             availableLetters = letters,
             letterIndices = indices,
             searchQuery = query,
-            isSearching = query.isNotBlank(),
+            isSearching = query.isNotBlank() || isSearchActive,
             is24Hour = general.is24Hour,
             hapticsEnabled = general.hapticsEnabled,
             alphabetSide = general.alphabetSide,
@@ -294,6 +297,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
+        if (newQuery.isNotBlank()) {
+            _isSearchActive.value = true
+        }
+    }
+
+    fun setSearchActive(active: Boolean) {
+        _isSearchActive.value = active
+        if (!active) {
+            _searchQuery.value = ""
+        }
     }
 
     fun selectCategory(categoryId: String) {
