@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.14)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.15)
 
 ---
 
@@ -128,3 +128,16 @@
       - Memposisikan badge notifikasi angka bulat / kapsul merah cerah (`Color(0xFFFF334B)`) tepat di sudut kanan atas (`Alignment.TopEnd` dengan offset `x = 4.dp, y = -2.dp`) dari ikon aplikasi 40dp.
       - Dilengkapi border pelindung kontras gelap (`1.5.dp, Color(0xFF141416)`) dan bayangan lembut agar kontras dan terbaca jelas di atas ikon aplikasi apa pun (WhatsApp, Telegram, Pesan, Gmail, dll).
       - Menyediakan fallback badge di samping label aplikasi khusus jika pengguna mengaktifkan mode minimalis tanpa ikon (`showIcon = false`).
+  - **Menu Pengaturan Launcher & Tema Minimalis Foto Bug (Release v1.0.15)**:
+    - **Menu Pengaturan Launcher Mandiri (`LauncherSettingsBottomSheet.kt`)**:
+      - Terbuka otomatis saat pengguna mengklik aplikasi "MaoneArt Flow" di daftar aplikasi (atau tap banner logo).
+      - Dilengkapi kontrol switch interaktif persisten DataStore.
+    - **Tema Widget Niagara Trio Pills (Identik Foto Bug)**:
+      - Pilihan tema widget: *MaoneArt Classic* vs *Niagara Trio Pills*.
+      - 3 kartu vertikal kapsul neon: `TODAY` (hijau neon + jam), `HARI & TANGGAL` (kuning amber + kalender), `WEATHER & POWER` (cyan neon + status baterai).
+    - **Switch Kustomisasi UI Ekstensif**:
+      - *Sembunyikan Banner Grafiti*: Memberikan ruang bersih minimalis.
+      - *Search Bar Jadi Tombol Logo*: Mengubah search bar horizontal menjadi tombol bulat Google "G" di kanan bawah seperti di foto bug.
+      - *Background Murni Transparan*: Menghilangkan gradasi gelap sehingga wallpaper asli pengguna tampil bening 100%.
+      - *Sembunyikan Baris Kategori*: Menyembunyikan chip bar kategori untuk tampilan vertikal murni.
+      - *Sembunyikan Scroller Alfabet*: Opsi menyembunyikan scroller huruf A-Z.

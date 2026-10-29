@@ -26,6 +26,12 @@ class PreferencesRepository(private val context: Context) {
         val CUSTOM_CATEGORIES = stringSetPreferencesKey("custom_categories")
         val HIDDEN_CATEGORIES = stringSetPreferencesKey("hidden_categories")
         val APP_CATEGORY_OVERRIDES = stringPreferencesKey("app_category_overrides")
+        val SHOW_MAONEART_BANNER = booleanPreferencesKey("show_maoneart_banner")
+        val SEARCH_AS_ICON = booleanPreferencesKey("search_as_icon")
+        val WIDGET_THEME = stringPreferencesKey("widget_theme")
+        val SHOW_ALPHABET_SCROLLER = booleanPreferencesKey("show_alphabet_scroller")
+        val PURE_TRANSPARENT_BG = booleanPreferencesKey("pure_transparent_bg")
+        val SHOW_CATEGORIES = booleanPreferencesKey("show_categories")
     }
 
     val favoritesFlow: Flow<Set<String>> = context.dataStore.data.map { prefs ->
@@ -55,6 +61,30 @@ class PreferencesRepository(private val context: Context) {
 
     val showIconsFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[Keys.SHOW_ICONS] ?: true
+    }
+
+    val showMaoneArtBannerFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.SHOW_MAONEART_BANNER] ?: true
+    }
+
+    val searchAsIconFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.SEARCH_AS_ICON] ?: false
+    }
+
+    val widgetThemeFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.WIDGET_THEME] ?: "classic"
+    }
+
+    val showAlphabetScrollerFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.SHOW_ALPHABET_SCROLLER] ?: true
+    }
+
+    val pureTransparentBgFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.PURE_TRANSPARENT_BG] ?: false
+    }
+
+    val showCategoriesFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.SHOW_CATEGORIES] ?: true
     }
 
     val customCategoriesFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
@@ -209,5 +239,41 @@ class PreferencesRepository(private val context: Context) {
                 prefs[Keys.APP_CATEGORY_OVERRIDES] = jsonObject.toString()
             } catch (_: Throwable) {}
         }
+    }
+
+    suspend fun setShowMaoneArtBanner(show: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.SHOW_MAONEART_BANNER] = show }
+    }
+
+    suspend fun setSearchAsIcon(asIcon: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.SEARCH_AS_ICON] = asIcon }
+    }
+
+    suspend fun setWidgetTheme(theme: String) {
+        context.dataStore.edit { prefs -> prefs[Keys.WIDGET_THEME] = theme }
+    }
+
+    suspend fun setShowAlphabetScroller(show: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.SHOW_ALPHABET_SCROLLER] = show }
+    }
+
+    suspend fun setPureTransparentBg(transparent: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.PURE_TRANSPARENT_BG] = transparent }
+    }
+
+    suspend fun setHapticsEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.HAPTICS_ENABLED] = enabled }
+    }
+
+    suspend fun setIs24Hour(is24H: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.IS_24_HOUR] = is24H }
+    }
+
+    suspend fun setShowIcons(show: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.SHOW_ICONS] = show }
+    }
+
+    suspend fun setShowCategories(show: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.SHOW_CATEGORIES] = show }
     }
 }

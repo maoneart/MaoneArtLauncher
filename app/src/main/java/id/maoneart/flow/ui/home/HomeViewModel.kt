@@ -33,10 +33,26 @@ data class HomeUiState(
     val alphabetSide: String = "right",
     val showIcons: Boolean = true,
     val hasNotificationAccess: Boolean = true,
+    val showMaoneArtBanner: Boolean = true,
+    val searchAsIcon: Boolean = false,
+    val widgetTheme: String = "classic",
+    val showAlphabetScroller: Boolean = true,
+    val pureTransparentBg: Boolean = false,
+    val showCategories: Boolean = true,
+    val isSettingsOpen: Boolean = false,
     val selectedApp: AppInfo? = null
 )
 
-private data class LauncherSettings(
+private data class AppearanceSettings(
+    val showMaoneArtBanner: Boolean = true,
+    val searchAsIcon: Boolean = false,
+    val widgetTheme: String = "classic",
+    val showAlphabetScroller: Boolean = true,
+    val pureTransparentBg: Boolean = false,
+    val showCategories: Boolean = true
+)
+
+private data class GeneralSettings(
     val is24Hour: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val alphabetSide: String = "right",
@@ -68,6 +84,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedApp = MutableStateFlow<AppInfo?>(null)
     val selectedApp: StateFlow<AppInfo?> = _selectedApp.asStateFlow()
 
+    private val _isSettingsOpen = MutableStateFlow(false)
+    val isSettingsOpen: StateFlow<Boolean> = _isSettingsOpen.asStateFlow()
+
     // Dialog & bottom sheet states - directly observable for 0ms immediate response
     private val _appForCategoryChange = MutableStateFlow<AppInfo?>(null)
     val appForCategoryChange: StateFlow<AppInfo?> = _appForCategoryChange.asStateFlow()
@@ -78,14 +97,34 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _categoryToDelete = MutableStateFlow<CategoryItem?>(null)
     val categoryToDelete: StateFlow<CategoryItem?> = _categoryToDelete.asStateFlow()
 
-    private val settingsFlow = combine(
+    private val appearanceSettingsFlow = combine(
+        preferencesRepository.showMaoneArtBannerFlow,
+        preferencesRepository.searchAsIconFlow,
+        preferencesRepository.widgetThemeFlow,
+        preferencesRepository.showAlphabetScrollerFlow,
+        combine(
+            preferencesRepository.pureTransparentBgFlow,
+            preferencesRepository.showCategoriesFlow
+        ) { pureBg, showCats -> Pair(pureBg, showCats) }
+    ) { banner, asIcon, theme, scroller, (pureBg, showCats) ->
+        AppearanceSettings(banner, asIcon, theme, scroller, pureBg, showCats)
+    }
+
+    private val generalSettingsFlow = combine(
         preferencesRepository.is24HourFlow,
         preferencesRepository.hapticsEnabledFlow,
         preferencesRepository.alphabetSideFlow,
         preferencesRepository.showIconsFlow,
         _hasNotificationAccess
     ) { is24H, haptics, side, showIcons, hasNotifAccess ->
-        LauncherSettings(is24H, haptics, side, showIcons, hasNotifAccess)
+        GeneralSettings(is24H, haptics, side, showIcons, hasNotifAccess)
+    }
+
+    private val settingsFlow = combine(
+        appearanceSettingsFlow,
+        generalSettingsFlow
+    ) { appearance, general ->
+        Pair(appearance, general)
     }
 
     private val categoryConfigFlow = combine(
@@ -167,10 +206,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<HomeUiState> = combine(
         appsWithCategoriesFlow,
         settingsFlow,
-        _searchQuery,
-        _selectedCategoryId,
-        _selectedApp
-    ) { appsData, settings, query, catId, selApp ->
+        combine(_searchQuery, _selectedCategoryId) { q, c -> Pair(q, c) },
+        _selectedApp,
+        _isSettingsOpen
+    ) { appsData, (appearance, general), (query, catId), selApp, isSettingsOpen ->
 
         val visibleApps = appsData.apps
         val favoritesList = visibleApps.filter { it.isFavorite }
@@ -212,11 +251,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             letterIndices = indices,
             searchQuery = query,
             isSearching = query.isNotBlank(),
-            is24Hour = settings.is24Hour,
-            hapticsEnabled = settings.hapticsEnabled,
-            alphabetSide = settings.alphabetSide,
-            showIcons = settings.showIcons,
-            hasNotificationAccess = settings.hasNotificationAccess,
+            is24Hour = general.is24Hour,
+            hapticsEnabled = general.hapticsEnabled,
+            alphabetSide = general.alphabetSide,
+            showIcons = general.showIcons,
+            hasNotificationAccess = general.hasNotificationAccess,
+            showMaoneArtBanner = appearance.showMaoneArtBanner,
+            searchAsIcon = appearance.searchAsIcon,
+            widgetTheme = appearance.widgetTheme,
+            showAlphabetScroller = appearance.showAlphabetScroller,
+            pureTransparentBg = appearance.pureTransparentBg,
+            showCategories = appearance.showCategories,
+            isSettingsOpen = isSettingsOpen,
             selectedApp = selApp
         )
     }.stateIn(
@@ -309,7 +355,51 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun launchApp(app: AppInfo): Boolean {
+        if (app.packageName == getApplication<Application>().packageName) {
+            _isSettingsOpen.value = true
+            return true
+        }
         return appRepository.launchApp(app)
+    }
+
+    fun openSettings(open: Boolean) {
+        _isSettingsOpen.value = open
+    }
+
+    fun setShowMaoneArtBanner(show: Boolean) {
+        viewModelScope.launch { preferencesRepository.setShowMaoneArtBanner(show) }
+    }
+
+    fun setSearchAsIcon(asIcon: Boolean) {
+        viewModelScope.launch { preferencesRepository.setSearchAsIcon(asIcon) }
+    }
+
+    fun setWidgetTheme(theme: String) {
+        viewModelScope.launch { preferencesRepository.setWidgetTheme(theme) }
+    }
+
+    fun setShowAlphabetScroller(show: Boolean) {
+        viewModelScope.launch { preferencesRepository.setShowAlphabetScroller(show) }
+    }
+
+    fun setPureTransparentBg(transparent: Boolean) {
+        viewModelScope.launch { preferencesRepository.setPureTransparentBg(transparent) }
+    }
+
+    fun setShowCategories(show: Boolean) {
+        viewModelScope.launch { preferencesRepository.setShowCategories(show) }
+    }
+
+    fun setShowIcons(show: Boolean) {
+        viewModelScope.launch { preferencesRepository.setShowIcons(show) }
+    }
+
+    fun setIs24Hour(is24H: Boolean) {
+        viewModelScope.launch { preferencesRepository.setIs24Hour(is24H) }
+    }
+
+    fun setHapticsEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setHapticsEnabled(enabled) }
     }
 
     fun getAppIcon(packageName: String): Drawable? {

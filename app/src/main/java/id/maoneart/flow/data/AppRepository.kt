@@ -103,16 +103,19 @@ class AppRepository(private val context: Context) {
             val pkgName = info.activityInfo.packageName
             val actName = info.activityInfo.name
 
-            if (pkgName == selfPackage) continue
-
-            val label = try {
-                info.loadLabel(packageManager).toString().trim()
-            } catch (_: Throwable) {
-                pkgName
+            val isSelf = (pkgName == selfPackage)
+            val label = if (isSelf) {
+                "MaoneArt Flow"
+            } else {
+                try {
+                    info.loadLabel(packageManager).toString().trim()
+                } catch (_: Throwable) {
+                    pkgName
+                }
             }
 
             val appInfo = info.activityInfo.applicationInfo
-            val categoryId = resolveAppCategory(pkgName, label, appInfo)
+            val categoryId = if (isSelf) "system" else resolveAppCategory(pkgName, label, appInfo)
 
             result.add(
                 AppInfo(

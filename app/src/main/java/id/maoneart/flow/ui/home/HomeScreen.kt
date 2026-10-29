@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
 import id.maoneart.flow.ui.components.AlphabetWaveScroller
 import id.maoneart.flow.ui.components.AppActionBottomSheet
 import id.maoneart.flow.ui.components.AppListItem
@@ -54,6 +56,7 @@ import id.maoneart.flow.ui.components.CreateCategoryDialog
 import id.maoneart.flow.ui.components.DeleteCategoryDialog
 import id.maoneart.flow.ui.components.DigitalClockHeader
 import id.maoneart.flow.ui.components.FlowSearchBar
+import id.maoneart.flow.ui.components.LauncherSettingsBottomSheet
 import id.maoneart.flow.ui.components.SelectCategoryBottomSheet
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextSecondary
@@ -95,12 +98,16 @@ fun HomeScreen(
     }
 
     // Back Navigation Hierarchy (Strict Zero Leakage Focus):
-    // 1. If searching -> clear search query
-    // 2. If in a specific category (e.g. Game) -> return to "all" (Semua) category & reset chip to index 0
-    // 3. If scrolled down in "all" category -> smoothly scroll back to top
-    // 4. If already at top and in "all" -> lock chip to 0 and consume event so it never leaks focus to '+ Kategori' at the right
+    // 1. If settings open -> close settings
+    // 2. If searching -> clear search query
+    // 3. If in a specific category (e.g. Game) -> return to "all" (Semua) category & reset chip to index 0
+    // 4. If scrolled down in "all" category -> smoothly scroll back to top
+    // 5. If already at top and in "all" -> lock chip to 0 and consume event so it never leaks focus
     BackHandler(enabled = true) {
         when {
+            uiState.isSettingsOpen -> {
+                viewModel.openSettings(false)
+            }
             uiState.isSearching -> {
                 viewModel.onSearchQueryChange("")
             }
@@ -125,40 +132,56 @@ fun HomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            // Subtle dark readability gradient over user wallpaper
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0x99000000),
-                        Color(0xB3000000),
-                        Color(0xCC000000)
+            .then(
+                if (uiState.pureTransparentBg) {
+                    Modifier.background(Color.Transparent)
+                } else {
+                    Modifier.background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0x99000000),
+                                Color(0xB3000000),
+                                Color(0xCC000000)
+                            )
+                        )
                     )
-                )
+                }
             )
             .statusBarsPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // 1. Digital Clock (collapses smoothly when user starts typing search query)
+            // 1. Digital Clock Header (with Theme & Banner controls)
             AnimatedVisibility(
                 visible = !uiState.isSearching,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                DigitalClockHeader(is24Hour = uiState.is24Hour)
+                DigitalClockHeader(
+                    is24Hour = uiState.is24Hour,
+                    showBanner = uiState.showMaoneArtBanner,
+                    widgetTheme = uiState.widgetTheme,
+                    onOpenSettings = { viewModel.openSettings(true) }
+                )
             }
 
-            // 2. PERMANENT STABLE SEARCH BAR (Never disposed or recreated on typing!)
-            FlowSearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = viewModel::onSearchQueryChange,
-                onSearchAction = {
-                    if (uiState.displayApps.isNotEmpty()) {
-                        viewModel.launchApp(uiState.displayApps.first())
-                    }
-                },
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
+            // 2. SEARCH BAR (Normal horizontal or hidden when searchAsIcon is true and not searching)
+            AnimatedVisibility(
+                visible = !uiState.searchAsIcon || uiState.isSearching,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                FlowSearchBar(
+                    query = uiState.searchQuery,
+                    onQueryChange = viewModel::onSearchQueryChange,
+                    onSearchAction = {
+                        if (uiState.displayApps.isNotEmpty()) {
+                            viewModel.launchApp(uiState.displayApps.first())
+                        }
+                    },
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
 
             // 3. Notification Access Setup Banner (auto-dismissed once granted)
             AnimatedVisibility(
@@ -201,33 +224,35 @@ fun HomeScreen(
                 }
             }
 
-            // 4. Category Chip Bar (Customizable & Manageable)
-            AnimatedVisibility(
-                visible = !uiState.isSearching,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                CategoryChipBar(
-                    categories = uiState.categories,
-                    selectedCategoryId = uiState.selectedCategoryId,
-                    onCategorySelected = viewModel::selectCategory,
-                    onAddCategoryClick = { viewModel.openCreateCategoryDialog(true) },
-                    onCategoryLongClick = { cat -> viewModel.openDeleteCategoryDialog(cat) },
-                    hapticsEnabled = uiState.hapticsEnabled,
-                    chipListState = chipListState,
-                    modifier = Modifier.padding(bottom = 6.dp)
-                )
+            // 4. Category Chip Bar (Customizable & Manageable - can be hidden via settings)
+            if (uiState.showCategories) {
+                AnimatedVisibility(
+                    visible = !uiState.isSearching,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    CategoryChipBar(
+                        categories = uiState.categories,
+                        selectedCategoryId = uiState.selectedCategoryId,
+                        onCategorySelected = viewModel::selectCategory,
+                        onAddCategoryClick = { viewModel.openCreateCategoryDialog(true) },
+                        onCategoryLongClick = { cat -> viewModel.openDeleteCategoryDialog(cat) },
+                        hapticsEnabled = uiState.hapticsEnabled,
+                        chipListState = chipListState,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
             }
 
-            // 4. Main Content Row: Apps List + Alphabet Wave Scroller
+            // 5. Main Content Row: Apps List + Alphabet Wave Scroller
             Row(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
 
-                // Left-Handed Alphabet Wave Scroller (if configured)
-                if (uiState.alphabetSide == "left" && !uiState.isSearching) {
+                // Left-Handed Alphabet Wave Scroller (if configured & enabled)
+                if (uiState.showAlphabetScroller && uiState.alphabetSide == "left" && !uiState.isSearching) {
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = { letter ->
@@ -349,8 +374,8 @@ fun HomeScreen(
                     }
                 }
 
-                // Right-Handed Alphabet Wave Scroller (Default)
-                if (uiState.alphabetSide == "right" && !uiState.isSearching) {
+                // Right-Handed Alphabet Wave Scroller (Default - can be hidden via settings)
+                if (uiState.showAlphabetScroller && uiState.alphabetSide == "right" && !uiState.isSearching) {
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = { letter ->
@@ -371,6 +396,31 @@ fun HomeScreen(
             }
         }
 
+        // Floating Google/Search Button (Active when searchAsIcon is true and not searching, like in Bug photo)
+        if (uiState.searchAsIcon && !uiState.isSearching) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 28.dp)
+                    .size(52.dp)
+                    .shadow(14.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(Color(0xEE1A1B20))
+                    .border(1.2.dp, Color(0x3300E5FF), CircleShape)
+                    .clickable {
+                        viewModel.onSearchQueryChange("")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "G",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+            }
+        }
+
         // App Action Bottom Sheet
         uiState.selectedApp?.let { app ->
             AppActionBottomSheet(
@@ -383,6 +433,33 @@ fun HomeScreen(
                 onOpenInfo = { viewModel.openAppDetails(app) },
                 onUninstall = { viewModel.uninstallApp(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) }
+            )
+        }
+
+        // Launcher Settings Bottom Sheet (Opened when clicking MaoneArt Flow app or header)
+        if (uiState.isSettingsOpen) {
+            LauncherSettingsBottomSheet(
+                showBanner = uiState.showMaoneArtBanner,
+                onToggleShowBanner = viewModel::setShowMaoneArtBanner,
+                searchAsIcon = uiState.searchAsIcon,
+                onToggleSearchAsIcon = viewModel::setSearchAsIcon,
+                widgetTheme = uiState.widgetTheme,
+                onSelectWidgetTheme = viewModel::setWidgetTheme,
+                showAlphabetScroller = uiState.showAlphabetScroller,
+                onToggleShowAlphabetScroller = viewModel::setShowAlphabetScroller,
+                pureTransparentBg = uiState.pureTransparentBg,
+                onTogglePureTransparentBg = viewModel::setPureTransparentBg,
+                showCategories = uiState.showCategories,
+                onToggleShowCategories = viewModel::setShowCategories,
+                showIcons = uiState.showIcons,
+                onToggleShowIcons = viewModel::setShowIcons,
+                is24Hour = uiState.is24Hour,
+                onToggleIs24Hour = viewModel::setIs24Hour,
+                hapticsEnabled = uiState.hapticsEnabled,
+                onToggleHaptics = viewModel::setHapticsEnabled,
+                hasNotificationAccess = uiState.hasNotificationAccess,
+                onOpenNotificationSettings = viewModel::openNotificationSettings,
+                onDismiss = { viewModel.openSettings(false) }
             )
         }
 
