@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -49,15 +50,15 @@ fun CategoryChipBar(
     onAddCategoryClick: () -> Unit,
     onCategoryLongClick: (CategoryItem) -> Unit,
     hapticsEnabled: Boolean = true,
+    chipListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
-    val chipListState = rememberLazyListState()
 
-    // When back button is pressed or category changes to "all", immediately animate scroll to LEFT (index 0, "Semua")
+    // Immediately anchor scroll to LEFT (index 0, "Semua") whenever category is "all"
     LaunchedEffect(selectedCategoryId) {
         if (selectedCategoryId == "all") {
-            chipListState.animateScrollToItem(0)
+            chipListState.scrollToItem(0)
         } else {
             val index = categories.indexOfFirst { it.id == selectedCategoryId }
             if (index >= 0) {

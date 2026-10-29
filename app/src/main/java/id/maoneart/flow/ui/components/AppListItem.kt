@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.ui.theme.FlowOrange
 import id.maoneart.flow.ui.theme.FlowTextPrimary
@@ -90,6 +92,25 @@ fun AppListItem(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
+
+        // Notification Badge Counter
+        if (app.notificationCount > 0) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFFF334B))
+                    .padding(horizontal = 7.dp, vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (app.notificationCount > 99) "99+" else "${app.notificationCount}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
 
         // Favorite Indicator
         if (app.isFavorite) {

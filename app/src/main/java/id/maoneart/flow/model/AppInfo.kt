@@ -41,6 +41,7 @@ data class AppInfo(
     val categoryIcon: String = "⚡",
     val isFavorite: Boolean = false,
     val isHidden: Boolean = false,
+    val notificationCount: Int = 0,
     val installTime: Long = 0L
 ) {
     val id: String get() = "$packageName/$activityName"

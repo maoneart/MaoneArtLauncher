@@ -9,6 +9,7 @@ import id.maoneart.flow.data.PreferencesRepository
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.model.CategoryItem
 import id.maoneart.flow.model.DefaultCategories
+import id.maoneart.flow.service.NotificationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,7 @@ data class HomeUiState(
     val hapticsEnabled: Boolean = true,
     val alphabetSide: String = "right",
     val showIcons: Boolean = true,
+    val hasNotificationAccess: Boolean = true,
     val selectedApp: AppInfo? = null
 )
 
@@ -38,7 +40,8 @@ private data class LauncherSettings(
     val is24Hour: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val alphabetSide: String = "right",
-    val showIcons: Boolean = true
+    val showIcons: Boolean = true,
+    val hasNotificationAccess: Boolean = true
 )
 
 private data class AppsAndCategoriesData(
@@ -50,6 +53,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val appRepository = AppRepository(application)
     private val preferencesRepository = PreferencesRepository(application)
+
+    private val _hasNotificationAccess = MutableStateFlow(
+        NotificationService.isNotificationAccessGranted(application)
+    )
+    val hasNotificationAccess: StateFlow<Boolean> = _hasNotificationAccess.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -74,9 +82,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         preferencesRepository.is24HourFlow,
         preferencesRepository.hapticsEnabledFlow,
         preferencesRepository.alphabetSideFlow,
-        preferencesRepository.showIconsFlow
-    ) { is24H, haptics, side, showIcons ->
-        LauncherSettings(is24H, haptics, side, showIcons)
+        preferencesRepository.showIconsFlow,
+        _hasNotificationAccess
+    ) { is24H, haptics, side, showIcons, hasNotifAccess ->
+        LauncherSettings(is24H, haptics, side, showIcons, hasNotifAccess)
     }
 
     private val categoryConfigFlow = combine(
@@ -91,13 +100,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         appRepository.installedAppsFlow,
         preferencesRepository.favoritesFlow,
         preferencesRepository.hiddenAppsFlow,
-        categoryConfigFlow
-    ) { rawApps, favs, hidden, (overrides, customCats, hiddenCats) ->
+        categoryConfigFlow,
+        NotificationService.notificationCounts
+    ) { rawApps, favs, hidden, (overrides, customCats, hiddenCats), notifCounts ->
 
-        // 1. Filter out hidden apps and apply favorite & category overrides
+        // 1. Filter out hidden apps and apply favorite & category overrides & notification counts
         val processedApps = rawApps
             .filter { !hidden.contains(it.packageName) }
             .map { app ->
+                val notifCount = notifCounts[app.packageName] ?: 0
                 val overrideCat = overrides[app.packageName]
                 if (overrideCat != null) {
                     val title = if (customCats.contains(overrideCat)) {
@@ -114,10 +125,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         isFavorite = favs.contains(app.packageName),
                         categoryId = overrideCat,
                         categoryTitle = title,
-                        categoryIcon = icon
+                        categoryIcon = icon,
+                        notificationCount = notifCount
                     )
                 } else {
-                    app.copy(isFavorite = favs.contains(app.packageName))
+                    app.copy(
+                        isFavorite = favs.contains(app.packageName),
+                        notificationCount = notifCount
+                    )
                 }
             }
 
@@ -201,6 +216,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             hapticsEnabled = settings.hapticsEnabled,
             alphabetSide = settings.alphabetSide,
             showIcons = settings.showIcons,
+            hasNotificationAccess = settings.hasNotificationAccess,
             selectedApp = selApp
         )
     }.stateIn(
@@ -221,6 +237,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
     )
+
+    fun checkNotificationPermission() {
+        _hasNotificationAccess.value = NotificationService.isNotificationAccessGranted(getApplication())
+    }
+
+    fun openNotificationSettings() {
+        NotificationService.openNotificationAccessSettings(getApplication())
+    }
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery

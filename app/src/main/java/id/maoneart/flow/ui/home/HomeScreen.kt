@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,8 +23,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,11 +36,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.maoneart.flow.ui.components.AlphabetWaveScroller
 import id.maoneart.flow.ui.components.AppActionBottomSheet
@@ -63,31 +71,52 @@ fun HomeScreen(
     val appForCategoryChange by viewModel.appForCategoryChange.collectAsState()
 
     val listState = rememberLazyListState()
+    val chipListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var scrollJob by remember { mutableStateOf<Job?>(null) }
+
+    // Auto refresh notification access permission on launcher resume
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.checkNotificationPermission()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Smooth instant reset scroll position on category change to prevent layout freeze
     LaunchedEffect(uiState.selectedCategoryId) {
         listState.scrollToItem(0)
     }
 
-    // Back Navigation Hierarchy:
+    // Back Navigation Hierarchy (Strict Zero Leakage Focus):
     // 1. If searching -> clear search query
-    // 2. If in a specific category (e.g. Game) -> return to "all" (Semua) category
+    // 2. If in a specific category (e.g. Game) -> return to "all" (Semua) category & reset chip to index 0
     // 3. If scrolled down in "all" category -> smoothly scroll back to top
-    BackHandler(
-        enabled = uiState.isSearching || uiState.selectedCategoryId != "all" || listState.firstVisibleItemIndex > 0
-    ) {
+    // 4. If already at top and in "all" -> lock chip to 0 and consume event so it never leaks focus to '+ Kategori' at the right
+    BackHandler(enabled = true) {
         when {
             uiState.isSearching -> {
                 viewModel.onSearchQueryChange("")
             }
             uiState.selectedCategoryId != "all" -> {
                 viewModel.selectCategory("all")
-            }
-            listState.firstVisibleItemIndex > 0 -> {
                 scope.launch {
-                    listState.animateScrollToItem(0)
+                    chipListState.scrollToItem(0)
+                    listState.scrollToItem(0)
+                }
+            }
+            else -> {
+                scope.launch {
+                    chipListState.scrollToItem(0)
+                    if (listState.firstVisibleItemIndex > 0) {
+                        listState.animateScrollToItem(0)
+                    }
                 }
             }
         }
@@ -131,7 +160,48 @@ fun HomeScreen(
                 modifier = Modifier.padding(bottom = 4.dp)
             )
 
-            // 3. Category Chip Bar (Customizable & Manageable)
+            // 3. Notification Access Setup Banner (auto-dismissed once granted)
+            AnimatedVisibility(
+                visible = !uiState.hasNotificationAccess && !uiState.isSearching,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0x1FFF9800))
+                        .border(1.dp, Color(0x66FF9800), RoundedCornerShape(12.dp))
+                        .clickable { viewModel.openNotificationSettings() }
+                        .padding(horizontal = 14.dp, vertical = 9.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🔔",
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(end = 10.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Aktifkan Akses Notifikasi",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFFB74D)
+                            )
+                            Text(
+                                text = "Sentuh untuk izinkan lencana pesan WhatsApp & aplikasi",
+                                fontSize = 11.sp,
+                                color = FlowTextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 4. Category Chip Bar (Customizable & Manageable)
             AnimatedVisibility(
                 visible = !uiState.isSearching,
                 enter = fadeIn() + expandVertically(),
@@ -144,6 +214,7 @@ fun HomeScreen(
                     onAddCategoryClick = { viewModel.openCreateCategoryDialog(true) },
                     onCategoryLongClick = { cat -> viewModel.openDeleteCategoryDialog(cat) },
                     hapticsEnabled = uiState.hapticsEnabled,
+                    chipListState = chipListState,
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
             }

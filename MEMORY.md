@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.11)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.12)
 
 ---
 
@@ -105,3 +105,12 @@
     - **Logo Grafiti Besar & Center**:
       - Memperbesar ukuran logo grafiti dari 78dp menjadi 118dp (peningkatan skala 50%) agar gagah dan menonjol.
       - Mengunci penataan logo menjadi 100% simetris di tengah horizontal (`Box(contentAlignment = Alignment.Center)` dan `alignment = Alignment.Center`).
+  - **Lencana Notifikasi Pesan/WA & Penguncian Back Double-Press (Release v1.0.12)**:
+    - **Lencana Notifikasi Aktif Aplikasi (WhatsApp, Pesan, Telegram, dll)**:
+      - Mengembangkan `NotificationService` berbasis `NotificationListenerService` yang mengamati notifikasi masuk dan terhapus secara real-time via `onNotificationPosted` dan `onNotificationRemoved`.
+      - Menghitung notifikasi aktif per paket aplikasi (`packageName`) dan mengeksposnya secara reaktif melalui StateFlow ke `HomeViewModel`.
+      - Menampilkan lencana counter merah cerah khas Niagara/iOS (`Color(0xFFFF334B)`) dengan angka notifikasi (atau `"99+"`) di samping nama aplikasi pada `AppListItem.kt`.
+      - Menyediakan banner status notifikasi glassmorphic yang otomatis muncul jika izin belum aktif dan otomatis menghilang begitu izin diberikan, dilengkapi shortcut langsung ke pengaturan akses notifikasi Android.
+    - **Solusi Tuntas Dobel-Klik Back Menggeser Kategori ke Kanan**:
+      - Root Cause: Sebelumnya `BackHandler(enabled = ...)` bernilai `false` ketika user menekan Back saat sudah di kategori "Semua" di posisi teratas. Event Back yang tidak tertangani bocor ke focus manager Android, memicu perpindahan fokus ke view focusable berikutnya di layar—yaitu tombol `+ Kategori` di ujung kanan LazyRow—sehingga LazyRow otomatis scroll ke kanan.
+      - Solusi: `BackHandler(enabled = true)` diaktifkan tanpa batas (*unconditional*). Setiap kali Back ditekan (termasuk double press cepat), `chipListState.scrollToItem(0)` langsung dieksekusi mengunci tab "Semua" di kiri, dan event Back dikonsumsi tuntas sehingga tidak pernah memicu perpindahan fokus ke kanan.
