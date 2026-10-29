@@ -4,11 +4,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import id.maoneart.flow.model.AppInfo
+import id.maoneart.flow.model.DefaultCategories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,16 +27,12 @@ import java.util.concurrent.ConcurrentHashMap
 class AppRepository(private val context: Context) {
 
     private val packageManager: PackageManager = context.packageManager
-    private val iconCache = ConcurrentHashMap<String, Drawable>()
+    private val iconCache = ConcurrentHashMap<String, Drawable>(128)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val collator = Collator.getInstance(Locale("id", "ID")).apply {
         strength = Collator.PRIMARY
     }
 
-    /**
-     * Emits the complete list of installed applications and updates automatically
-     * whenever packages are installed, updated, or removed by the system.
-     */
     val installedAppsFlow: Flow<List<AppInfo>> = callbackFlow {
         fun updateApps() {
             scope.launch(Dispatchers.IO) {
@@ -81,13 +80,12 @@ class AppRepository(private val context: Context) {
         val resolveInfos = packageManager.queryIntentActivities(launcherIntent, 0)
         val selfPackage = context.packageName
 
-        val result = mutableListOf<AppInfo>()
+        val result = ArrayList<AppInfo>(resolveInfos.size)
 
         for (info in resolveInfos) {
             val pkgName = info.activityInfo.packageName
             val actName = info.activityInfo.name
 
-            // Exclude launcher self from app drawer list to keep view uncluttered
             if (pkgName == selfPackage) continue
 
             val label = try {
@@ -96,19 +94,8 @@ class AppRepository(private val context: Context) {
                 pkgName
             }
 
-            val installTime = try {
-                packageManager.getPackageInfo(pkgName, 0).firstInstallTime
-            } catch (_: Throwable) {
-                0L
-            }
-
-            // Cache icon lazily in background
-            if (!iconCache.containsKey(pkgName)) {
-                try {
-                    val icon = info.loadIcon(packageManager)
-                    iconCache[pkgName] = icon
-                } catch (_: Throwable) {}
-            }
+            val appInfo = info.activityInfo.applicationInfo
+            val categoryId = resolveAppCategory(pkgName, label, appInfo)
 
             result.add(
                 AppInfo(
@@ -116,16 +103,29 @@ class AppRepository(private val context: Context) {
                     activityName = actName,
                     label = label,
                     firstLetter = AppInfo.computeFirstLetter(label),
-                    installTime = installTime
+                    categoryId = categoryId,
+                    categoryTitle = DefaultCategories.getTitle(categoryId),
+                    categoryIcon = DefaultCategories.getIcon(categoryId)
                 )
             )
+        }
+
+        // Background non-blocking pre-warming of icon cache
+        scope.launch(Dispatchers.IO) {
+            for (app in result) {
+                if (!iconCache.containsKey(app.packageName)) {
+                    try {
+                        val icon = packageManager.getApplicationIcon(app.packageName)
+                        iconCache[app.packageName] = icon
+                    } catch (_: Throwable) {}
+                }
+            }
         }
 
         // Sort alphabetically using Indonesian locale collator
         return result.sortedWith { a, b ->
             val firstCompare = a.firstLetter.compareTo(b.firstLetter)
             if (firstCompare != 0) {
-                // Symbols/numbers (#) at the end or top
                 if (a.firstLetter == '#') 1
                 else if (b.firstLetter == '#') -1
                 else firstCompare
@@ -133,6 +133,62 @@ class AppRepository(private val context: Context) {
                 collator.compare(a.label, b.label)
             }
         }
+    }
+
+    private fun resolveAppCategory(pkgName: String, label: String, appInfo: ApplicationInfo?): String {
+        val pkg = pkgName.lowercase()
+        val lbl = label.lowercase()
+
+        // 1. Game check
+        if (appInfo != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (appInfo.category == ApplicationInfo.CATEGORY_GAME) return "games"
+        }
+        if (pkg.contains("game") || lbl.contains("game") || pkg.contains("mlbb") ||
+            pkg.contains("pubg") || pkg.contains("freefire") || pkg.contains("roblox") ||
+            pkg.contains("genshin") || pkg.contains("arcade") || pkg.contains("simulator")) {
+            return "games"
+        }
+
+        // 2. Social / Chat
+        if (appInfo != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (appInfo.category == ApplicationInfo.CATEGORY_SOCIAL) return "social"
+        }
+        if (pkg.contains("whatsapp") || pkg.contains("telegram") || pkg.contains("instagram") ||
+            pkg.contains("facebook") || pkg.contains("twitter") || pkg.contains("tiktok") ||
+            pkg.contains("discord") || pkg.contains("chat") || pkg.contains("message") ||
+            pkg.contains("pesan") || pkg.contains("line") || lbl.contains("chat") ||
+            lbl.contains("sosial") || lbl.contains("pesan")) {
+            return "social"
+        }
+
+        // 3. Media & Audio & Video & Foto
+        if (appInfo != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (appInfo.category == ApplicationInfo.CATEGORY_AUDIO ||
+                appInfo.category == ApplicationInfo.CATEGORY_VIDEO ||
+                appInfo.category == ApplicationInfo.CATEGORY_IMAGE) {
+                return "media"
+            }
+        }
+        if (pkg.contains("music") || pkg.contains("youtube") || pkg.contains("spotify") ||
+            pkg.contains("video") || pkg.contains("media") || pkg.contains("player") ||
+            pkg.contains("camera") || pkg.contains("kamera") || pkg.contains("gallery") ||
+            pkg.contains("galeri") || pkg.contains("foto") || pkg.contains("photo") ||
+            pkg.contains("vlc") || pkg.contains("netflix") || lbl.contains("musik") ||
+            lbl.contains("video") || lbl.contains("kamera") || lbl.contains("galeri")) {
+            return "media"
+        }
+
+        // 4. System & Phone
+        if (pkg.contains("settings") || pkg.contains("setelan") || pkg.contains("dialer") ||
+            pkg.contains("phone") || pkg.contains("telepon") || pkg.contains("contact") ||
+            pkg.contains("kontak") || pkg.contains("vending") || pkg.contains("playstore") ||
+            lbl.contains("setelan") || lbl.contains("pengaturan") || lbl.contains("telepon") ||
+            lbl.contains("kontak")) {
+            return "system"
+        }
+
+        // 5. Productivity & Tools default
+        return "productivity"
     }
 
     fun getAppIcon(packageName: String): Drawable? {

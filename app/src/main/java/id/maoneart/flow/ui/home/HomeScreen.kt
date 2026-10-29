@@ -36,8 +36,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import id.maoneart.flow.ui.components.AlphabetWaveScroller
 import id.maoneart.flow.ui.components.AppActionBottomSheet
 import id.maoneart.flow.ui.components.AppListItem
+import id.maoneart.flow.ui.components.CategoryChipBar
+import id.maoneart.flow.ui.components.CreateCategoryDialog
+import id.maoneart.flow.ui.components.DeleteCategoryDialog
 import id.maoneart.flow.ui.components.DigitalClockHeader
 import id.maoneart.flow.ui.components.FlowSearchBar
+import id.maoneart.flow.ui.components.SelectCategoryBottomSheet
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextSecondary
 import kotlinx.coroutines.launch
@@ -86,10 +90,27 @@ fun HomeScreen(
                         viewModel.launchApp(uiState.displayApps.first())
                     }
                 },
-                modifier = Modifier.padding(bottom = 6.dp)
+                modifier = Modifier.padding(bottom = 4.dp)
             )
 
-            // 3. Main Content Row: Apps List + Alphabet Wave Scroller
+            // 3. Category Chip Bar (Customizable & Manageable)
+            AnimatedVisibility(
+                visible = !uiState.isSearching,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                CategoryChipBar(
+                    categories = uiState.categories,
+                    selectedCategoryId = uiState.selectedCategoryId,
+                    onCategorySelected = viewModel::selectCategory,
+                    onAddCategoryClick = { viewModel.openCreateCategoryDialog(true) },
+                    onCustomCategoryLongClick = { cat -> viewModel.openDeleteCategoryDialog(cat) },
+                    hapticsEnabled = uiState.hapticsEnabled,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+            }
+
+            // 4. Main Content Row: Apps List + Alphabet Wave Scroller
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -102,7 +123,9 @@ fun HomeScreen(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = { letter ->
                             uiState.letterIndices[letter]?.let { appIndex ->
-                                val headerOffset = if (uiState.favorites.isNotEmpty()) uiState.favorites.size + 3 else 1
+                                val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
+                                    uiState.favorites.size + 3
+                                } else 1
                                 scope.launch {
                                     listState.scrollToItem(headerOffset + appIndex)
                                 }
@@ -122,11 +145,58 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 72.dp)
                 ) {
                     if (!uiState.isSearching) {
-                        // Favorites Section
-                        if (uiState.favorites.isNotEmpty()) {
-                            item(key = "favorites_title") {
+                        // In "All" category, show Favorites section first
+                        if (uiState.selectedCategoryId == "all") {
+                            if (uiState.favorites.isNotEmpty()) {
+                                item(key = "favorites_title") {
+                                    Text(
+                                        text = "FAVORIT",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = FlowElectricBlue,
+                                        letterSpacing = 1.2.sp,
+                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
+                                    )
+                                }
+
+                                itemsIndexed(
+                                    items = uiState.favorites,
+                                    key = { _, app -> "fav_${app.id}" }
+                                ) { _, app ->
+                                    AppListItem(
+                                        app = app,
+                                        iconDrawable = viewModel.getAppIcon(app.packageName),
+                                        showIcon = uiState.showIcons,
+                                        onClick = { viewModel.launchApp(app) },
+                                        onLongClick = { viewModel.selectAppForAction(app) }
+                                    )
+                                }
+
+                                item(key = "favorites_divider") {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
+                            }
+
+                            // All Apps Title
+                            item(key = "all_apps_title") {
                                 Text(
-                                    text = "FAVORIT",
+                                    text = "SEMUA APLIKASI",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = FlowTextSecondary,
+                                    letterSpacing = 1.2.sp,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
+                                )
+                            }
+                        } else {
+                            // Category Specific Section Title
+                            val currentCat = uiState.categories.find { it.id == uiState.selectedCategoryId }
+                            val catTitle = currentCat?.title ?: "KATEGORI"
+                            val catIcon = currentCat?.icon ?: "📁"
+
+                            item(key = "cat_header_${uiState.selectedCategoryId}") {
+                                Text(
+                                    text = "$catIcon ${catTitle.uppercase()} (${uiState.displayApps.size})",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = FlowElectricBlue,
@@ -134,40 +204,11 @@ fun HomeScreen(
                                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
                                 )
                             }
-
-                            itemsIndexed(
-                                items = uiState.favorites,
-                                key = { _, app -> "fav_${app.id}" }
-                            ) { _, app ->
-                                AppListItem(
-                                    app = app,
-                                    iconDrawable = viewModel.getAppIcon(app.packageName),
-                                    showIcon = uiState.showIcons,
-                                    onClick = { viewModel.launchApp(app) },
-                                    onLongClick = { viewModel.selectAppForAction(app) }
-                                )
-                            }
-
-                            item(key = "favorites_divider") {
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
-                        }
-
-                        // All Apps Title
-                        item(key = "all_apps_title") {
-                            Text(
-                                text = "SEMUA APLIKASI",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = FlowTextSecondary,
-                                letterSpacing = 1.2.sp,
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
-                            )
                         }
                     }
 
-                    // Display Apps (Filtered Search Results or Complete Alphabetical List)
-                    if (uiState.displayApps.isEmpty() && uiState.isSearching) {
+                    // Display Apps (Filtered Search Results, Category Filter, or Complete Alphabetical List)
+                    if (uiState.displayApps.isEmpty()) {
                         item(key = "empty_state") {
                             Box(
                                 modifier = Modifier
@@ -176,8 +217,8 @@ fun HomeScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Aplikasi tidak ditemukan",
-                                    fontSize = 16.sp,
+                                    text = if (uiState.isSearching) "Aplikasi tidak ditemukan" else "Tidak ada aplikasi di kategori ini",
+                                    fontSize = 15.sp,
                                     color = FlowTextSecondary
                                 )
                             }
@@ -185,7 +226,7 @@ fun HomeScreen(
                     } else {
                         itemsIndexed(
                             items = uiState.displayApps,
-                            key = { _, app -> app.id }
+                            key = { _, app -> "${uiState.selectedCategoryId}_${app.id}" }
                         ) { _, app ->
                             AppListItem(
                                 app = app,
@@ -204,7 +245,9 @@ fun HomeScreen(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = { letter ->
                             uiState.letterIndices[letter]?.let { appIndex ->
-                                val headerOffset = if (uiState.favorites.isNotEmpty()) uiState.favorites.size + 3 else 1
+                                val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
+                                    uiState.favorites.size + 3
+                                } else 1
                                 scope.launch {
                                     listState.scrollToItem(headerOffset + appIndex)
                                 }
@@ -225,9 +268,39 @@ fun HomeScreen(
                 onDismiss = { viewModel.selectAppForAction(null) },
                 onLaunch = { viewModel.launchApp(app) },
                 onToggleFavorite = { viewModel.toggleFavorite(app) },
+                onChangeCategory = { viewModel.openCategoryChangeDialog(app) },
                 onOpenInfo = { viewModel.openAppDetails(app) },
                 onUninstall = { viewModel.uninstallApp(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) }
+            )
+        }
+
+        // Select / Change Category Bottom Sheet
+        uiState.appForCategoryChange?.let { app ->
+            SelectCategoryBottomSheet(
+                app = app,
+                availableCategories = uiState.categories,
+                onCategorySelected = { catId -> viewModel.assignAppCategory(app, catId) },
+                onCreateNewCategory = { viewModel.openCreateCategoryDialog(true) },
+                onResetToDefault = { viewModel.resetAppCategory(app) },
+                onDismiss = { viewModel.openCategoryChangeDialog(null) }
+            )
+        }
+
+        // Create Custom Category Dialog
+        if (uiState.isCreateCategoryOpen) {
+            CreateCategoryDialog(
+                onDismiss = { viewModel.openCreateCategoryDialog(false) },
+                onConfirm = { name -> viewModel.createCustomCategory(name) }
+            )
+        }
+
+        // Delete Custom Category Dialog
+        uiState.categoryToDelete?.let { category ->
+            DeleteCategoryDialog(
+                category = category,
+                onDismiss = { viewModel.openDeleteCategoryDialog(null) },
+                onConfirm = { viewModel.deleteCustomCategory(category) }
             )
         }
     }

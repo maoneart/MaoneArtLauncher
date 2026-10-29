@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Star
@@ -53,6 +54,7 @@ fun AppActionBottomSheet(
     onDismiss: () -> Unit,
     onLaunch: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onChangeCategory: () -> Unit,
     onOpenInfo: () -> Unit,
     onUninstall: () -> Unit,
     onToggleHidden: () -> Unit
@@ -71,7 +73,7 @@ fun AppActionBottomSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            // Header: Icon + App Label + Package
+            // Header: Icon + App Label + Package + Category Badge
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -100,11 +102,27 @@ fun AppActionBottomSheet(
                         fontWeight = FontWeight.Bold,
                         color = FlowTextPrimary
                     )
-                    Text(
-                        text = app.packageName,
-                        fontSize = 12.sp,
-                        color = FlowTextSecondary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Text(
+                            text = "${app.categoryIcon} ${app.categoryTitle}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = FlowElectricBlue,
+                            modifier = Modifier
+                                .background(FlowElectricBlue.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = app.packageName,
+                            fontSize = 11.sp,
+                            color = FlowTextSecondary,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
@@ -129,6 +147,17 @@ fun AppActionBottomSheet(
                 onClick = {
                     onToggleFavorite()
                     onDismiss()
+                }
+            )
+
+            // Action: Change Category
+            ActionItem(
+                icon = Icons.Rounded.Folder,
+                title = "Ubah Kategori (${app.categoryTitle})",
+                iconTint = FlowElectricBlue,
+                onClick = {
+                    onDismiss()
+                    onChangeCategory()
                 }
             )
 
