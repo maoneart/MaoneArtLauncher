@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.6)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.7)
 
 ---
 
@@ -78,3 +78,9 @@
     - **Presisi Pusat Huruf & Gelombang Hidup**:
       - Menggunakan koordinat aktual parent `columnTopY + (i + 0.5f) * itemHeight` sehingga puncak ombak tepat berada di bawah jempol di setiap titik pergeseran.
       - Huruf-huruf di sepanjang jalur scrolling secara dinamis "terangkat" keluar melengkung hingga -88dp dan membesar hingga 2.45x mengikuti jempol secara real-time persis seperti Niagara Launcher.
+  - **Hierarki Navigasi Tombol Back Cerdas (Release v1.0.7)**:
+    - **Prioritas Kembali ke Tab 'Semua'**:
+      - Ketika pengguna sedang membuka kategori tertentu (mis. Game, Sosial, Media, dll), menekan tombol Back kini otomatis mengembalikan launcher ke kategori master `"Semua"` (`selectedCategoryId = "all"`).
+    - **Pembersihan Pencarian & Scroll-to-Top**:
+      - Jika pengguna sedang melakukan pencarian aplikasi, tombol Back langsung mengosongkan teks pencarian.
+      - Jika pengguna sedang berada di kategori "Semua" namun posisi daftar ter-scroll jauh ke bawah, tombol Back akan melakukan scroll halus kembali ke posisi paling atas.

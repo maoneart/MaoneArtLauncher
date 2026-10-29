@@ -1,5 +1,6 @@
 package id.maoneart.flow.ui.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -68,6 +69,28 @@ fun HomeScreen(
     // Smooth instant reset scroll position on category change to prevent layout freeze
     LaunchedEffect(uiState.selectedCategoryId) {
         listState.scrollToItem(0)
+    }
+
+    // Back Navigation Hierarchy:
+    // 1. If searching -> clear search query
+    // 2. If in a specific category (e.g. Game) -> return to "all" (Semua) category
+    // 3. If scrolled down in "all" category -> smoothly scroll back to top
+    BackHandler(
+        enabled = uiState.isSearching || uiState.selectedCategoryId != "all" || listState.firstVisibleItemIndex > 0
+    ) {
+        when {
+            uiState.isSearching -> {
+                viewModel.onSearchQueryChange("")
+            }
+            uiState.selectedCategoryId != "all" -> {
+                viewModel.selectCategory("all")
+            }
+            listState.firstVisibleItemIndex > 0 -> {
+                scope.launch {
+                    listState.animateScrollToItem(0)
+                }
+            }
+        }
     }
 
     Box(
