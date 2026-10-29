@@ -1,0 +1,62 @@
+name: Build MaoneArt Flow Launcher APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Android Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Android Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Prepare APK Asset
+        run: |
+          mkdir -p release-output
+          cp app/build/outputs/apk/release/app-release.apk release-output/MaoneArtFlow.apk
+          ls -la release-output/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaoneArtFlow-apk
+          path: release-output/MaoneArtFlow.apk
+          retention-days: 14
+
+      - name: Create GitHub Release & Upload Asset
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main')
+        with:
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "MaoneArt Flow Launcher v1.0.${{ github.run_number }}"
+          body: |
+            ### 🌊 MaoneArt Flow — Minimalist Android Launcher (Release Build)
+            - **Desain**: Terinspirasi dari ergonomi minimalis 1-tangan Niagara Launcher
+            - **Alphabet Wave Scroller**: Scroller A-Z melengkung dinamis dengan pembesaran gelombang elastis
+            - **Getaran Taktil**: Haptic feedback responsif di setiap perpindahan huruf
+            - **Header Digital Clock**: Jam digital besar, kalender Bahasa Indonesia & status baterai real-time
+            - **App Hub & Search**: Akses instan aplikasi favorit, pencarian cepat, dan menu aksi long-press
+            - **Performa**: 120 FPS Jetpack Compose, in-memory icon cache, footprint RAM sangat kecil (< 35 MB)
+          files: release-output/MaoneArtFlow.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

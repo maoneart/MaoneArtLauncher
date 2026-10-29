@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MaoneArt Flow</string>
+    <string name="search_apps">Cari aplikasi…</string>
+    <string name="favorites_title">Favorit</string>
+    <string name="all_apps_title">Semua Aplikasi</string>
+    <string name="no_apps_found">Aplikasi tidak ditemukan</string>
+    <string name="app_info">Info Aplikasi</string>
+    <string name="add_to_favorites">Tambah ke Favorit</string>
+    <string name="remove_from_favorites">Hapus dari Favorit</string>
+    <string name="hide_app">Sembunyikan Aplikasi</string>
+    <string name="uninstall_app">Hapus Instalasi</string>
+    <string name="settings_title">Pengaturan Launcher</string>
+    <string name="set_default_launcher">Jadikan Launcher Utama</string>
+    <string name="haptics_enabled">Getaran Taktil (Haptic)</string>
+    <string name="alphabet_side">Posisi Navigasi Huruf</string>
+    <string name="right_side">Kanan (Standar)</string>
+    <string name="left_side">Kiri (Kidal)</string>
+</resources>
