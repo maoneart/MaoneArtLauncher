@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
@@ -48,7 +49,8 @@ fun AppListItem(
     showIcon: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    twoLineAppNames: Boolean = true
 ) {
     val context = LocalContext.current
 
@@ -118,16 +120,27 @@ fun AppListItem(
             Spacer(modifier = Modifier.width(16.dp))
         }
 
-        // App Label
+        // App Label (supports 2 lines wrapping for long names to prevent clashing with wallpapers)
+        val textMaxWidth = if (showIcon) 110.dp else 165.dp
         Text(
             text = app.label,
-            fontSize = 17.sp,
+            fontSize = 16.5.sp,
             fontWeight = FontWeight.Normal,
             color = FlowTextPrimary,
-            maxLines = 1,
+            maxLines = if (twoLineAppNames) 2 else 1,
+            lineHeight = 20.sp,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
+            modifier = if (twoLineAppNames) {
+                Modifier.widthIn(max = textMaxWidth)
+            } else {
+                Modifier.weight(1f)
+            }
         )
+
+        // Spacer to absorb remaining row space if twoLineAppNames is active and there's a fallback badge
+        if (twoLineAppNames && !showIcon && app.notificationCount > 0) {
+            Spacer(modifier = Modifier.weight(1f))
+        }
 
         // Notification Badge Counter fallback (only when app icon is hidden by user settings)
         if (!showIcon && app.notificationCount > 0) {

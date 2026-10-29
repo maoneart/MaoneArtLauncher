@@ -306,6 +306,7 @@ fun HomeScreen(
                                         app = app,
                                         iconDrawable = viewModel.getAppIcon(app.packageName),
                                         showIcon = uiState.showIcons,
+                                        twoLineAppNames = uiState.twoLineAppNames,
                                         onClick = { viewModel.launchApp(app) },
                                         onLongClick = { viewModel.selectAppForAction(app) }
                                     )
@@ -371,6 +372,7 @@ fun HomeScreen(
                                 app = app,
                                 iconDrawable = viewModel.getAppIcon(app.packageName),
                                 showIcon = uiState.showIcons,
+                                twoLineAppNames = uiState.twoLineAppNames,
                                 onClick = { viewModel.launchApp(app) },
                                 onLongClick = { viewModel.selectAppForAction(app) }
                             )
@@ -456,6 +458,8 @@ fun HomeScreen(
                 onTogglePureTransparentBg = viewModel::setPureTransparentBg,
                 showCategories = uiState.showCategories,
                 onToggleShowCategories = viewModel::setShowCategories,
+                twoLineAppNames = uiState.twoLineAppNames,
+                onToggleTwoLineAppNames = viewModel::setTwoLineAppNames,
                 showIcons = uiState.showIcons,
                 onToggleShowIcons = viewModel::setShowIcons,
                 is24Hour = uiState.is24Hour,

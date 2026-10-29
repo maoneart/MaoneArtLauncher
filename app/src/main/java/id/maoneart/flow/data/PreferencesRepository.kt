@@ -32,6 +32,7 @@ class PreferencesRepository(private val context: Context) {
         val SHOW_ALPHABET_SCROLLER = booleanPreferencesKey("show_alphabet_scroller")
         val PURE_TRANSPARENT_BG = booleanPreferencesKey("pure_transparent_bg")
         val SHOW_CATEGORIES = booleanPreferencesKey("show_categories")
+        val TWO_LINE_APP_NAMES = booleanPreferencesKey("two_line_app_names")
     }
 
     val favoritesFlow: Flow<Set<String>> = context.dataStore.data.map { prefs ->
@@ -85,6 +86,10 @@ class PreferencesRepository(private val context: Context) {
 
     val showCategoriesFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[Keys.SHOW_CATEGORIES] ?: true
+    }
+
+    val twoLineAppNamesFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.TWO_LINE_APP_NAMES] ?: true
     }
 
     val customCategoriesFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
@@ -263,5 +268,9 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun setShowCategories(show: Boolean) {
         context.dataStore.edit { prefs -> prefs[Keys.SHOW_CATEGORIES] = show }
+    }
+
+    suspend fun setTwoLineAppNames(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.TWO_LINE_APP_NAMES] = enabled }
     }
 }

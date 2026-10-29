@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.16)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.17)
 
 ---
 
@@ -148,3 +148,12 @@
       - Menerapkan `navigationBarsPadding()` dengan padding `bottom = 48.dp` pada tombol logo "G" di pojok kanan bawah agar posisinya terangkat nyaman di atas navigasi/gesture bar Android dan tidak tertutup.
     - **Aktivasi Search Otomatis Saat Tombol "G" Diklik**:
       - Memperbaiki event klik tombol "G" via `viewModel.setSearchActive(true)`. Saat tombol disentuh, `isSearching` langsung aktif, `FlowSearchBar` meluncur keluar di bagian atas dengan `autoFocus` keyboard, dan tombol close `✕` disediakan untuk menutup search bar kembali.
+  - **Nama Aplikasi 2 Baris & Pembatasan Lebar Wallpaper-Safe (Release v1.0.17)**:
+    - **Solusi Nama Aplikasi Panjang Menabrak Karakter Wallpaper**:
+      - Root Cause: Teks nama aplikasi sebelumnya dibatasi kaku ke `maxLines = 1` dengan `Modifier.weight(1f)` yang membentang lebar melintasi layar. Pada wallpaper dengan ilustrasi/karakter di sisi kanan (seperti screenshot bug), nama aplikasi panjang ("Clash of Clans", "Digital Korlantas") melebar menyeberangi dinding gelap dan menutupi wajah/badan karakter.
+      - Solusi:
+        1. Menambahkan dukungan pembungkusan teks `maxLines = if (twoLineAppNames) 2 else 1` dengan `lineHeight = 20.sp` dan `fontSize = 16.5.sp` yang pas dengan tinggi ikon 40dp (tinggi baris list tetap konsisten 64dp, bebas lonjakan layout).
+        2. Mengalibrasi batas lebar maksimal teks `textMaxWidth = if (showIcon) 110.dp else 165.dp` yang presisi sesuai batas dinding gelap wallpaper (~47% lebar layar).
+        3. Nama aplikasi pendek ("DANA", "Copilot", "Dark War", "Daya Auto", "Discord", "Dokumen") tetap rapi di 1 baris.
+        4. Nama aplikasi panjang ("Clash of Clans", "Digital Korlantas", dll.) otomatis membungkus ke 2 baris ("Clash of" / "Clans", "Digital" / "Korlantas") dan 100% terkunci rapi di dalam kolom dinding tanpa menyenggol karakter anime.
+        5. Menambahkan switch kustomisasi persisten di `LauncherSettingsBottomSheet.kt`: "Nama Aplikasi 2 Baris" (aktif secara default).

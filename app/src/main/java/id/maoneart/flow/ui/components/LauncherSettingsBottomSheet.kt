@@ -57,6 +57,8 @@ fun LauncherSettingsBottomSheet(
     onTogglePureTransparentBg: (Boolean) -> Unit,
     showCategories: Boolean,
     onToggleShowCategories: (Boolean) -> Unit,
+    twoLineAppNames: Boolean,
+    onToggleTwoLineAppNames: (Boolean) -> Unit,
     showIcons: Boolean,
     onToggleShowIcons: (Boolean) -> Unit,
     is24Hour: Boolean,
@@ -216,6 +218,13 @@ fun LauncherSettingsBottomSheet(
                 subtitle = "Mode minimalis teks saja jika dimatikan",
                 checked = showIcons,
                 onCheckedChange = onToggleShowIcons
+            )
+
+            SettingsSwitchRow(
+                title = "Nama Aplikasi 2 Baris",
+                subtitle = "Bungkus nama aplikasi panjang ke baris kedua agar tidak menabrak wallpaper",
+                checked = twoLineAppNames,
+                onCheckedChange = onToggleTwoLineAppNames
             )
 
             Spacer(modifier = Modifier.height(14.dp))

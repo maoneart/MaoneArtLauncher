@@ -39,6 +39,7 @@ data class HomeUiState(
     val showAlphabetScroller: Boolean = true,
     val pureTransparentBg: Boolean = false,
     val showCategories: Boolean = true,
+    val twoLineAppNames: Boolean = true,
     val isSettingsOpen: Boolean = false,
     val selectedApp: AppInfo? = null
 )
@@ -49,7 +50,8 @@ private data class AppearanceSettings(
     val widgetTheme: String = "classic",
     val showAlphabetScroller: Boolean = true,
     val pureTransparentBg: Boolean = false,
-    val showCategories: Boolean = true
+    val showCategories: Boolean = true,
+    val twoLineAppNames: Boolean = true
 )
 
 private data class GeneralSettings(
@@ -107,10 +109,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         preferencesRepository.showAlphabetScrollerFlow,
         combine(
             preferencesRepository.pureTransparentBgFlow,
-            preferencesRepository.showCategoriesFlow
-        ) { pureBg, showCats -> Pair(pureBg, showCats) }
-    ) { banner, asIcon, theme, scroller, (pureBg, showCats) ->
-        AppearanceSettings(banner, asIcon, theme, scroller, pureBg, showCats)
+            preferencesRepository.showCategoriesFlow,
+            preferencesRepository.twoLineAppNamesFlow
+        ) { pureBg, showCats, twoLine -> Triple(pureBg, showCats, twoLine) }
+    ) { banner, asIcon, theme, scroller, (pureBg, showCats, twoLine) ->
+        AppearanceSettings(banner, asIcon, theme, scroller, pureBg, showCats, twoLine)
     }
 
     private val generalSettingsFlow = combine(
@@ -265,6 +268,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             showAlphabetScroller = appearance.showAlphabetScroller,
             pureTransparentBg = appearance.pureTransparentBg,
             showCategories = appearance.showCategories,
+            twoLineAppNames = appearance.twoLineAppNames,
             isSettingsOpen = isSettingsOpen,
             selectedApp = selApp
         )
@@ -405,6 +409,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowIcons(show: Boolean) {
         viewModelScope.launch { preferencesRepository.setShowIcons(show) }
+    }
+
+    fun setTwoLineAppNames(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setTwoLineAppNames(enabled) }
     }
 
     fun setIs24Hour(is24H: Boolean) {
