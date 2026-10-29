@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.13)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.14)
 
 ---
 
@@ -123,3 +123,8 @@
         3. Menetapkan `transformOrigin = TransformOrigin(0.85f, 0.5f)` agar perbesaran huruf melengkung dan mengembang ke arah interior layar (kiri), bebas 100% dari pemotongan tepi kanan.
         4. Mengunci `clip = false` pada graphics layer dan menambahkan `softWrap = false`, `maxLines = 1`, `overflow = TextOverflow.Visible` pada teks.
         5. Mengatur skala ombak maksimal yang anggun di 1.80x dengan pergeseran horizontal -68dp, menjaga huruf tetap terbaca sangat jelas dan bebas tumpang-tindih.
+  - **Lencana Notifikasi di Pojok Kanan Atas Ikon Aplikasi (Release v1.0.14)**:
+    - **Penataan Posisi Badge iOS / Niagara**:
+      - Memposisikan badge notifikasi angka bulat / kapsul merah cerah (`Color(0xFFFF334B)`) tepat di sudut kanan atas (`Alignment.TopEnd` dengan offset `x = 4.dp, y = -2.dp`) dari ikon aplikasi 40dp.
+      - Dilengkapi border pelindung kontras gelap (`1.5.dp, Color(0xFF141416)`) dan bayangan lembut agar kontras dan terbaca jelas di atas ikon aplikasi apa pun (WhatsApp, Telegram, Pesan, Gmail, dll).
+      - Menyediakan fallback badge di samping label aplikasi khusus jika pengguna mengaktifkan mode minimalis tanpa ikon (`showIcon = false`).

@@ -29,7 +29,13 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.ui.theme.FlowOrange
 import id.maoneart.flow.ui.theme.FlowTextPrimary
@@ -59,24 +65,54 @@ fun AppListItem(
     ) {
         if (showIcon) {
             Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center
+                modifier = Modifier.size(44.dp)
             ) {
-                if (iconDrawable != null) {
-                    val imageRequest = remember(iconDrawable) {
-                        ImageRequest.Builder(context)
-                            .data(iconDrawable)
-                            .crossfade(false) // Zero overhead, instant render from memory cache
-                            .build()
+                // App Icon
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.BottomStart)
+                        .clip(RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (iconDrawable != null) {
+                        val imageRequest = remember(iconDrawable) {
+                            ImageRequest.Builder(context)
+                                .data(iconDrawable)
+                                .crossfade(false) // Zero overhead, instant render from memory cache
+                                .build()
+                        }
+                        AsyncImage(
+                            model = imageRequest,
+                            contentDescription = app.label,
+                            modifier = Modifier.size(40.dp),
+                            contentScale = ContentScale.Fit
+                        )
                     }
-                    AsyncImage(
-                        model = imageRequest,
-                        contentDescription = app.label,
-                        modifier = Modifier.size(40.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                }
+
+                // Notification Badge Counter at Top-Right Corner of App Icon
+                if (app.notificationCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 4.dp, y = (-2).dp)
+                            .shadow(3.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFF334B))
+                            .border(1.5.dp, Color(0xFF141416), CircleShape)
+                            .padding(horizontal = if (app.notificationCount > 9) 5.dp else 4.dp, vertical = 1.dp)
+                            .sizeIn(minWidth = 18.dp, minHeight = 18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (app.notificationCount > 99) "99+" else "${app.notificationCount}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -93,8 +129,8 @@ fun AppListItem(
             modifier = Modifier.weight(1f)
         )
 
-        // Notification Badge Counter
-        if (app.notificationCount > 0) {
+        // Notification Badge Counter fallback (only when app icon is hidden by user settings)
+        if (!showIcon && app.notificationCount > 0) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
