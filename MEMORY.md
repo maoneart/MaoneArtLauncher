@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.5)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.6)
 
 ---
 
@@ -71,3 +71,10 @@
       - Pembatalan scroll job bertumpuk (`scrollJob?.cancel()`) untuk mencegah penumpukan layout passes saat jempol meluncur cepat di atas ombak.
       - Optimasi rendering ikon di `AppListItem.kt` menggunakan `remember(iconDrawable)` dan `crossfade(false)`.
       - Pengurangan frekuensi update baterai di `DigitalClockHeader.kt` untuk memastikan CPU idle 99% saat scrolling.
+  - **Dynamic Living Wave Tracking via `awaitEachGesture` (Release v1.0.6)**:
+    - **Solusi Ombak Macet Saat Digeser (Drag Motion Fix)**:
+      - Root Cause: Duplikasi gesture detector (`detectTapGestures` + `detectDragGestures`) menyebabkan event touch down terkunci di `tryAwaitRelease()`, mengabaikan pointer drag saat jari bergeser ke atas/bawah.
+      - Solusi: Mengganti seluruh gesture detector dengan satu low-level event loop `awaitEachGesture { awaitFirstDown() -> while (pressed) handleTouchAt() }`.
+    - **Presisi Pusat Huruf & Gelombang Hidup**:
+      - Menggunakan koordinat aktual parent `columnTopY + (i + 0.5f) * itemHeight` sehingga puncak ombak tepat berada di bawah jempol di setiap titik pergeseran.
+      - Huruf-huruf di sepanjang jalur scrolling secara dinamis "terangkat" keluar melengkung hingga -88dp dan membesar hingga 2.45x mengikuti jempol secara real-time persis seperti Niagara Launcher.
