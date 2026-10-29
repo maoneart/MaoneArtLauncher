@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.12)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.13)
 
 ---
 
@@ -114,3 +114,12 @@
     - **Solusi Tuntas Dobel-Klik Back Menggeser Kategori ke Kanan**:
       - Root Cause: Sebelumnya `BackHandler(enabled = ...)` bernilai `false` ketika user menekan Back saat sudah di kategori "Semua" di posisi teratas. Event Back yang tidak tertangani bocor ke focus manager Android, memicu perpindahan fokus ke view focusable berikutnya di layar—yaitu tombol `+ Kategori` di ujung kanan LazyRow—sehingga LazyRow otomatis scroll ke kanan.
       - Solusi: `BackHandler(enabled = true)` diaktifkan tanpa batas (*unconditional*). Setiap kali Back ditekan (termasuk double press cepat), `chipListState.scrollToItem(0)` langsung dieksekusi mengunci tab "Semua" di kiri, dan event Back dikonsumsi tuntas sehingga tidak pernah memicu perpindahan fokus ke kanan.
+  - **Pencegahan Font Terpotong & Penataan Jarak Alphabet Scroller (Release v1.0.13)**:
+    - **Solusi Huruf Terpotong di Tepi Layar & Saling Menabrak**:
+      - Root Cause: 27 huruf (A-Z + #) berukuran 12sp dijejali dalam kolom vertikal tanpa margin bezel kanan yang cukup. Saat disentuh, skala ombak membesar hingga 2.45x dari pivot tengah (`0.5, 0.5`), menyebabkan sisi kanan teks terdorong menabrak batas layar kanan (terpotong oleh bezel/curved display), dan huruf-huruf saling menimpa secara vertikal.
+      - Solusi:
+        1. Menyesuaikan ukuran font dasar menjadi `10.5.sp` yang lebih proporsional dan elegan khas Niagara Launcher asli sehingga tidak berdesakan.
+        2. Menambahkan padding aman `8.dp` dari tepi bezel layar kanan.
+        3. Menetapkan `transformOrigin = TransformOrigin(0.85f, 0.5f)` agar perbesaran huruf melengkung dan mengembang ke arah interior layar (kiri), bebas 100% dari pemotongan tepi kanan.
+        4. Mengunci `clip = false` pada graphics layer dan menambahkan `softWrap = false`, `maxLines = 1`, `overflow = TextOverflow.Visible` pada teks.
+        5. Mengatur skala ombak maksimal yang anggun di 1.80x dengan pergeseran horizontal -68dp, menjaga huruf tetap terbaca sangat jelas dan bebas tumpang-tindih.

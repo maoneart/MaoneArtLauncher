@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,7 +120,7 @@ fun AlphabetWaveScroller(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .width(62.dp)
+            .width(54.dp)
             .onGloballyPositioned { coordinates ->
                 containerHeight = coordinates.size.height.toFloat()
             }
@@ -156,13 +158,13 @@ fun AlphabetWaveScroller(
                 .offset {
                     val offsetY = (animatedTouchY - with(density) { 33.dp.toPx() }).roundToInt()
                     // Position balloon comfortably in front of the wave crest
-                    val offsetX = if (isRightSide) with(density) { (-124).dp.roundToPx() } else with(density) { 124.dp.roundToPx() }
+                    val offsetX = if (isRightSide) with(density) { (-108).dp.roundToPx() } else with(density) { 108.dp.roundToPx() }
                     IntOffset(offsetX, offsetY.coerceIn(0, (containerHeight - 120).toInt().coerceAtLeast(0)))
                 }
         ) {
             Box(
                 modifier = Modifier
-                    .size(66.dp)
+                    .size(64.dp)
                     .shadow(22.dp, CircleShape, spotColor = FlowElectricBlue)
                     .background(
                         Brush.radialGradient(
@@ -174,7 +176,7 @@ fun AlphabetWaveScroller(
             ) {
                 Text(
                     text = activeLetter?.toString() ?: "",
-                    fontSize = 32.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
@@ -185,37 +187,46 @@ fun AlphabetWaveScroller(
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(vertical = 24.dp)
+                .padding(
+                    top = 8.dp,
+                    bottom = 18.dp,
+                    start = if (isRightSide) 0.dp else 8.dp,
+                    end = if (isRightSide) 8.dp else 0.dp
+                )
                 .onGloballyPositioned { coordinates ->
                     columnHeight = coordinates.size.height.toFloat()
                     columnTopY = coordinates.positionInParent().y
                 },
             horizontalAlignment = if (isRightSide) Alignment.End else Alignment.Start
         ) {
-            // Authentic Niagara wave influence radius: ~200dp (~9-11 letters influenced simultaneously)
-            val waveRadiusPx = with(density) { 200.dp.toPx() }
-            val maxDisplacementPx = with(density) { (if (isRightSide) -88.dp else 88.dp).toPx() }
+            // Authentic Niagara wave influence radius: ~180dp (~7-9 letters influenced simultaneously)
+            val waveRadiusPx = with(density) { 180.dp.toPx() }
+            val maxDisplacementPx = with(density) { (if (isRightSide) -68.dp else 68.dp).toPx() }
             val itemHeight = if (columnHeight > 0f) columnHeight / alphabet.size else 22f
 
             alphabet.forEachIndexed { i, letter ->
                 val letterCenterY = columnTopY + (i + 0.5f) * itemHeight
                 val hasApps = availableLetters.contains(letter)
 
-                // 120 FPS GPU-accelerated graphicsLayer: live wave dynamics follow finger continuously!
+                // 120 FPS GPU-accelerated graphicsLayer: expands safely without screen-edge clipping
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .width(44.dp)
+                        .width(36.dp)
                         .graphicsLayer {
+                            clip = false
+                            // Pivot toward screen interior to eliminate right-edge font clipping
+                            transformOrigin = TransformOrigin(if (isRightSide) 0.85f else 0.15f, 0.5f)
+
                             if (waveIntensity > 0.005f) {
                                 val dist = abs(animatedTouchY - letterCenterY)
                                 if (dist < waveRadiusPx) {
                                     val normalized = dist / waveRadiusPx
-                                    // Cosine bell curve with power shaping for dramatic, fluid wave crest
+                                    // Smooth cosine bell curve
                                     val rawFactor = ((1f + cos(normalized * PI.toFloat())) / 2f)
                                     val waveFactor = rawFactor.toDouble().pow(1.35).toFloat() * waveIntensity
 
-                                    val scale = 1.0f + (1.45f * waveFactor) // Expands up to 2.45x
+                                    val scale = 1.0f + (0.80f * waveFactor) // Expands up to 1.80x cleanly
                                     scaleX = scale
                                     scaleY = scale
                                     translationX = maxDisplacementPx * waveFactor
@@ -224,13 +235,13 @@ fun AlphabetWaveScroller(
                                     scaleX = 1.0f
                                     scaleY = 1.0f
                                     translationX = 0f
-                                    alpha = if (hasApps) 0.85f else 0.30f
+                                    alpha = if (hasApps) 0.85f else 0.28f
                                 }
                             } else {
                                 scaleX = 1.0f
                                 scaleY = 1.0f
                                 translationX = 0f
-                                alpha = if (hasApps) 0.85f else 0.30f
+                                alpha = if (hasApps) 0.85f else 0.28f
                             }
                         },
                     contentAlignment = Alignment.Center
@@ -239,17 +250,20 @@ fun AlphabetWaveScroller(
 
                     Text(
                         text = letter.toString(),
-                        fontSize = 12.sp,
+                        fontSize = 10.5.sp,
                         fontWeight = when {
                             isApex -> FontWeight.ExtraBold
                             hasApps -> FontWeight.Bold
-                            else -> FontWeight.Normal
+                            else -> FontWeight.Medium
                         },
                         color = when {
                             isApex -> FlowElectricBlue
                             hasApps -> FlowTextPrimary
                             else -> FlowTextSecondary
                         },
+                        softWrap = false,
+                        maxLines = 1,
+                        overflow = TextOverflow.Visible,
                         textAlign = TextAlign.Center
                     )
                 }
