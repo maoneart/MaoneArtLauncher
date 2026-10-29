@@ -1,10 +1,8 @@
 package id.maoneart.flow.ui.components
 
 import android.graphics.drawable.Drawable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,12 +16,10 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +52,7 @@ fun AppListItem(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .padding(horizontal = 24.dp, vertical = 11.dp),
+            .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (showIcon) {
@@ -67,11 +63,14 @@ fun AppListItem(
                 contentAlignment = Alignment.Center
             ) {
                 if (iconDrawable != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
+                    val imageRequest = remember(iconDrawable) {
+                        ImageRequest.Builder(context)
                             .data(iconDrawable)
-                            .crossfade(true)
-                            .build(),
+                            .crossfade(false) // Zero overhead, instant render from memory cache
+                            .build()
+                    }
+                    AsyncImage(
+                        model = imageRequest,
                         contentDescription = app.label,
                         modifier = Modifier.size(40.dp),
                         contentScale = ContentScale.Fit

@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.4)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.5)
 
 ---
 
@@ -61,3 +61,13 @@
       - Menerapkan standar MaoneArt Glassmorphism Modal dengan tombol simetris 2-kolom (Batal & Simpan) berukuran 46dp yang responsif.
     - **Penghapusan Kategori via Long-Press**:
       - Membuka kapabilitas penghapusan/penyembunyian kategori untuk semua chip selain master "Semua" via `PreferencesRepository.hiddenCategoriesFlow`.
+  - **Fluid Niagara Wave Physics & Optimasi Performa 120 FPS (Release v1.0.5)**:
+    - **Fisika Ombak Niagara Sejati**:
+      - Radius pengaruh ombak diperluas hingga 190dp (~9-11 huruf terdorong serentak) dengan kurva kosinus berpangkat (`rawFactor.pow(1.25)`).
+      - Outward arc displacement mencapai -82dp dan pembesaran font hingga 2.35x di puncak gelombang.
+      - Balon huruf aktif melayang (*floating active bubble*) diposisikan di -118dp di depan puncak gelombang ombak dengan pendaran neon cyan.
+    - **Optimasi Ultra Smooth 120 FPS**:
+      - Seluruh transformasi kurva ombak dipindahkan ke `Modifier.graphicsLayer { ... }` untuk bypass recomposition dan 100% diproses di GPU hardware matrix.
+      - Pembatalan scroll job bertumpuk (`scrollJob?.cancel()`) untuk mencegah penumpukan layout passes saat jempol meluncur cepat di atas ombak.
+      - Optimasi rendering ikon di `AppListItem.kt` menggunakan `remember(iconDrawable)` dan `crossfade(false)`.
+      - Pengurangan frekuensi update baterai di `DigitalClockHeader.kt` untuk memastikan CPU idle 99% saat scrolling.

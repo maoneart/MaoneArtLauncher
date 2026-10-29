@@ -91,7 +91,7 @@ fun DigitalClockHeader(
                              status == BatteryManager.BATTERY_STATUS_FULL
             } catch (_: Throwable) {}
 
-            delay(1000L)
+            delay(15000L)
         }
     }
 

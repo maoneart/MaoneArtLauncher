@@ -29,10 +29,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -49,6 +49,7 @@ import id.maoneart.flow.ui.theme.FlowTextSecondary
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
@@ -68,17 +69,17 @@ fun AlphabetWaveScroller(
     var activeLetter by remember { mutableStateOf<Char?>(null) }
     var totalHeight by remember { mutableFloatStateOf(0f) }
 
-    // Elastic spring physics for wave expansion & collapse
+    // Elastic spring physics for wave expansion & collapse (Niagara fluid rubber physics)
     val waveIntensity by animateFloatAsState(
         targetValue = if (isTouching) 1f else 0f,
         animationSpec = spring(
-            dampingRatio = 0.58f,
+            dampingRatio = 0.52f, // Bouncy & rubbery wave elastic feel
             stiffness = Spring.StiffnessMediumLow
         ),
         label = "wave_spring"
     )
 
-    // Smooth liquid interpolation for tracking finger position
+    // Smooth liquid interpolation for tracking finger position at 120 FPS
     val animatedTouchY by animateFloatAsState(
         targetValue = touchY,
         animationSpec = spring(
@@ -112,7 +113,7 @@ fun AlphabetWaveScroller(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .width(54.dp)
+            .width(58.dp)
             .onGloballyPositioned { coordinates ->
                 totalHeight = coordinates.size.height.toFloat()
             }
@@ -149,26 +150,27 @@ fun AlphabetWaveScroller(
             },
         contentAlignment = if (isRightSide) Alignment.CenterEnd else Alignment.CenterStart
     ) {
-        // Niagara Floating Active Letter Balloon / Bubble with Spring Motion
+        // Floating Active Letter Balloon / Bubble at the crest of the wave
         AnimatedVisibility(
             visible = isTouching && activeLetter != null,
-            enter = fadeIn() + scaleIn(spring(dampingRatio = 0.6f)),
+            enter = fadeIn() + scaleIn(spring(dampingRatio = 0.55f)),
             exit = fadeOut() + scaleOut(),
             modifier = Modifier
                 .align(if (isRightSide) Alignment.TopEnd else Alignment.TopStart)
                 .offset {
-                    val offsetY = (animatedTouchY - with(density) { 32.dp.toPx() }).roundToInt()
-                    val offsetX = if (isRightSide) with(density) { (-78).dp.roundToPx() } else with(density) { 78.dp.roundToPx() }
-                    IntOffset(offsetX, offsetY.coerceIn(0, (totalHeight - 110).toInt().coerceAtLeast(0)))
+                    val offsetY = (animatedTouchY - with(density) { 33.dp.toPx() }).roundToInt()
+                    // Position balloon comfortably to the left of the wave apex
+                    val offsetX = if (isRightSide) with(density) { (-118).dp.roundToPx() } else with(density) { 118.dp.roundToPx() }
+                    IntOffset(offsetX, offsetY.coerceIn(0, (totalHeight - 120).toInt().coerceAtLeast(0)))
                 }
         ) {
             Box(
                 modifier = Modifier
-                    .size(62.dp)
-                    .shadow(16.dp, CircleShape, spotColor = FlowElectricBlue)
+                    .size(66.dp)
+                    .shadow(20.dp, CircleShape, spotColor = FlowElectricBlue)
                     .background(
                         Brush.radialGradient(
-                            colors = listOf(FlowElectricBlue, FlowCyan)
+                            colors = listOf(FlowCyan, FlowElectricBlue)
                         ),
                         CircleShape
                     ),
@@ -176,57 +178,65 @@ fun AlphabetWaveScroller(
             ) {
                 Text(
                     text = activeLetter?.toString() ?: "",
-                    fontSize = 30.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
             }
         }
 
-        // Vertical Alphabet List with 3D Niagara Elastic Wave Curve Projection
+        // Vertical Alphabet List with Authentic Wide Niagara Wave Curve
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(vertical = 24.dp),
+                .padding(vertical = 20.dp),
             horizontalAlignment = if (isRightSide) Alignment.End else Alignment.Start
         ) {
-            val waveRadiusPx = with(density) { 110.dp.toPx() } // Niagara wide influence radius (~5-6 letters)
-            val itemHeight = if (totalHeight > 0f) totalHeight / alphabet.size else 20f
+            // Authentic Niagara wave influence radius: ~190dp (~9-11 letters influenced)
+            val waveRadiusPx = with(density) { 190.dp.toPx() }
+            val maxOutwardDisplacementPx = with(density) { (if (isRightSide) -82.dp else 82.dp).toPx() }
+            val itemHeight = if (totalHeight > 0f) totalHeight / alphabet.size else 22f
 
             alphabet.forEachIndexed { i, letter ->
                 val letterCenterY = (i + 0.5f) * itemHeight
-
-                val (scale, offsetX, isApex) = if (waveIntensity > 0.01f) {
-                    val dist = abs(animatedTouchY - letterCenterY)
-                    if (dist < waveRadiusPx) {
-                        // Smooth Cosine bell-curve wave projection
-                        val normalized = dist / waveRadiusPx
-                        val bellFactor = ((1f + cos(normalized * PI.toFloat())) / 2f)
-                        val effectiveFactor = bellFactor * waveIntensity
-
-                        val s = 1.0f + (1.15f * effectiveFactor) // Expands up to 2.15x
-                        val ox = (if (isRightSide) -48f else 48f) * effectiveFactor // Curves outward up to 48dp!
-                        Triple(s, ox, bellFactor > 0.82f)
-                    } else {
-                        Triple(1.0f, 0f, false)
-                    }
-                } else {
-                    Triple(1.0f, 0f, false)
-                }
-
                 val hasApps = availableLetters.contains(letter)
 
+                // 120 FPS GPU-accelerated graphicsLayer without recomposition overhead!
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .width(38.dp)
-                        .offset { IntOffset(with(density) { offsetX.dp.roundToPx() }, 0) }
-                        .scale(scale),
+                        .width(42.dp)
+                        .graphicsLayer {
+                            if (waveIntensity > 0.005f) {
+                                val dist = abs(animatedTouchY - letterCenterY)
+                                if (dist < waveRadiusPx) {
+                                    val normalized = dist / waveRadiusPx
+                                    // Cosine bell curve with power shaping for dramatic wave crest
+                                    val rawFactor = ((1f + cos(normalized * PI.toFloat())) / 2f)
+                                    val waveFactor = rawFactor.toDouble().pow(1.25).toFloat() * waveIntensity
+
+                                    val scale = 1.0f + (1.35f * waveFactor) // Expands up to 2.35x
+                                    scaleX = scale
+                                    scaleY = scale
+                                    translationX = maxOutwardDisplacementPx * waveFactor
+                                } else {
+                                    scaleX = 1.0f
+                                    scaleY = 1.0f
+                                    translationX = 0f
+                                }
+                            } else {
+                                scaleX = 1.0f
+                                scaleY = 1.0f
+                                translationX = 0f
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
+                    val isApex = isTouching && activeLetter == letter
+
                     Text(
                         text = letter.toString(),
-                        fontSize = if (isApex) 16.sp else 11.sp,
+                        fontSize = if (isApex) 15.sp else 11.sp,
                         fontWeight = when {
                             isApex -> FontWeight.ExtraBold
                             hasApps -> FontWeight.SemiBold
@@ -235,7 +245,7 @@ fun AlphabetWaveScroller(
                         color = when {
                             isApex -> FlowElectricBlue
                             hasApps -> FlowTextPrimary
-                            else -> FlowTextSecondary.copy(alpha = 0.35f)
+                            else -> FlowTextSecondary.copy(alpha = 0.30f)
                         },
                         textAlign = TextAlign.Center
                     )

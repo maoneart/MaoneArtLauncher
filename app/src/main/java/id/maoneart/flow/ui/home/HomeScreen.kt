@@ -25,7 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -45,6 +48,7 @@ import id.maoneart.flow.ui.components.FlowSearchBar
 import id.maoneart.flow.ui.components.SelectCategoryBottomSheet
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextSecondary
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,6 +63,7 @@ fun HomeScreen(
 
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    var scrollJob by remember { mutableStateOf<Job?>(null) }
 
     // Smooth instant reset scroll position on category change to prevent layout freeze
     LaunchedEffect(uiState.selectedCategoryId) {
@@ -136,7 +141,8 @@ fun HomeScreen(
                                 val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
                                     uiState.favorites.size + 3
                                 } else 1
-                                scope.launch {
+                                scrollJob?.cancel()
+                                scrollJob = scope.launch {
                                     listState.scrollToItem(headerOffset + appIndex)
                                 }
                             }
@@ -258,7 +264,8 @@ fun HomeScreen(
                                 val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
                                     uiState.favorites.size + 3
                                 } else 1
-                                scope.launch {
+                                scrollJob?.cancel()
+                                scrollJob = scope.launch {
                                     listState.scrollToItem(headerOffset + appIndex)
                                 }
                             }
