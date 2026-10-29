@@ -17,12 +17,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +52,22 @@ fun CategoryChipBar(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
+    val chipListState = rememberLazyListState()
+
+    // When back button is pressed or category changes to "all", immediately animate scroll to LEFT (index 0, "Semua")
+    LaunchedEffect(selectedCategoryId) {
+        if (selectedCategoryId == "all") {
+            chipListState.animateScrollToItem(0)
+        } else {
+            val index = categories.indexOfFirst { it.id == selectedCategoryId }
+            if (index >= 0) {
+                chipListState.animateScrollToItem(index)
+            }
+        }
+    }
 
     LazyRow(
+        state = chipListState,
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),

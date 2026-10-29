@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.9)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.10)
 
 ---
 
@@ -97,3 +97,7 @@
       - Menambahkan singleton static cache `cachedApps` di `AppRepository` yang langsung me-return daftar aplikasi seketika (0ms) tanpa query ulang.
       - Pre-warming cache aplikasi saat proses lahir di `MaoneArtFlowApp.onCreate()`.
       - Konfigurasi Activity resident di `AndroidManifest.xml` (`configChanges` & penghapusan `stateNotNeeded`).
+  - **Auto-Scroll Horizontal Kategori ke Kiri saat Tekan Back (Release v1.0.10)**:
+    - **Solusi Scroll Kategori ke Kanan**:
+      - Root Cause: `LazyRow` pada `CategoryChipBar` sebelumnya tidak memiliki `LazyListState` yang terikat pada `selectedCategoryId`, sehingga ketika pengguna kembali ke kategori "Semua" via tombol Back, baris chip horizontal tetap tertinggal di posisi scroll paling kanan (di ujung dekat tombol `+ Kategori`).
+      - Solusi: Menambahkan `chipListState = rememberLazyListState()` dan `LaunchedEffect(selectedCategoryId)` yang secara otomatis memicu animasi scroll halus ke kiri (`animateScrollToItem(0)`) menuju tab `"Semua"` setiap kali tombol Back ditekan.
