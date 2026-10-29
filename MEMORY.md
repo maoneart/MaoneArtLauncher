@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.0)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.3)
 
 ---
 
@@ -41,3 +41,15 @@
       - Widget teks branding eksklusif `"M A O N E A R T"` dengan font sans-serif modern, letter-spacing lebar 4.5sp, dan gradasi warna elektrik (Cyan -> Electric Blue -> Violet), dilengkapi pill frosted glass `"FLOW"`.
       - Desain jam digital tipografi modern 62sp dengan bobot font ramping (*light weight*) yang mewah dan bersih.
       - Tombol interaktif langsung: tap jam membuka Alarm/Clock, tap tanggal membuka Kalender, tap pil baterai membuka Pengaturan Penggunaan Daya Baterai.
+  - **Sistem Kategori Kustom & Pengaturan Mandiri (Release v1.0.3)**:
+    - **Category Chip Bar**:
+      - Bilah horizontal chip kategori bergaya glassmorphism dengan transisi warna halus, icon kategori, dan badge jumlah aplikasi (`CategoryChipBar.kt`).
+      - Kategori bawaan: Semua (`✦`), Sosial (`💬`), Media (`🎬`), Alat & Kerja (`⚡`), Game (`🎮`), Sistem (`⚙️`).
+    - **Kategori Buat Sendiri (Custom Categories)**:
+      - Pengguna dapat membuat kategori baru sesuka hati melalui tombol `+ Kategori` (`CreateCategoryDialog.kt`). Kategori tersimpan permanen di DataStore.
+      - Pengguna dapat menghapus kategori kustom dengan menekan lama (long press) chip kategori yang dibuat (`DeleteCategoryDialog.kt`).
+    - **Pengaturan & Pemindahan Kategori Aplikasi**:
+      - Saat menekan lama (long press) aplikasi di launcher, menu "Ubah Kategori" kini tersedia di `AppActionBottomSheet`.
+      - Menampilkan bottom sheet pemilihan kategori (`SelectCategoryBottomSheet.kt`) untuk memindahkan aplikasi ke kategori yang diinginkan, membuat kategori baru langsung dari sheet, atau mereset aplikasi kembali ke kategori bawaan sistem.
+    - **Integrasi Filter & Alphabet Wave Scroller**:
+      - Saat kategori dipilih, daftar aplikasi dan scroller huruf A-Z secara dinamis langsung beradaptasi hanya menampilkan aplikasi dan huruf yang relevan di kategori tersebut secara instan tanpa lag.
