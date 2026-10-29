@@ -28,3 +28,4 @@
   - Implementasi Android Home Launcher Intent (`ACTION_MAIN` & `CATEGORY_HOME`).
   - Implementasi `AlphabetWaveScroller`, `DigitalClockHeader`, `FlowSearchBar`, `AppListItem`, dan `AppActionBottomSheet`.
   - Integrasi DataStore Preferences untuk pengelolaan Favorit dan Aplikasi Tersembunyi.
+  - Pipeline CI/CD GitHub Actions berhasil mengompilasi release APK bertanda tangan `release.jks` permanen dan diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
