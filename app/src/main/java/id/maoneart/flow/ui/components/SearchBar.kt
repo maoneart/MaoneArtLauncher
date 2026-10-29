@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
@@ -27,6 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.maoneart.flow.ui.theme.FlowDarkSurface
@@ -38,7 +42,8 @@ import id.maoneart.flow.ui.theme.FlowTextSecondary
 fun FlowSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSearchAction: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -81,6 +86,13 @@ fun FlowSearchBar(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = FlowTextPrimary
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Search,
+                        keyboardType = KeyboardType.Text
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { onSearchAction() }
                     ),
                     cursorBrush = SolidColor(FlowElectricBlue),
                     modifier = Modifier.fillMaxWidth()

@@ -1,14 +1,17 @@
 package id.maoneart.flow.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,7 +38,6 @@ import id.maoneart.flow.ui.components.AppActionBottomSheet
 import id.maoneart.flow.ui.components.AppListItem
 import id.maoneart.flow.ui.components.DigitalClockHeader
 import id.maoneart.flow.ui.components.FlowSearchBar
-import id.maoneart.flow.ui.theme.FlowDarkBackground
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextSecondary
 import kotlinx.coroutines.launch
@@ -64,65 +66,126 @@ fun HomeScreen(
             )
             .statusBarsPadding()
     ) {
-        Row(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
 
-            // If alphabet is set to left-handed mode
-            if (uiState.alphabetSide == "left" && !uiState.isSearching) {
-                AlphabetWaveScroller(
-                    availableLetters = uiState.availableLetters,
-                    onLetterSelected = { letter ->
-                        uiState.letterIndices[letter]?.let { appIndex ->
-                            // Offset by header items: Clock(1) + Search(1) + Favorites(size + 2)
-                            val headerOffset = 2 + (if (uiState.favorites.isNotEmpty()) uiState.favorites.size + 1 else 0)
-                            scope.launch {
-                                listState.scrollToItem(headerOffset + appIndex)
-                            }
-                        }
-                    },
-                    isRightSide = false,
-                    hapticsEnabled = uiState.hapticsEnabled
-                )
+            // 1. Digital Clock (collapses smoothly when user starts typing search query)
+            AnimatedVisibility(
+                visible = !uiState.isSearching,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                DigitalClockHeader(is24Hour = uiState.is24Hour)
             }
 
-            // Main Vertical Scroll Area
-            LazyColumn(
-                state = listState,
+            // 2. PERMANENT STABLE SEARCH BAR (Never disposed or recreated on typing!)
+            FlowSearchBar(
+                query = uiState.searchQuery,
+                onQueryChange = viewModel::onSearchQueryChange,
+                onSearchAction = {
+                    if (uiState.displayApps.isNotEmpty()) {
+                        viewModel.launchApp(uiState.displayApps.first())
+                    }
+                },
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+
+            // 3. Main Content Row: Apps List + Alphabet Wave Scroller
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 72.dp)
+                    .fillMaxWidth()
             ) {
-                if (!uiState.isSearching) {
-                    // 1. Digital Clock & Date Header
-                    item(key = "header_clock") {
-                        DigitalClockHeader(is24Hour = uiState.is24Hour)
-                    }
 
-                    // 2. Search Bar
-                    item(key = "header_search") {
-                        FlowSearchBar(
-                            query = uiState.searchQuery,
-                            onQueryChange = viewModel::onSearchQueryChange
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
+                // Left-Handed Alphabet Wave Scroller (if configured)
+                if (uiState.alphabetSide == "left" && !uiState.isSearching) {
+                    AlphabetWaveScroller(
+                        availableLetters = uiState.availableLetters,
+                        onLetterSelected = { letter ->
+                            uiState.letterIndices[letter]?.let { appIndex ->
+                                val headerOffset = if (uiState.favorites.isNotEmpty()) uiState.favorites.size + 3 else 1
+                                scope.launch {
+                                    listState.scrollToItem(headerOffset + appIndex)
+                                }
+                            }
+                        },
+                        isRightSide = false,
+                        hapticsEnabled = uiState.hapticsEnabled
+                    )
+                }
 
-                    // 3. Favorites Section
-                    if (uiState.favorites.isNotEmpty()) {
-                        item(key = "favorites_title") {
+                // Vertical Apps List
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentPadding = PaddingValues(bottom = 72.dp)
+                ) {
+                    if (!uiState.isSearching) {
+                        // Favorites Section
+                        if (uiState.favorites.isNotEmpty()) {
+                            item(key = "favorites_title") {
+                                Text(
+                                    text = "FAVORIT",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = FlowElectricBlue,
+                                    letterSpacing = 1.2.sp,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
+                                )
+                            }
+
+                            itemsIndexed(
+                                items = uiState.favorites,
+                                key = { _, app -> "fav_${app.id}" }
+                            ) { _, app ->
+                                AppListItem(
+                                    app = app,
+                                    iconDrawable = viewModel.getAppIcon(app.packageName),
+                                    showIcon = uiState.showIcons,
+                                    onClick = { viewModel.launchApp(app) },
+                                    onLongClick = { viewModel.selectAppForAction(app) }
+                                )
+                            }
+
+                            item(key = "favorites_divider") {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+
+                        // All Apps Title
+                        item(key = "all_apps_title") {
                             Text(
-                                text = "FAVORIT",
+                                text = "SEMUA APLIKASI",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = FlowElectricBlue,
+                                color = FlowTextSecondary,
                                 letterSpacing = 1.2.sp,
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
                             )
                         }
+                    }
 
+                    // Display Apps (Filtered Search Results or Complete Alphabetical List)
+                    if (uiState.displayApps.isEmpty() && uiState.isSearching) {
+                        item(key = "empty_state") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Aplikasi tidak ditemukan",
+                                    fontSize = 16.sp,
+                                    color = FlowTextSecondary
+                                )
+                            }
+                        }
+                    } else {
                         itemsIndexed(
-                            items = uiState.favorites,
-                            key = { _, app -> "fav_${app.id}" }
+                            items = uiState.displayApps,
+                            key = { _, app -> app.id }
                         ) { _, app ->
                             AppListItem(
                                 app = app,
@@ -132,82 +195,25 @@ fun HomeScreen(
                                 onLongClick = { viewModel.selectAppForAction(app) }
                             )
                         }
-
-                        item(key = "favorites_divider") {
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }
-
-                    // 4. All Apps Section Title
-                    item(key = "all_apps_title") {
-                        Text(
-                            text = "SEMUA APLIKASI",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = FlowTextSecondary,
-                            letterSpacing = 1.2.sp,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
-                        )
-                    }
-                } else {
-                    // Search Active Header
-                    item(key = "search_active_bar") {
-                        FlowSearchBar(
-                            query = uiState.searchQuery,
-                            onQueryChange = viewModel::onSearchQueryChange,
-                            modifier = Modifier.padding(top = 12.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
 
-                // Apps List
-                if (uiState.displayApps.isEmpty() && uiState.isSearching) {
-                    item(key = "empty_state") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Aplikasi tidak ditemukan",
-                                fontSize = 16.sp,
-                                color = FlowTextSecondary
-                            )
-                        }
-                    }
-                } else {
-                    itemsIndexed(
-                        items = uiState.displayApps,
-                        key = { _, app -> app.id }
-                    ) { _, app ->
-                        AppListItem(
-                            app = app,
-                            iconDrawable = viewModel.getAppIcon(app.packageName),
-                            showIcon = uiState.showIcons,
-                            onClick = { viewModel.launchApp(app) },
-                            onLongClick = { viewModel.selectAppForAction(app) }
-                        )
-                    }
-                }
-            }
-
-            // Right-Handed Alphabet Wave Scroller (Default)
-            if (uiState.alphabetSide == "right" && !uiState.isSearching) {
-                AlphabetWaveScroller(
-                    availableLetters = uiState.availableLetters,
-                    onLetterSelected = { letter ->
-                        uiState.letterIndices[letter]?.let { appIndex ->
-                            val headerOffset = 2 + (if (uiState.favorites.isNotEmpty()) uiState.favorites.size + 1 else 0)
-                            scope.launch {
-                                listState.scrollToItem(headerOffset + appIndex)
+                // Right-Handed Alphabet Wave Scroller (Default)
+                if (uiState.alphabetSide == "right" && !uiState.isSearching) {
+                    AlphabetWaveScroller(
+                        availableLetters = uiState.availableLetters,
+                        onLetterSelected = { letter ->
+                            uiState.letterIndices[letter]?.let { appIndex ->
+                                val headerOffset = if (uiState.favorites.isNotEmpty()) uiState.favorites.size + 3 else 1
+                                scope.launch {
+                                    listState.scrollToItem(headerOffset + appIndex)
+                                }
                             }
-                        }
-                    },
-                    isRightSide = true,
-                    hapticsEnabled = uiState.hapticsEnabled
-                )
+                        },
+                        isRightSide = true,
+                        hapticsEnabled = uiState.hapticsEnabled
+                    )
+                }
             }
         }
 

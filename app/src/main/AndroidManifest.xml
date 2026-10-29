@@ -27,7 +27,7 @@
             android:launchMode="singleTask"
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
-            android:windowSoftInputMode="adjustPan"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.MaoneArtFlow">
 
             <!-- Genuine Android Home Launcher intent filter -->
