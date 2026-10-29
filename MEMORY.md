@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.3)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.4)
 
 ---
 
@@ -53,3 +53,11 @@
       - Menampilkan bottom sheet pemilihan kategori (`SelectCategoryBottomSheet.kt`) untuk memindahkan aplikasi ke kategori yang diinginkan, membuat kategori baru langsung dari sheet, atau mereset aplikasi kembali ke kategori bawaan sistem.
     - **Integrasi Filter & Alphabet Wave Scroller**:
       - Saat kategori dipilih, daftar aplikasi dan scroller huruf A-Z secara dinamis langsung beradaptasi hanya menampilkan aplikasi dan huruf yang relevan di kategori tersebut secara instan tanpa lag.
+  - **Optimasi Instan Kategori & Perbaikan Modal Interaktif (Release v1.0.4)**:
+    - **Performa Transisi Kategori 0ms**:
+      - Memperbaiki layout freeze saat berpindah kategori dengan menghapus key prefix yang memaksa recomposition seluruh LazyColumn node dan menambahkan instant scroll reset (`LaunchedEffect(selectedCategoryId) { listState.scrollToItem(0) }`).
+    - **Perbaikan Dialog Buat Kategori**:
+      - Memisahkan dialog state menjadi StateFlow reaktif independen (`isCreateCategoryOpen`, `categoryToDelete`, `appForCategoryChange`) sehingga aksi buka dan tutup (tombol Batal) langsung merespons seketika (0ms).
+      - Menerapkan standar MaoneArt Glassmorphism Modal dengan tombol simetris 2-kolom (Batal & Simpan) berukuran 46dp yang responsif.
+    - **Penghapusan Kategori via Long-Press**:
+      - Membuka kapabilitas penghapusan/penyembunyian kategori untuk semua chip selain master "Semua" via `PreferencesRepository.hiddenCategoriesFlow`.

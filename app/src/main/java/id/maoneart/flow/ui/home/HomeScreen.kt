@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,8 +53,17 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isCreateCategoryOpen by viewModel.isCreateCategoryOpen.collectAsState()
+    val categoryToDelete by viewModel.categoryToDelete.collectAsState()
+    val appForCategoryChange by viewModel.appForCategoryChange.collectAsState()
+
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+
+    // Smooth instant reset scroll position on category change to prevent layout freeze
+    LaunchedEffect(uiState.selectedCategoryId) {
+        listState.scrollToItem(0)
+    }
 
     Box(
         modifier = modifier
@@ -104,7 +114,7 @@ fun HomeScreen(
                     selectedCategoryId = uiState.selectedCategoryId,
                     onCategorySelected = viewModel::selectCategory,
                     onAddCategoryClick = { viewModel.openCreateCategoryDialog(true) },
-                    onCustomCategoryLongClick = { cat -> viewModel.openDeleteCategoryDialog(cat) },
+                    onCategoryLongClick = { cat -> viewModel.openDeleteCategoryDialog(cat) },
                     hapticsEnabled = uiState.hapticsEnabled,
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
@@ -207,7 +217,7 @@ fun HomeScreen(
                         }
                     }
 
-                    // Display Apps (Filtered Search Results, Category Filter, or Complete Alphabetical List)
+                    // Display Apps
                     if (uiState.displayApps.isEmpty()) {
                         item(key = "empty_state") {
                             Box(
@@ -226,7 +236,7 @@ fun HomeScreen(
                     } else {
                         itemsIndexed(
                             items = uiState.displayApps,
-                            key = { _, app -> "${uiState.selectedCategoryId}_${app.id}" }
+                            key = { _, app -> app.id }
                         ) { _, app ->
                             AppListItem(
                                 app = app,
@@ -276,7 +286,7 @@ fun HomeScreen(
         }
 
         // Select / Change Category Bottom Sheet
-        uiState.appForCategoryChange?.let { app ->
+        appForCategoryChange?.let { app ->
             SelectCategoryBottomSheet(
                 app = app,
                 availableCategories = uiState.categories,
@@ -288,19 +298,19 @@ fun HomeScreen(
         }
 
         // Create Custom Category Dialog
-        if (uiState.isCreateCategoryOpen) {
+        if (isCreateCategoryOpen) {
             CreateCategoryDialog(
                 onDismiss = { viewModel.openCreateCategoryDialog(false) },
                 onConfirm = { name -> viewModel.createCustomCategory(name) }
             )
         }
 
-        // Delete Custom Category Dialog
-        uiState.categoryToDelete?.let { category ->
+        // Delete / Hide Category Confirmation Dialog
+        categoryToDelete?.let { category ->
             DeleteCategoryDialog(
                 category = category,
                 onDismiss = { viewModel.openDeleteCategoryDialog(null) },
-                onConfirm = { viewModel.deleteCustomCategory(category) }
+                onConfirm = { viewModel.deleteCategory(category) }
             )
         }
     }

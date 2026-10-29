@@ -24,6 +24,7 @@ class PreferencesRepository(private val context: Context) {
         val ALPHABET_SIDE = stringPreferencesKey("alphabet_side")
         val SHOW_ICONS = booleanPreferencesKey("show_icons")
         val CUSTOM_CATEGORIES = stringSetPreferencesKey("custom_categories")
+        val HIDDEN_CATEGORIES = stringSetPreferencesKey("hidden_categories")
         val APP_CATEGORY_OVERRIDES = stringPreferencesKey("app_category_overrides")
     }
 
@@ -59,6 +60,10 @@ class PreferencesRepository(private val context: Context) {
     val customCategoriesFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
         val set = prefs[Keys.CUSTOM_CATEGORIES] ?: emptySet()
         set.toList().sorted()
+    }
+
+    val hiddenCategoriesFlow: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+        prefs[Keys.HIDDEN_CATEGORIES] ?: emptySet()
     }
 
     val appCategoryOverridesFlow: Flow<Map<String, String>> = context.dataStore.data.map { prefs ->
@@ -134,6 +139,11 @@ class PreferencesRepository(private val context: Context) {
             val current = prefs[Keys.CUSTOM_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
             current.add(trimmed)
             prefs[Keys.CUSTOM_CATEGORIES] = current
+            // If it was hidden, unhide it
+            val hidden = prefs[Keys.HIDDEN_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
+            if (hidden.remove(trimmed)) {
+                prefs[Keys.HIDDEN_CATEGORIES] = hidden
+            }
         }
     }
 
@@ -158,6 +168,22 @@ class PreferencesRepository(private val context: Context) {
                 }
                 prefs[Keys.APP_CATEGORY_OVERRIDES] = newObj.toString()
             } catch (_: Throwable) {}
+        }
+    }
+
+    suspend fun hideCategory(categoryId: String) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.HIDDEN_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
+            current.add(categoryId)
+            prefs[Keys.HIDDEN_CATEGORIES] = current
+        }
+    }
+
+    suspend fun unhideCategory(categoryId: String) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.HIDDEN_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
+            current.remove(categoryId)
+            prefs[Keys.HIDDEN_CATEGORIES] = current
         }
     }
 

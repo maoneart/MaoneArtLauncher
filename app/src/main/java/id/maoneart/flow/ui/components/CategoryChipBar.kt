@@ -45,7 +45,7 @@ fun CategoryChipBar(
     selectedCategoryId: String,
     onCategorySelected: (String) -> Unit,
     onAddCategoryClick: () -> Unit,
-    onCustomCategoryLongClick: (CategoryItem) -> Unit,
+    onCategoryLongClick: (CategoryItem) -> Unit,
     hapticsEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -67,19 +67,19 @@ fun CategoryChipBar(
 
             val backgroundColor by animateColorAsState(
                 targetValue = if (isSelected) FlowElectricBlue.copy(alpha = 0.22f) else Color(0x1AFFFFFF),
-                animationSpec = tween(durationMillis = 200),
+                animationSpec = tween(durationMillis = 150),
                 label = "bgColor"
             )
 
             val borderColor by animateColorAsState(
                 targetValue = if (isSelected) FlowElectricBlue else Color(0x22FFFFFF),
-                animationSpec = tween(durationMillis = 200),
+                animationSpec = tween(durationMillis = 150),
                 label = "borderColor"
             )
 
             val textColor by animateColorAsState(
                 targetValue = if (isSelected) FlowTextPrimary else FlowTextSecondary,
-                animationSpec = tween(durationMillis = 200),
+                animationSpec = tween(durationMillis = 150),
                 label = "textColor"
             )
 
@@ -95,14 +95,14 @@ fun CategoryChipBar(
                             }
                             onCategorySelected(category.id)
                         },
-                        onLongClick = {
-                            if (category.isCustom) {
+                        onLongClick = if (category.id != "all") {
+                            {
                                 if (hapticsEnabled) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 }
-                                onCustomCategoryLongClick(category)
+                                onCategoryLongClick(category)
                             }
-                        }
+                        } else null
                     )
                     .padding(horizontal = 14.dp, vertical = 7.dp)
             ) {

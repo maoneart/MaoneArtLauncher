@@ -31,10 +31,7 @@ data class HomeUiState(
     val hapticsEnabled: Boolean = true,
     val alphabetSide: String = "right",
     val showIcons: Boolean = true,
-    val selectedApp: AppInfo? = null,
-    val appForCategoryChange: AppInfo? = null,
-    val isCreateCategoryOpen: Boolean = false,
-    val categoryToDelete: CategoryItem? = null
+    val selectedApp: AppInfo? = null
 )
 
 private data class LauncherSettings(
@@ -63,6 +60,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedApp = MutableStateFlow<AppInfo?>(null)
     val selectedApp: StateFlow<AppInfo?> = _selectedApp.asStateFlow()
 
+    // Dialog & bottom sheet states - directly observable for 0ms immediate response
     private val _appForCategoryChange = MutableStateFlow<AppInfo?>(null)
     val appForCategoryChange: StateFlow<AppInfo?> = _appForCategoryChange.asStateFlow()
 
@@ -81,13 +79,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         LauncherSettings(is24H, haptics, side, showIcons)
     }
 
+    private val categoryConfigFlow = combine(
+        preferencesRepository.appCategoryOverridesFlow,
+        preferencesRepository.customCategoriesFlow,
+        preferencesRepository.hiddenCategoriesFlow
+    ) { overrides, customCats, hiddenCats ->
+        Triple(overrides, customCats, hiddenCats)
+    }
+
     private val appsWithCategoriesFlow = combine(
         appRepository.installedAppsFlow,
         preferencesRepository.favoritesFlow,
         preferencesRepository.hiddenAppsFlow,
-        preferencesRepository.appCategoryOverridesFlow,
-        preferencesRepository.customCategoriesFlow
-    ) { rawApps, favs, hidden, overrides, customCats ->
+        categoryConfigFlow
+    ) { rawApps, favs, hidden, (overrides, customCats, hiddenCats) ->
 
         // 1. Filter out hidden apps and apply favorite & category overrides
         val processedApps = rawApps
@@ -123,20 +128,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             categoryCounts[app.categoryId] = (categoryCounts[app.categoryId] ?: 0) + 1
         }
 
-        // 3. Construct category items: Default categories + User custom categories
-        val defaultList = DefaultCategories.LIST.map { def ->
-            def.copy(appCount = categoryCounts[def.id] ?: 0)
-        }
+        // 3. Construct category items (filter out hidden ones, 'all' is always preserved)
+        val defaultList = DefaultCategories.LIST
+            .filter { it.id == "all" || !hiddenCats.contains(it.id) }
+            .map { def -> def.copy(appCount = categoryCounts[def.id] ?: 0) }
 
-        val customList = customCats.map { catName ->
-            CategoryItem(
-                id = catName,
-                title = catName,
-                icon = "📁",
-                isCustom = true,
-                appCount = categoryCounts[catName] ?: 0
-            )
-        }
+        val customList = customCats
+            .filter { !hiddenCats.contains(it) }
+            .map { catName ->
+                CategoryItem(
+                    id = catName,
+                    title = catName,
+                    icon = "📁",
+                    isCustom = true,
+                    appCount = categoryCounts[catName] ?: 0
+                )
+            }
 
         val allCategories = defaultList + customList
         AppsAndCategoriesData(apps = processedApps, categories = allCategories)
@@ -153,7 +160,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val visibleApps = appsData.apps
         val favoritesList = visibleApps.filter { it.isFavorite }
 
-        // Filter apps by category and search query
+        // Filter apps by category
         val categoryFilteredApps = if (catId == "all") {
             visibleApps
         } else {
@@ -164,7 +171,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             categoryFilteredApps
         } else {
             val q = query.trim().lowercase()
-            // When user types search, search within visible apps
+            // When searching, query across all visible apps
             visibleApps.filter {
                 it.label.lowercase().contains(q) || it.packageName.lowercase().contains(q)
             }
@@ -194,10 +201,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             hapticsEnabled = settings.hapticsEnabled,
             alphabetSide = settings.alphabetSide,
             showIcons = settings.showIcons,
-            selectedApp = selApp,
-            appForCategoryChange = _appForCategoryChange.value,
-            isCreateCategoryOpen = _isCreateCategoryOpen.value,
-            categoryToDelete = _categoryToDelete.value
+            selectedApp = selApp
         )
     }.stateIn(
         scope = viewModelScope,
@@ -230,16 +234,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun createCustomCategory(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
         viewModelScope.launch {
-            preferencesRepository.addCustomCategory(name)
-            _selectedCategoryId.value = name
+            preferencesRepository.addCustomCategory(trimmed)
+            _selectedCategoryId.value = trimmed
             _isCreateCategoryOpen.value = false
         }
     }
 
-    fun deleteCustomCategory(category: CategoryItem) {
+    fun deleteCategory(category: CategoryItem) {
         viewModelScope.launch {
-            preferencesRepository.removeCustomCategory(category.id)
+            if (category.isCustom) {
+                preferencesRepository.removeCustomCategory(category.id)
+            } else {
+                preferencesRepository.hideCategory(category.id)
+            }
             if (_selectedCategoryId.value == category.id) {
                 _selectedCategoryId.value = "all"
             }
