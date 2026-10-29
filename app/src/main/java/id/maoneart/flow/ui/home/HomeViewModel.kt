@@ -30,6 +30,13 @@ data class HomeUiState(
     val selectedApp: AppInfo? = null
 )
 
+private data class LauncherSettings(
+    val is24Hour: Boolean = true,
+    val hapticsEnabled: Boolean = true,
+    val alphabetSide: String = "right",
+    val showIcons: Boolean = true
+)
+
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val appRepository = AppRepository(application)
@@ -41,20 +48,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedApp = MutableStateFlow<AppInfo?>(null)
     val selectedApp: StateFlow<AppInfo?> = _selectedApp.asStateFlow()
 
-    val uiState: StateFlow<HomeUiState> = combine(
-        appRepository.installedAppsFlow,
-        preferencesRepository.favoritesFlow,
-        preferencesRepository.hiddenAppsFlow,
+    private val settingsFlow = combine(
         preferencesRepository.is24HourFlow,
         preferencesRepository.hapticsEnabledFlow,
         preferencesRepository.alphabetSideFlow,
-        preferencesRepository.showIconsFlow,
+        preferencesRepository.showIconsFlow
+    ) { is24H, haptics, side, showIcons ->
+        LauncherSettings(is24H, haptics, side, showIcons)
+    }
+
+    private val appsFlow = combine(
+        appRepository.installedAppsFlow,
+        preferencesRepository.favoritesFlow,
+        preferencesRepository.hiddenAppsFlow
+    ) { apps, favs, hidden ->
+        apps.filter { !hidden.contains(it.packageName) }
+            .map { it.copy(isFavorite = favs.contains(it.packageName)) }
+    }
+
+    val uiState: StateFlow<HomeUiState> = combine(
+        appsFlow,
+        settingsFlow,
         _searchQuery,
         _selectedApp
-    ) { apps, favs, hidden, is24H, haptics, side, showIcons, query, selApp ->
-
-        val visibleApps = apps.filter { !hidden.contains(it.packageName) }
-            .map { it.copy(isFavorite = favs.contains(it.packageName)) }
+    ) { visibleApps, settings, query, selApp ->
 
         val favoritesList = visibleApps.filter { it.isFavorite }
 
@@ -85,10 +102,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             letterIndices = indices,
             searchQuery = query,
             isSearching = query.isNotBlank(),
-            is24Hour = is24H,
-            hapticsEnabled = haptics,
-            alphabetSide = side,
-            showIcons = showIcons,
+            is24Hour = settings.is24Hour,
+            hapticsEnabled = settings.hapticsEnabled,
+            alphabetSide = settings.alphabetSide,
+            showIcons = settings.showIcons,
             selectedApp = selApp
         )
     }.stateIn(
