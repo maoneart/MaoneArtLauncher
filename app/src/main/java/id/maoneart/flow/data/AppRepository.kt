@@ -27,29 +27,46 @@ import java.util.concurrent.ConcurrentHashMap
 class AppRepository(private val context: Context) {
 
     private val packageManager: PackageManager = context.packageManager
-    private val iconCache = ConcurrentHashMap<String, Drawable>(128)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val collator = Collator.getInstance(Locale("id", "ID")).apply {
         strength = Collator.PRIMARY
     }
 
+    companion object {
+        @Volatile
+        private var cachedApps: List<AppInfo>? = null
+        private val iconCache = ConcurrentHashMap<String, Drawable>(256)
+
+        fun getCachedApps(): List<AppInfo>? = cachedApps
+
+        fun clearPackageIcon(packageName: String) {
+            iconCache.remove(packageName)
+        }
+    }
+
     val installedAppsFlow: Flow<List<AppInfo>> = callbackFlow {
+        // 1. Instant 0ms emission from hot memory cache
+        cachedApps?.let { hotList ->
+            trySend(hotList)
+        }
+
         fun updateApps() {
             scope.launch(Dispatchers.IO) {
                 try {
                     val apps = fetchInstalledApps()
+                    cachedApps = apps
                     trySend(apps)
                 } catch (_: Throwable) {}
             }
         }
 
-        // Initial emission
+        // Fresh background fetch
         updateApps()
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 intent?.data?.schemeSpecificPart?.let { pkg ->
-                    iconCache.remove(pkg)
+                    clearPackageIcon(pkg)
                 }
                 updateApps()
             }
@@ -110,20 +127,8 @@ class AppRepository(private val context: Context) {
             )
         }
 
-        // Background non-blocking pre-warming of icon cache
-        scope.launch(Dispatchers.IO) {
-            for (app in result) {
-                if (!iconCache.containsKey(app.packageName)) {
-                    try {
-                        val icon = packageManager.getApplicationIcon(app.packageName)
-                        iconCache[app.packageName] = icon
-                    } catch (_: Throwable) {}
-                }
-            }
-        }
-
         // Sort alphabetically using Indonesian locale collator
-        return result.sortedWith { a, b ->
+        val sortedResult = result.sortedWith { a, b ->
             val firstCompare = a.firstLetter.compareTo(b.firstLetter)
             if (firstCompare != 0) {
                 if (a.firstLetter == '#') 1
@@ -133,6 +138,22 @@ class AppRepository(private val context: Context) {
                 collator.compare(a.label, b.label)
             }
         }
+
+        cachedApps = sortedResult
+
+        // Background non-blocking pre-warming of icon cache
+        scope.launch(Dispatchers.IO) {
+            for (app in sortedResult) {
+                if (!iconCache.containsKey(app.packageName)) {
+                    try {
+                        val icon = packageManager.getApplicationIcon(app.packageName)
+                        iconCache[app.packageName] = icon
+                    } catch (_: Throwable) {}
+                }
+            }
+        }
+
+        return sortedResult
     }
 
     private fun resolveAppCategory(pkgName: String, label: String, appInfo: ApplicationInfo?): String {
@@ -204,9 +225,10 @@ class AppRepository(private val context: Context) {
 
     fun launchApp(app: AppInfo): Boolean {
         return try {
-            val intent = packageManager.getLaunchIntentForPackage(app.packageName)
+            val intent = packageManager.getLaunchIntentForPackage(app.packageName)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+            }
             if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
                 context.startActivity(intent)
                 true
             } else {
@@ -220,7 +242,7 @@ class AppRepository(private val context: Context) {
     fun openAppDetails(packageName: String) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
+                data = Uri.fromParts("package", packageName, null)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
@@ -230,7 +252,7 @@ class AppRepository(private val context: Context) {
     fun uninstallApp(packageName: String) {
         try {
             val intent = Intent(Intent.ACTION_DELETE).apply {
-                data = Uri.parse("package:$packageName")
+                data = Uri.fromParts("package", packageName, null)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)

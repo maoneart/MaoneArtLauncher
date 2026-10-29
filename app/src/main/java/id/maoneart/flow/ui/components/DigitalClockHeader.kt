@@ -6,6 +6,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.provider.AlarmClock
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,12 +39,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import id.maoneart.flow.R
 import id.maoneart.flow.ui.theme.FlowCyan
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowRed
@@ -100,46 +104,17 @@ fun DigitalClockHeader(
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 14.dp)
     ) {
-        // --- 1. EXCLUSIVE "MAONEART" BRANDED TYPOGRAPHY WIDGET ---
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 6.dp)
-        ) {
-            Text(
-                text = "M A O N E A R T",
-                style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 13.sp,
-                    letterSpacing = 4.5.sp,
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            FlowCyan,
-                            FlowElectricBlue,
-                            Color(0xFF8E8CF8)
-                        )
-                    )
-                )
-            )
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            // Minimalist "FLOW" Glassmorphic Pill
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0x22FFFFFF))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "FLOW",
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp,
-                    color = FlowCyan
-                )
-            }
-        }
+        // --- 1. EXCLUSIVE "MAONEART FLOW" GRAFFITI LOGO ---
+        Image(
+            painter = painterResource(id = R.drawable.maoneart_graffiti_logo),
+            contentDescription = "MaoneArt Flow",
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .height(78.dp)
+                .padding(bottom = 2.dp),
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.CenterStart
+        )
 
         // --- 2. LUXURY MINIMALIST DIGITAL CLOCK ---
         Text(

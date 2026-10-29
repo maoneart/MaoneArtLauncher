@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.7)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.9)
 
 ---
 
@@ -84,3 +84,16 @@
     - **Pembersihan Pencarian & Scroll-to-Top**:
       - Jika pengguna sedang melakukan pencarian aplikasi, tombol Back langsung mengosongkan teks pencarian.
       - Jika pengguna sedang berada di kategori "Semua" namun posisi daftar ter-scroll jauh ke bawah, tombol Back akan melakukan scroll halus kembali ke posisi paling atas.
+  - **Identitas Visual Graffiti MaoneArt Flow Header (Release v1.0.8)**:
+    - **Logo Grafiti Asli MaoneArt Flow**:
+      - Mengintegrasikan logo seni jalanan (*street art graffiti typography*) `MAONEART FLOW` beresolusi tinggi dengan transparansi alpha sempurna (`maoneart_graffiti_logo.png`).
+      - Dilengkapi mahkota (*neon crown*) 3-puncak di atas huruf O-N, badge `FLOW` di kanan bawah, dan efek percikan cat air (*spray droplet splash*) biru elektrik yang identik dengan mockup screenshot user di folder `Bug`.
+  - **Zero-Latency Resume Lifecycle & Hot Pre-Warmed Apps Cache (Release v1.0.9)**:
+    - **Penyebab Delay Saat Kembali dari Aplikasi Lain**:
+      - `SharingStarted.WhileSubscribed(5000)` di ViewModel menghentikan flow saat user membuka aplikasi lain >5 detik dan membuang state ke `initialValue = emptyList()`.
+      - `callbackFlow` di AppRepository memicu query IPC Binder `fetchInstalledApps()` berulang setiap kali activity di-resume.
+    - **Solusi Zero-Latency (0ms Instant Return)**:
+      - Mengubah StateFlow sharing policy menjadi `SharingStarted.Eagerly` dan mengikat `initialValue` langsung ke in-memory hot cache.
+      - Menambahkan singleton static cache `cachedApps` di `AppRepository` yang langsung me-return daftar aplikasi seketika (0ms) tanpa query ulang.
+      - Pre-warming cache aplikasi saat proses lahir di `MaoneArtFlowApp.onCreate()`.
+      - Konfigurasi Activity resident di `AndroidManifest.xml` (`configChanges` & penghapusan `stateNotNeeded`).

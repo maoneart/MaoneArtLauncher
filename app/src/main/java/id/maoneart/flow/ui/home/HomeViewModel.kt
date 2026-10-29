@@ -205,8 +205,21 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = HomeUiState()
+        started = SharingStarted.Eagerly,
+        initialValue = run {
+            val cached = AppRepository.getCachedApps() ?: emptyList()
+            val letters = cached.map { it.firstLetter }.toSet()
+            val indices = mutableMapOf<Char, Int>()
+            cached.forEachIndexed { idx, app ->
+                if (!indices.containsKey(app.firstLetter)) indices[app.firstLetter] = idx
+            }
+            HomeUiState(
+                allApps = cached,
+                displayApps = cached,
+                availableLetters = letters,
+                letterIndices = indices
+            )
+        }
     )
 
     fun onSearchQueryChange(newQuery: String) {
