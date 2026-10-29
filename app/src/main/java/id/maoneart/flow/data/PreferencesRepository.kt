@@ -261,18 +261,6 @@ class PreferencesRepository(private val context: Context) {
         context.dataStore.edit { prefs -> prefs[Keys.PURE_TRANSPARENT_BG] = transparent }
     }
 
-    suspend fun setHapticsEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.HAPTICS_ENABLED] = enabled }
-    }
-
-    suspend fun setIs24Hour(is24H: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.IS_24_HOUR] = is24H }
-    }
-
-    suspend fun setShowIcons(show: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.SHOW_ICONS] = show }
-    }
-
     suspend fun setShowCategories(show: Boolean) {
         context.dataStore.edit { prefs -> prefs[Keys.SHOW_CATEGORIES] = show }
     }

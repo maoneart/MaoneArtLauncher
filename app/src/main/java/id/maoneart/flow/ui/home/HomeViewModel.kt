@@ -395,7 +395,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setIs24Hour(is24H: Boolean) {
-        viewModelScope.launch { preferencesRepository.setIs24Hour(is24H) }
+        viewModelScope.launch { preferencesRepository.set24Hour(is24H) }
     }
 
     fun setHapticsEnabled(enabled: Boolean) {
