@@ -104,17 +104,23 @@ fun DigitalClockHeader(
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 14.dp)
     ) {
-        // --- 1. EXCLUSIVE "MAONEART FLOW" GRAFFITI LOGO ---
-        Image(
-            painter = painterResource(id = R.drawable.maoneart_graffiti_logo),
-            contentDescription = "MaoneArt Flow",
+        // --- 1. EXCLUSIVE "MAONEART FLOW" GRAFFITI LOGO (CENTERED & PROMINENT) ---
+        Box(
             modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .height(78.dp)
-                .padding(bottom = 2.dp),
-            contentScale = ContentScale.Fit,
-            alignment = Alignment.CenterStart
-        )
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.maoneart_graffiti_logo),
+                contentDescription = "MaoneArt Flow",
+                modifier = Modifier
+                    .fillMaxWidth(0.98f)
+                    .height(118.dp),
+                contentScale = ContentScale.Fit,
+                alignment = Alignment.Center
+            )
+        }
 
         // --- 2. LUXURY MINIMALIST DIGITAL CLOCK ---
         Text(
