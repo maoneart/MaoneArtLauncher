@@ -314,7 +314,7 @@ fun HomeScreen(
 
                                 itemsIndexed(
                                     items = uiState.favorites,
-                                    key = { _, app -> "fav_${app.id}" }
+                                    key = { index, app -> "fav_${app.id}_$index" }
                                 ) { _, app ->
                                     AppListItem(
                                         app = app,
@@ -380,7 +380,7 @@ fun HomeScreen(
                     } else {
                         itemsIndexed(
                             items = uiState.displayApps,
-                            key = { _, app -> app.id }
+                            key = { index, app -> "${app.id}_$index" }
                         ) { _, app ->
                             AppListItem(
                                 app = app,

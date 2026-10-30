@@ -5,12 +5,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import org.json.JSONObject
+import java.io.IOException
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "maoneart_flow_prefs")
 
@@ -35,7 +38,16 @@ class PreferencesRepository(private val context: Context) {
         val TWO_LINE_APP_NAMES = booleanPreferencesKey("two_line_app_names")
     }
 
-    val favoritesFlow: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+    // IO-Safe preferences flow that catches any disk corruption gracefully without crashing the app
+    private val safePreferences: Flow<Preferences> = context.dataStore.data.catch { exception ->
+        if (exception is IOException) {
+            emit(emptyPreferences())
+        } else {
+            throw exception
+        }
+    }
+
+    val favoritesFlow: Flow<Set<String>> = safePreferences.map { prefs ->
         prefs[Keys.FAVORITES] ?: setOf(
             "com.android.chrome",
             "com.whatsapp",
@@ -44,64 +56,64 @@ class PreferencesRepository(private val context: Context) {
         )
     }
 
-    val hiddenAppsFlow: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+    val hiddenAppsFlow: Flow<Set<String>> = safePreferences.map { prefs ->
         prefs[Keys.HIDDEN_APPS] ?: emptySet()
     }
 
-    val hapticsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val hapticsEnabledFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.HAPTICS_ENABLED] ?: true
     }
 
-    val alphabetSideFlow: Flow<String> = context.dataStore.data.map { prefs ->
+    val alphabetSideFlow: Flow<String> = safePreferences.map { prefs ->
         prefs[Keys.ALPHABET_SIDE] ?: "right"
     }
 
-    val is24HourFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val is24HourFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.IS_24_HOUR] ?: true
     }
 
-    val showIconsFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val showIconsFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.SHOW_ICONS] ?: true
     }
 
-    val showMaoneArtBannerFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val showMaoneArtBannerFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.SHOW_MAONEART_BANNER] ?: true
     }
 
-    val searchAsIconFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val searchAsIconFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.SEARCH_AS_ICON] ?: false
     }
 
-    val widgetThemeFlow: Flow<String> = context.dataStore.data.map { prefs ->
+    val widgetThemeFlow: Flow<String> = safePreferences.map { prefs ->
         prefs[Keys.WIDGET_THEME] ?: "classic"
     }
 
-    val showAlphabetScrollerFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val showAlphabetScrollerFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.SHOW_ALPHABET_SCROLLER] ?: true
     }
 
-    val pureTransparentBgFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val pureTransparentBgFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.PURE_TRANSPARENT_BG] ?: false
     }
 
-    val showCategoriesFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val showCategoriesFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.SHOW_CATEGORIES] ?: true
     }
 
-    val twoLineAppNamesFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val twoLineAppNamesFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.TWO_LINE_APP_NAMES] ?: true
     }
 
-    val customCategoriesFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
+    val customCategoriesFlow: Flow<List<String>> = safePreferences.map { prefs ->
         val set = prefs[Keys.CUSTOM_CATEGORIES] ?: emptySet()
         set.toList().sorted()
     }
 
-    val hiddenCategoriesFlow: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+    val hiddenCategoriesFlow: Flow<Set<String>> = safePreferences.map { prefs ->
         prefs[Keys.HIDDEN_CATEGORIES] ?: emptySet()
     }
 
-    val appCategoryOverridesFlow: Flow<Map<String, String>> = context.dataStore.data.map { prefs ->
+    val appCategoryOverridesFlow: Flow<Map<String, String>> = safePreferences.map { prefs ->
         val rawJson = prefs[Keys.APP_CATEGORY_OVERRIDES] ?: "{}"
         try {
             val jsonObject = JSONObject(rawJson)

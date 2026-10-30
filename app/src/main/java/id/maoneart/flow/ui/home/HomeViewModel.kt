@@ -205,7 +205,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
 
-        val allCategories = defaultList + customList
+        // Strictly deduplicate by category.id to eliminate Compose LazyRow duplicate key crashes
+        val allCategories = (defaultList + customList).distinctBy { it.id }
         AppsAndCategoriesData(apps = processedApps, categories = allCategories)
     }
 
@@ -324,6 +325,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         return completeIndices
+    }
+
+    fun resetToHomeScreen() {
+        _searchQuery.value = ""
+        _isSearchActive.value = false
+        _isSettingsOpen.value = false
+        _selectedApp.value = null
+        _appForCategoryChange.value = null
+        _categoryToDelete.value = null
+        _isCreateCategoryOpen.value = false
+        _selectedCategoryId.value = "all"
     }
 
     fun checkNotificationPermission() {

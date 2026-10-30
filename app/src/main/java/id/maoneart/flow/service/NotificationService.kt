@@ -21,8 +21,12 @@ class NotificationService : NotificationListenerService() {
             private set
 
         fun isNotificationAccessGranted(context: Context): Boolean {
-            val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(context)
-            return enabledPackages.contains(context.packageName)
+            return try {
+                val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(context)
+                enabledPackages.contains(context.packageName)
+            } catch (_: Throwable) {
+                false
+            }
         }
 
         fun openNotificationAccessSettings(context: Context) {

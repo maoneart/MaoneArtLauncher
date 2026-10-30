@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.ContextCompat
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.model.DefaultCategories
 import kotlinx.coroutines.CoroutineScope
@@ -81,7 +82,18 @@ class AppRepository(private val context: Context) {
             addDataScheme("package")
         }
 
-        context.registerReceiver(receiver, filter)
+        try {
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                ContextCompat.RECEIVER_EXPORTED
+            )
+        } catch (_: Throwable) {
+            try {
+                context.registerReceiver(receiver, filter)
+            } catch (_: Throwable) {}
+        }
 
         awaitClose {
             try {
@@ -101,21 +113,22 @@ class AppRepository(private val context: Context) {
         val result = ArrayList<AppInfo>(resolveInfos.size)
 
         for (info in resolveInfos) {
-            val pkgName = info.activityInfo.packageName
-            val actName = info.activityInfo.name
+            val actInfo = info.activityInfo ?: continue
+            val pkgName = actInfo.packageName ?: continue
+            val actName = actInfo.name ?: continue
 
             val isSelf = (pkgName == selfPackage)
             val label = if (isSelf) {
                 "MaoneArt Flow"
             } else {
                 try {
-                    info.loadLabel(packageManager).toString().trim()
+                    info.loadLabel(packageManager).toString().trim().ifEmpty { pkgName }
                 } catch (_: Throwable) {
                     pkgName
                 }
             }
 
-            val appInfo = info.activityInfo.applicationInfo
+            val appInfo = actInfo.applicationInfo
             val categoryId = if (isSelf) "system" else resolveAppCategory(pkgName, label, appInfo)
 
             result.add(
@@ -131,8 +144,11 @@ class AppRepository(private val context: Context) {
             )
         }
 
+        // De-duplicate strictly by app.id (prevents Dual Apps / Cloned Apps from causing LazyColumn duplicate key crash)
+        val distinctResult = result.distinctBy { it.id }
+
         // Sort alphabetically using Indonesian locale collator
-        val sortedResult = result.sortedWith { a, b ->
+        val sortedResult = distinctResult.sortedWith { a, b ->
             val firstCompare = a.firstLetter.compareTo(b.firstLetter)
             if (firstCompare != 0) {
                 if (a.firstLetter == '#') 1

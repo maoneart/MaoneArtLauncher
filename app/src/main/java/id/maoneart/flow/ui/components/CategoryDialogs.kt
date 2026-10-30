@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -393,18 +394,20 @@ fun SelectCategoryBottomSheet(
                 }
             }
 
-            // Categories List (exclude 'all')
-            val selectableCategories = availableCategories.filter { it.id != "all" }
+            // Categories List (exclude 'all' and deduplicate strictly)
+            val selectableCategories = availableCategories
+                .filter { it.id != "all" }
+                .distinctBy { it.id }
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(280.dp)
             ) {
-                items(
+                itemsIndexed(
                     items = selectableCategories,
-                    key = { it.id }
-                ) { category ->
+                    key = { index, category -> "select_cat_${category.id}_$index" }
+                ) { _, category ->
                     val isCurrent = app.categoryId == category.id
 
                     Row(

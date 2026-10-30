@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.18)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.19)
 
 ---
 
@@ -169,3 +169,15 @@
     - **Sinkronisasi Detik Jam Sub-Detik & Sensor Suhu Dinamis**:
       - Sinkronisasi loop jam di `DigitalClockHeader.kt` ke detik `00` menit berikutnya secara presisi (`60000L - (nowMs % 60000L)`).
       - Menampilkan suhu baterai real-time dari sensor hardware Android (`BatteryManager.EXTRA_TEMPERATURE`) pada tema Niagara Trio Pills.
+  - **Pencegahan Menyeluruh Potensi Crash & Force Close (Release v1.0.19)**:
+    - **Proteksi Android 14+ `SecurityException` pada BroadcastReceiver**:
+      - Menggunakan `ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_EXPORTED)` dengan `try-catch` berlapis di `AppRepository.kt`. Mencegah crash fatal `SecurityException` pada Android 14 (HyperOS, One UI 6, ColorOS 14).
+    - **Proteksi Compose Duplicate Key Crash (Dual Apps & Kloning)**:
+      - Menambahkan filter de-duplikasi ketat `.distinctBy { it.id }` di `fetchInstalledApps()` pada `AppRepository.kt`.
+      - Menambahkan index discriminator pada Compose keys: `"fav_${app.id}_$index"` dan `"${app.id}_$index"` pada `HomeScreen.kt`. Mencegah crash `IllegalArgumentException: Key was already used` saat ponsel memiliki Dual Apps / WhatsApp kloning / Work Profile.
+    - **Proteksi Duplicate Key pada Kategori**:
+      - Mengunci daftar kategori dengan `.distinctBy { it.id }` di `HomeViewModel.kt` dan `CategoryDialogs.kt`, serta index key `"chip_${category.id}_$index"` di `CategoryChipBar.kt`.
+    - **DataStore IO-Safe Flow**:
+      - Membungkus seluruh aliran data DataStore dengan `.catch { if (it is IOException) emit(emptyPreferences()) }` di `PreferencesRepository.kt` untuk mencegah force close jika file preferensi korup saat baterai drop.
+    - **Handler `onNewIntent` Tombol Home**:
+      - Menambahkan override `onNewIntent` di `MainActivity.kt` yang memanggil `viewModel.resetToHomeScreen()` untuk mengembalikan status launcher ke beranda bersih saat tombol Home fisik/gesture ditekan.

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -58,11 +59,15 @@ fun CategoryChipBar(
     // Immediately anchor scroll to LEFT (index 0, "Semua") whenever category is "all"
     LaunchedEffect(selectedCategoryId) {
         if (selectedCategoryId == "all") {
-            chipListState.scrollToItem(0)
+            try {
+                chipListState.scrollToItem(0)
+            } catch (_: Throwable) {}
         } else {
             val index = categories.indexOfFirst { it.id == selectedCategoryId }
             if (index >= 0) {
-                chipListState.animateScrollToItem(index)
+                try {
+                    chipListState.animateScrollToItem(index)
+                } catch (_: Throwable) {}
             }
         }
     }
@@ -76,10 +81,10 @@ fun CategoryChipBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        items(
+        itemsIndexed(
             items = categories,
-            key = { it.id }
-        ) { category ->
+            key = { index, category -> "chip_${category.id}_$index" }
+        ) { _, category ->
             val isSelected = category.id == selectedCategoryId
 
             val backgroundColor by animateColorAsState(
