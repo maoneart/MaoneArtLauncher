@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.22)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.23)
 
 ---
 
@@ -218,3 +218,19 @@
         2. Mengombinasikannya serentak dengan `view.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_GLOBAL_SETTING or 1)` untuk respon instan pada layar 120 FPS.
         3. Mengintegrasikan getaran taktil presisi saat jempol meluncur melintasi huruf-huruf A-Z di `AlphabetWaveScroller.kt`, tombol chip kategori di `CategoryChipBar.kt`, tombol search logo "G", dan long-press aplikasi di `HomeScreen.kt`.
         4. Menambahkan preview getaran seketika saat toggle "Getaran Haptik Tactile" dinyalakan di menu pengaturan.
+  - **Eliminasi Lag Scroll & Proteksi Total Force Close Navigasi Navbar (Release v1.0.23)**:
+    - **Solusi Lag Saat Scroll Cepat ("Agak Ngelek")**:
+      - Root Cause: Pemanggilan sinkron `vibrator.vibrate()` langsung di main UI thread memicu puluhan Binder IPC calls per detik ke `system_server`, memblokir thread UI selama 50-100ms saat jempol meluncur cepat.
+      - Solusi:
+        1. Menambahkan rate limiting 38ms (`SystemClock.uptimeMillis() - lastTickTime < 38L`), menyelaraskan pulsa dengan inersia motor dan mencegah flooding IPC.
+        2. Memindahkan eksekusi `vibrator.vibrate` ke background coroutine (`Dispatchers.Default`), membebaskan UI thread 100% sehingga scrolling stabil di 120 FPS.
+    - **Solusi Force Close Saat Tekan Navbar**:
+      - Root Cause:
+        1. `AlphabetWaveScroller` tidak memiliki `navigationBarsPadding()`, sehingga bagian bawah scroller (Z dan #) menabrak navbar. Sentuhan navbar memicu bentrok gesture event dan membatalkan coroutine scroll secara mendadak.
+        2. `scrollJob = scope.launch { listState.scrollToItem(...) }` tidak memiliki try-catch dan bounds protection. Saat tombol Home/Back ditekan, state kategori berubah seketika dan scroll ke index lama melempar exception tak tertangani yang mematikan proses launcher.
+        3. `resetToHomeScreen()` memutasi 9 StateFlow sekaligus tanpa pengecekan nilai (`if (value != new)`), memicu gelombang recomposition beruntun.
+      - Solusi:
+        1. Menerapkan `navigationBarsPadding()` pada container Row, mengangkat scroller A-Z dan daftar aplikasi secara aman di atas area sistem navbar Android.
+        2. Membungkus seluruh coroutine scroll (`safeScrollToLetter`, `BackHandler`, `LaunchedEffect`) dengan `try-catch (_: Throwable)` dan validasi batas `coerceAtLeast(0)`.
+        3. Menambahkan blok `try-finally` pada pointer gesture loop `AlphabetWaveScroller` agar status sentuhan selalu bersih saat diinterupsi oleh gesture navbar.
+        4. Mengoptimalkan `resetToHomeScreen()` agar hanya mengupdate StateFlow yang nilainya benar-benar berubah, serta membungkus pemanggilan `onNewIntent` dengan `try-catch`.

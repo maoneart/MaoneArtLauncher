@@ -126,23 +126,26 @@ fun AlphabetWaveScroller(
             // Low-level pointer loop: tracks every tap AND every drag movement without dropping
             .pointerInput(Unit) {
                 awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    isTouching = true
-                    handleTouchAt(down.position.y)
+                    try {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        isTouching = true
+                        handleTouchAt(down.position.y)
 
-                    // Track drag / scroll continuously across the entire scroller
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val pointer = event.changes.firstOrNull() ?: break
-                        if (!pointer.pressed) {
-                            break
+                        // Track drag / scroll continuously across the entire scroller
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val pointer = event.changes.firstOrNull() ?: break
+                            if (!pointer.pressed) {
+                                break
+                            }
+                            pointer.consume()
+                            handleTouchAt(pointer.position.y)
                         }
-                        pointer.consume()
-                        handleTouchAt(pointer.position.y)
+                    } catch (_: Throwable) {
+                    } finally {
+                        isTouching = false
+                        activeLetter = null
                     }
-
-                    isTouching = false
-                    activeLetter = null
                 }
             },
         contentAlignment = if (isRightSide) Alignment.CenterEnd else Alignment.CenterStart

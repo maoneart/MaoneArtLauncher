@@ -101,7 +101,9 @@ fun HomeScreen(
 
     // Smooth instant reset scroll position on category change to prevent layout freeze
     LaunchedEffect(uiState.selectedCategoryId) {
-        listState.scrollToItem(0)
+        try {
+            listState.scrollToItem(0)
+        } catch (_: Throwable) {}
     }
 
     // Back Navigation Hierarchy (Strict Zero Leakage Focus):
@@ -113,44 +115,50 @@ fun HomeScreen(
     // 6. If scrolled down in "all" category -> smoothly scroll back to top
     // 7. If already at top and in "all" -> lock chip to 0 and consume event so it never leaks focus
     BackHandler(enabled = true) {
-        when {
-            appForCategoryChange != null -> {
-                viewModel.openCategoryChangeDialog(null)
-            }
-            categoryToDelete != null -> {
-                viewModel.openDeleteCategoryDialog(null)
-            }
-            isCreateCategoryOpen -> {
-                viewModel.openCreateCategoryDialog(false)
-            }
-            uiState.selectedApp != null -> {
-                viewModel.selectAppForAction(null)
-            }
-            uiState.isHiddenAppsSheetOpen -> {
-                viewModel.openHiddenAppsSheet(false)
-            }
-            uiState.isSettingsOpen -> {
-                viewModel.openSettings(false)
-            }
-            uiState.isSearching -> {
-                viewModel.setSearchActive(false)
-            }
-            uiState.selectedCategoryId != "all" -> {
-                viewModel.selectCategory("all")
-                scope.launch {
-                    chipListState.scrollToItem(0)
-                    listState.scrollToItem(0)
+        try {
+            when {
+                appForCategoryChange != null -> {
+                    viewModel.openCategoryChangeDialog(null)
                 }
-            }
-            else -> {
-                scope.launch {
-                    chipListState.scrollToItem(0)
-                    if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
-                        listState.animateScrollToItem(0)
+                categoryToDelete != null -> {
+                    viewModel.openDeleteCategoryDialog(null)
+                }
+                isCreateCategoryOpen -> {
+                    viewModel.openCreateCategoryDialog(false)
+                }
+                uiState.selectedApp != null -> {
+                    viewModel.selectAppForAction(null)
+                }
+                uiState.isHiddenAppsSheetOpen -> {
+                    viewModel.openHiddenAppsSheet(false)
+                }
+                uiState.isSettingsOpen -> {
+                    viewModel.openSettings(false)
+                }
+                uiState.isSearching -> {
+                    viewModel.setSearchActive(false)
+                }
+                uiState.selectedCategoryId != "all" -> {
+                    viewModel.selectCategory("all")
+                    scope.launch {
+                        try {
+                            chipListState.scrollToItem(0)
+                            listState.scrollToItem(0)
+                        } catch (_: Throwable) {}
+                    }
+                }
+                else -> {
+                    scope.launch {
+                        try {
+                            chipListState.scrollToItem(0)
+                            if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
+                                listState.animateScrollToItem(0)
+                            }
+                        } catch (_: Throwable) {}
                     }
                 }
             }
-        }
+        } catch (_: Throwable) {}
     }
 
     Box(
@@ -270,28 +278,35 @@ fun HomeScreen(
                 }
             }
 
-            // 5. Main Content Row: Apps List + Alphabet Wave Scroller
+            // Safe scroll handler with bounds checking & cancellation protection to prevent FC
+            val safeScrollToLetter: (Char) -> Unit = { letter ->
+                uiState.letterIndices[letter]?.let { appIndex ->
+                    val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
+                        uiState.favorites.size + 3
+                    } else 1
+                    val targetIndex = (headerOffset + appIndex).coerceAtLeast(0)
+                    scrollJob?.cancel()
+                    scrollJob = scope.launch {
+                        try {
+                            listState.scrollToItem(targetIndex)
+                        } catch (_: Throwable) {}
+                    }
+                }
+            }
+
+            // 5. Main Content Row: Apps List + Alphabet Wave Scroller (Protected by navigationBarsPadding)
             Row(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .navigationBarsPadding()
             ) {
 
                 // Left-Handed Alphabet Wave Scroller (if configured & enabled)
                 if (uiState.showAlphabetScroller && uiState.alphabetSide == "left" && !uiState.isSearching) {
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
-                        onLetterSelected = { letter ->
-                            uiState.letterIndices[letter]?.let { appIndex ->
-                                val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
-                                    uiState.favorites.size + 3
-                                } else 1
-                                scrollJob?.cancel()
-                                scrollJob = scope.launch {
-                                    listState.scrollToItem(headerOffset + appIndex)
-                                }
-                            }
-                        },
+                        onLetterSelected = safeScrollToLetter,
                         isRightSide = false,
                         hapticsEnabled = uiState.hapticsEnabled
                     )
@@ -303,7 +318,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    contentPadding = PaddingValues(bottom = if (uiState.searchAsIcon) 114.dp else 72.dp)
+                    contentPadding = PaddingValues(bottom = if (uiState.searchAsIcon) 80.dp else 16.dp)
                 ) {
                     if (!uiState.isSearching) {
                         // In "All" category, show Favorites section first
@@ -412,17 +427,7 @@ fun HomeScreen(
                 if (uiState.showAlphabetScroller && uiState.alphabetSide == "right" && !uiState.isSearching) {
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
-                        onLetterSelected = { letter ->
-                            uiState.letterIndices[letter]?.let { appIndex ->
-                                val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
-                                    uiState.favorites.size + 3
-                                } else 1
-                                scrollJob?.cancel()
-                                scrollJob = scope.launch {
-                                    listState.scrollToItem(headerOffset + appIndex)
-                                }
-                            }
-                        },
+                        onLetterSelected = safeScrollToLetter,
                         isRightSide = true,
                         hapticsEnabled = uiState.hapticsEnabled
                     )

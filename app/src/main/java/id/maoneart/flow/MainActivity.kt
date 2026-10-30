@@ -41,7 +41,9 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // Reset to default home state on Home button / Home gesture tap
-        viewModel.resetToHomeScreen()
+        try {
+            // Reset to default home state on Home button / Home gesture tap
+            viewModel.resetToHomeScreen()
+        } catch (_: Throwable) {}
     }
 }

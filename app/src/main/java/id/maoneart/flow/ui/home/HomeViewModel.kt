@@ -349,15 +349,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetToHomeScreen() {
-        _searchQuery.value = ""
-        _isSearchActive.value = false
-        _isSettingsOpen.value = false
-        _isHiddenAppsSheetOpen.value = false
-        _selectedApp.value = null
-        _appForCategoryChange.value = null
-        _categoryToDelete.value = null
-        _isCreateCategoryOpen.value = false
-        _selectedCategoryId.value = "all"
+        if (_searchQuery.value.isNotEmpty()) _searchQuery.value = ""
+        if (_isSearchActive.value) _isSearchActive.value = false
+        if (_isSettingsOpen.value) _isSettingsOpen.value = false
+        if (_isHiddenAppsSheetOpen.value) _isHiddenAppsSheetOpen.value = false
+        if (_selectedApp.value != null) _selectedApp.value = null
+        if (_appForCategoryChange.value != null) _appForCategoryChange.value = null
+        if (_categoryToDelete.value != null) _categoryToDelete.value = null
+        if (_isCreateCategoryOpen.value) _isCreateCategoryOpen.value = false
+        if (_selectedCategoryId.value != "all") _selectedCategoryId.value = "all"
     }
 
     fun checkNotificationPermission() {
