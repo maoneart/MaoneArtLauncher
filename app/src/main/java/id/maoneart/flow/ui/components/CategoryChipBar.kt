@@ -32,8 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +40,7 @@ import id.maoneart.flow.model.CategoryItem
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextPrimary
 import id.maoneart.flow.ui.theme.FlowTextSecondary
+import id.maoneart.flow.ui.util.rememberFlowHaptics
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -54,7 +54,8 @@ fun CategoryChipBar(
     chipListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    val haptic = LocalHapticFeedback.current
+    val view = LocalView.current
+    val haptics = rememberFlowHaptics()
 
     // Immediately anchor scroll to LEFT (index 0, "Semua") whenever category is "all"
     LaunchedEffect(selectedCategoryId) {
@@ -113,14 +114,14 @@ fun CategoryChipBar(
                     .combinedClickable(
                         onClick = {
                             if (hapticsEnabled) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                haptics.click(view)
                             }
                             onCategorySelected(category.id)
                         },
                         onLongClick = if (category.id != "all") {
                             {
                                 if (hapticsEnabled) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    haptics.heavyClick(view)
                                 }
                                 onCategoryLongClick(category)
                             }
@@ -177,7 +178,7 @@ fun CategoryChipBar(
                     .combinedClickable(
                         onClick = {
                             if (hapticsEnabled) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                haptics.click(view)
                             }
                             onAddCategoryClick()
                         }

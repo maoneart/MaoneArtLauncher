@@ -368,7 +368,7 @@ fun LauncherSettingsBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "MaoneArt Flow v1.0.21 • By MaoneArt",
+                text = "MaoneArt Flow v1.0.22 • By MaoneArt",
                 fontSize = 11.sp,
                 color = FlowTextSecondary.copy(alpha = 0.5f),
                 modifier = Modifier.align(Alignment.CenterHorizontally)

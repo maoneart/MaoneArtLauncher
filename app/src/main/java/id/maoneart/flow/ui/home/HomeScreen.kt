@@ -42,6 +42,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalView
+import id.maoneart.flow.ui.util.rememberFlowHaptics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,6 +81,8 @@ fun HomeScreen(
     val listState = rememberLazyListState()
     val chipListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
+    val haptics = rememberFlowHaptics()
     var scrollJob by remember { mutableStateOf<Job?>(null) }
 
     // Auto refresh notification access permission on launcher resume
@@ -326,7 +330,10 @@ fun HomeScreen(
                                         showIcon = uiState.showIcons,
                                         twoLineAppNames = uiState.twoLineAppNames,
                                         onClick = { viewModel.launchApp(app) },
-                                        onLongClick = { viewModel.selectAppForAction(app) }
+                                        onLongClick = {
+                                            if (uiState.hapticsEnabled) haptics.heavyClick(view)
+                                            viewModel.selectAppForAction(app)
+                                        }
                                     )
                                 }
 
@@ -392,7 +399,10 @@ fun HomeScreen(
                                 showIcon = uiState.showIcons,
                                 twoLineAppNames = uiState.twoLineAppNames,
                                 onClick = { viewModel.launchApp(app) },
-                                onLongClick = { viewModel.selectAppForAction(app) }
+                                onLongClick = {
+                                    if (uiState.hapticsEnabled) haptics.heavyClick(view)
+                                    viewModel.selectAppForAction(app)
+                                }
                             )
                         }
                     }
@@ -434,6 +444,7 @@ fun HomeScreen(
                     .background(Color(0xEE1A1B20))
                     .border(1.2.dp, Color(0x3300E5FF), CircleShape)
                     .clickable {
+                        if (uiState.hapticsEnabled) haptics.click(view)
                         viewModel.setSearchActive(true)
                     },
                 contentAlignment = Alignment.Center
@@ -488,7 +499,10 @@ fun HomeScreen(
                 is24Hour = uiState.is24Hour,
                 onToggleIs24Hour = viewModel::setIs24Hour,
                 hapticsEnabled = uiState.hapticsEnabled,
-                onToggleHaptics = viewModel::setHapticsEnabled,
+                onToggleHaptics = { enabled ->
+                    if (enabled) haptics.click(view)
+                    viewModel.setHapticsEnabled(enabled)
+                },
                 hasNotificationAccess = uiState.hasNotificationAccess,
                 onOpenNotificationSettings = viewModel::openNotificationSettings,
                 hiddenAppsCount = uiState.hiddenApps.size,

@@ -1,6 +1,7 @@
 package id.maoneart.flow.ui.components
 
 import android.view.HapticFeedbackConstants
+import id.maoneart.flow.ui.util.rememberFlowHaptics
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -66,6 +67,7 @@ fun AlphabetWaveScroller(
     val alphabet = remember { ('A'..'Z').toList() + listOf('#') }
     val view = LocalView.current
     val density = LocalDensity.current
+    val haptics = rememberFlowHaptics()
 
     var isTouching by remember { mutableStateOf(false) }
     var touchY by remember { mutableFloatStateOf(0f) }
@@ -108,10 +110,7 @@ fun AlphabetWaveScroller(
         if (letter != activeLetter) {
             activeLetter = letter
             if (hapticsEnabled) {
-                view.performHapticFeedback(
-                    HapticFeedbackConstants.CLOCK_TICK,
-                    HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
-                )
+                haptics.tick(view)
             }
             onLetterSelected(letter)
         }

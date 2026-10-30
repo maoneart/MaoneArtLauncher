@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.21)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.22)
 
 ---
 
@@ -210,3 +210,11 @@
       - Di `HomeScreen.kt`, mendeteksi `firstVisibleItemScrollOffset > 0` pada BackHandler, sehingga sentuhan tombol Back merespons scroll ke posisi paling atas meski bergeser hanya beberapa piksel.
     - **Placeholder Ikon Aplikasi**:
       - Di `AppListItem.kt`, menyematkan tile huruf estetik `FlowElectricBlue` sebagai fallback saat ikon aplikasi sistem belum termuat.
+  - **Mesin Haptik Taktil Dual-Layer Hardware Vibrator (Release v1.0.22)**:
+    - **Solusi Getaran Tidak Terasa pada Alphabet Wave Scroller**:
+      - Root Cause: Implementasi sebelumnya hanya mengandalkan `view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)` yang sering diabaikan atau dibisukan oleh ROM OEM (Xiaomi HyperOS, Samsung One UI, ColorOS) jika sistem haptics HP mati, serta bernilai terlalu lemah untuk menggerakkan motor getar tipe ERM (di bawah ambang inersia 30ms).
+      - Solusi:
+        1. Mengembangkan mesin `FlowHaptics.kt` berbasis Dual-Layer: langsung memicu hardware `Vibrator` / `VibratorManager` dengan pulsa terkalibrasi (`VibrationEffect.createOneShot(32L, 170)`) dan `AudioAttributes.USAGE_ASSISTANCE_SONIFICATION`.
+        2. Mengombinasikannya serentak dengan `view.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_GLOBAL_SETTING or 1)` untuk respon instan pada layar 120 FPS.
+        3. Mengintegrasikan getaran taktil presisi saat jempol meluncur melintasi huruf-huruf A-Z di `AlphabetWaveScroller.kt`, tombol chip kategori di `CategoryChipBar.kt`, tombol search logo "G", dan long-press aplikasi di `HomeScreen.kt`.
+        4. Menambahkan preview getaran seketika saat toggle "Getaran Haptik Tactile" dinyalakan di menu pengaturan.
