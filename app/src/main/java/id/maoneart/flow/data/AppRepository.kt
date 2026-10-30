@@ -122,7 +122,7 @@ class AppRepository(private val context: Context) {
                 "MaoneArt Flow"
             } else {
                 try {
-                    info.loadLabel(packageManager).toString().trim().ifEmpty { pkgName }
+                    info.loadLabel(packageManager).toString().replace("\n", " ").trim().ifEmpty { pkgName }
                 } catch (_: Throwable) {
                     pkgName
                 }

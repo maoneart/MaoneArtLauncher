@@ -7,6 +7,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.provider.AlarmClock
 import android.provider.Settings
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -100,9 +101,19 @@ fun DigitalClockHeader(
         }
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         try {
-            val initial = context.registerReceiver(receiver, filter)
+            val initial = ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                ContextCompat.RECEIVER_EXPORTED
+            )
             initial?.let { receiver.onReceive(context, it) }
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+            try {
+                val initial = context.registerReceiver(receiver, filter)
+                initial?.let { receiver.onReceive(context, it) }
+            } catch (_: Throwable) {}
+        }
 
         onDispose {
             try {

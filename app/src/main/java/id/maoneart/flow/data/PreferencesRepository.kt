@@ -2,6 +2,7 @@ package id.maoneart.flow.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -47,13 +48,26 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
+    // IO-Safe preferences edit helper to ensure background write locks or storage pressure never crash the app
+    private suspend fun safeEdit(action: (MutablePreferences) -> Unit) {
+        try {
+            context.dataStore.edit { prefs ->
+                action(prefs)
+            }
+        } catch (_: Throwable) {}
+    }
+
     val favoritesFlow: Flow<Set<String>> = safePreferences.map { prefs ->
-        prefs[Keys.FAVORITES] ?: setOf(
-            "com.android.chrome",
-            "com.whatsapp",
-            "com.google.android.youtube",
-            "com.termux"
-        )
+        if (prefs.contains(Keys.FAVORITES)) {
+            prefs[Keys.FAVORITES] ?: emptySet()
+        } else {
+            setOf(
+                "com.android.chrome",
+                "com.whatsapp",
+                "com.google.android.youtube",
+                "com.termux"
+            )
+        }
     }
 
     val hiddenAppsFlow: Flow<Set<String>> = safePreferences.map { prefs ->
@@ -130,7 +144,7 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun toggleFavorite(packageName: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val current = prefs[Keys.FAVORITES]?.toMutableSet() ?: mutableSetOf(
                 "com.android.chrome", "com.whatsapp", "com.google.android.youtube", "com.termux"
             )
@@ -144,7 +158,7 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun toggleHidden(packageName: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val current = prefs[Keys.HIDDEN_APPS]?.toMutableSet() ?: mutableSetOf()
             if (current.contains(packageName)) {
                 current.remove(packageName)
@@ -155,26 +169,34 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
+    suspend fun unhideApp(packageName: String) {
+        safeEdit { prefs ->
+            val current = prefs[Keys.HIDDEN_APPS]?.toMutableSet() ?: mutableSetOf()
+            current.remove(packageName)
+            prefs[Keys.HIDDEN_APPS] = current
+        }
+    }
+
     suspend fun setHapticsEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             prefs[Keys.HAPTICS_ENABLED] = enabled
         }
     }
 
     suspend fun setAlphabetSide(side: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             prefs[Keys.ALPHABET_SIDE] = side
         }
     }
 
     suspend fun set24Hour(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             prefs[Keys.IS_24_HOUR] = enabled
         }
     }
 
     suspend fun setShowIcons(show: Boolean) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             prefs[Keys.SHOW_ICONS] = show
         }
     }
@@ -182,7 +204,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun addCustomCategory(name: String) {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val current = prefs[Keys.CUSTOM_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
             current.add(trimmed)
             prefs[Keys.CUSTOM_CATEGORIES] = current
@@ -195,7 +217,7 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun removeCustomCategory(name: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val current = prefs[Keys.CUSTOM_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
             current.remove(name)
             prefs[Keys.CUSTOM_CATEGORIES] = current
@@ -219,7 +241,7 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun hideCategory(categoryId: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val current = prefs[Keys.HIDDEN_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
             current.add(categoryId)
             prefs[Keys.HIDDEN_CATEGORIES] = current
@@ -227,15 +249,21 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun unhideCategory(categoryId: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val current = prefs[Keys.HIDDEN_CATEGORIES]?.toMutableSet() ?: mutableSetOf()
             current.remove(categoryId)
             prefs[Keys.HIDDEN_CATEGORIES] = current
         }
     }
 
+    suspend fun unhideAllCategories() {
+        safeEdit { prefs ->
+            prefs[Keys.HIDDEN_CATEGORIES] = emptySet()
+        }
+    }
+
     suspend fun setAppCategoryOverride(packageName: String, categoryId: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val rawJson = prefs[Keys.APP_CATEGORY_OVERRIDES] ?: "{}"
             val jsonObject = try {
                 JSONObject(rawJson)
@@ -248,7 +276,7 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun resetAppCategoryOverride(packageName: String) {
-        context.dataStore.edit { prefs ->
+        safeEdit { prefs ->
             val rawJson = prefs[Keys.APP_CATEGORY_OVERRIDES] ?: "{}"
             try {
                 val jsonObject = JSONObject(rawJson)
@@ -259,30 +287,30 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun setShowMaoneArtBanner(show: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.SHOW_MAONEART_BANNER] = show }
+        safeEdit { prefs -> prefs[Keys.SHOW_MAONEART_BANNER] = show }
     }
 
     suspend fun setSearchAsIcon(asIcon: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.SEARCH_AS_ICON] = asIcon }
+        safeEdit { prefs -> prefs[Keys.SEARCH_AS_ICON] = asIcon }
     }
 
     suspend fun setWidgetTheme(theme: String) {
-        context.dataStore.edit { prefs -> prefs[Keys.WIDGET_THEME] = theme }
+        safeEdit { prefs -> prefs[Keys.WIDGET_THEME] = theme }
     }
 
     suspend fun setShowAlphabetScroller(show: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.SHOW_ALPHABET_SCROLLER] = show }
+        safeEdit { prefs -> prefs[Keys.SHOW_ALPHABET_SCROLLER] = show }
     }
 
     suspend fun setPureTransparentBg(transparent: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.PURE_TRANSPARENT_BG] = transparent }
+        safeEdit { prefs -> prefs[Keys.PURE_TRANSPARENT_BG] = transparent }
     }
 
     suspend fun setShowCategories(show: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.SHOW_CATEGORIES] = show }
+        safeEdit { prefs -> prefs[Keys.SHOW_CATEGORIES] = show }
     }
 
     suspend fun setTwoLineAppNames(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[Keys.TWO_LINE_APP_NAMES] = enabled }
+        safeEdit { prefs -> prefs[Keys.TWO_LINE_APP_NAMES] = enabled }
     }
 }

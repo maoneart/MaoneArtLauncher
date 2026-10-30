@@ -19,7 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +69,8 @@ fun LauncherSettingsBottomSheet(
     onToggleHaptics: (Boolean) -> Unit,
     hasNotificationAccess: Boolean,
     onOpenNotificationSettings: () -> Unit,
+    hiddenAppsCount: Int = 0,
+    onOpenHiddenApps: () -> Unit = {},
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -286,7 +290,62 @@ fun LauncherSettingsBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // --- 5. PRIVASI & APLIKASI TERSEMBUNYI ---
+            SettingsSectionHeader(title = "PRIVASI & APLIKASI TERSEMBUNYI")
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0x18FFFFFF))
+                    .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(14.dp))
+                    .clickable { onOpenHiddenApps() }
+                    .padding(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.VisibilityOff,
+                            contentDescription = null,
+                            tint = FlowElectricBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Kelola Aplikasi Tersembunyi",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = FlowTextPrimary
+                            )
+                            Text(
+                                text = if (hiddenAppsCount > 0) "$hiddenAppsCount aplikasi disembunyikan" else "Tidak ada aplikasi tersembunyi",
+                                fontSize = 11.sp,
+                                color = if (hiddenAppsCount > 0) FlowCyan else FlowTextSecondary
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = "Buka",
+                        tint = FlowTextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Selesai Button
             Box(
@@ -305,6 +364,15 @@ fun LauncherSettingsBottomSheet(
                     color = Color.White
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "MaoneArt Flow v1.0.21 • By MaoneArt",
+                fontSize = 11.sp,
+                color = FlowTextSecondary.copy(alpha = 0.5f),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }

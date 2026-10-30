@@ -58,6 +58,7 @@ import id.maoneart.flow.ui.components.CreateCategoryDialog
 import id.maoneart.flow.ui.components.DeleteCategoryDialog
 import id.maoneart.flow.ui.components.DigitalClockHeader
 import id.maoneart.flow.ui.components.FlowSearchBar
+import id.maoneart.flow.ui.components.HiddenAppsBottomSheet
 import id.maoneart.flow.ui.components.LauncherSettingsBottomSheet
 import id.maoneart.flow.ui.components.SelectCategoryBottomSheet
 import id.maoneart.flow.ui.theme.FlowElectricBlue
@@ -121,6 +122,9 @@ fun HomeScreen(
             uiState.selectedApp != null -> {
                 viewModel.selectAppForAction(null)
             }
+            uiState.isHiddenAppsSheetOpen -> {
+                viewModel.openHiddenAppsSheet(false)
+            }
             uiState.isSettingsOpen -> {
                 viewModel.openSettings(false)
             }
@@ -137,7 +141,7 @@ fun HomeScreen(
             else -> {
                 scope.launch {
                     chipListState.scrollToItem(0)
-                    if (listState.firstVisibleItemIndex > 0) {
+                    if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
                         listState.animateScrollToItem(0)
                     }
                 }
@@ -295,7 +299,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    contentPadding = PaddingValues(bottom = 72.dp)
+                    contentPadding = PaddingValues(bottom = if (uiState.searchAsIcon) 114.dp else 72.dp)
                 ) {
                     if (!uiState.isSearching) {
                         // In "All" category, show Favorites section first
@@ -487,7 +491,21 @@ fun HomeScreen(
                 onToggleHaptics = viewModel::setHapticsEnabled,
                 hasNotificationAccess = uiState.hasNotificationAccess,
                 onOpenNotificationSettings = viewModel::openNotificationSettings,
+                hiddenAppsCount = uiState.hiddenApps.size,
+                onOpenHiddenApps = { viewModel.openHiddenAppsSheet(true) },
                 onDismiss = { viewModel.openSettings(false) }
+            )
+        }
+
+        // Hidden Apps Management Bottom Sheet
+        if (uiState.isHiddenAppsSheetOpen) {
+            HiddenAppsBottomSheet(
+                hiddenApps = uiState.hiddenApps,
+                hasHiddenCategories = uiState.hasHiddenCategories,
+                getAppIcon = viewModel::getAppIcon,
+                onUnhideApp = viewModel::unhideApp,
+                onRestoreCategories = viewModel::restoreDefaultCategories,
+                onDismiss = { viewModel.openHiddenAppsSheet(false) }
             )
         }
 

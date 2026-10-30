@@ -55,6 +55,7 @@ class NotificationService : NotificationListenerService() {
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         isServiceConnected = false
+        _notificationCounts.value = emptyMap()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -69,7 +70,12 @@ class NotificationService : NotificationListenerService() {
 
     private fun updateActiveNotifications() {
         try {
-            val active = activeNotifications ?: return
+            val active = activeNotifications
+            if (active == null || active.isEmpty()) {
+                _notificationCounts.value = emptyMap()
+                return
+            }
+
             val counts = mutableMapOf<String, Int>()
 
             for (sbn in active) {
@@ -87,6 +93,8 @@ class NotificationService : NotificationListenerService() {
             }
 
             _notificationCounts.value = counts
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+            _notificationCounts.value = emptyMap()
+        }
     }
 }

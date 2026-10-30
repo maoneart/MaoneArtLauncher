@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import id.maoneart.flow.model.AppInfo
+import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowOrange
 import id.maoneart.flow.ui.theme.FlowTextPrimary
 
@@ -90,6 +91,21 @@ fun AppListItem(
                             modifier = Modifier.size(40.dp),
                             contentScale = ContentScale.Fit
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0x22FFFFFF)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = app.firstLetter.toString(),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = FlowElectricBlue
+                            )
+                        }
                     }
                 }
 

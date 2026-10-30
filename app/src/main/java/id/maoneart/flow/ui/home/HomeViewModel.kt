@@ -22,7 +22,9 @@ data class HomeUiState(
     val allApps: List<AppInfo> = emptyList(),
     val favorites: List<AppInfo> = emptyList(),
     val displayApps: List<AppInfo> = emptyList(),
+    val hiddenApps: List<AppInfo> = emptyList(),
     val categories: List<CategoryItem> = emptyList(),
+    val hasHiddenCategories: Boolean = false,
     val selectedCategoryId: String = "all",
     val availableLetters: Set<Char> = emptySet(),
     val letterIndices: Map<Char, Int> = emptyMap(),
@@ -41,6 +43,7 @@ data class HomeUiState(
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
     val isSettingsOpen: Boolean = false,
+    val isHiddenAppsSheetOpen: Boolean = false,
     val selectedApp: AppInfo? = null
 )
 
@@ -64,7 +67,9 @@ private data class GeneralSettings(
 
 private data class AppsAndCategoriesData(
     val apps: List<AppInfo> = emptyList(),
-    val categories: List<CategoryItem> = emptyList()
+    val hiddenApps: List<AppInfo> = emptyList(),
+    val categories: List<CategoryItem> = emptyList(),
+    val hasHiddenCategories: Boolean = false
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -91,6 +96,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isSettingsOpen = MutableStateFlow(false)
     val isSettingsOpen: StateFlow<Boolean> = _isSettingsOpen.asStateFlow()
+
+    private val _isHiddenAppsSheetOpen = MutableStateFlow(false)
+    val isHiddenAppsSheetOpen: StateFlow<Boolean> = _isHiddenAppsSheetOpen.asStateFlow()
 
     // Dialog & bottom sheet states - directly observable for 0ms immediate response
     private val _appForCategoryChange = MutableStateFlow<AppInfo?>(null)
@@ -207,7 +215,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         // Strictly deduplicate by category.id to eliminate Compose LazyRow duplicate key crashes
         val allCategories = (defaultList + customList).distinctBy { it.id }
-        AppsAndCategoriesData(apps = processedApps, categories = allCategories)
+
+        // Filter hidden apps list for recovery and management
+        val hiddenAppsList = rawApps.filter { hidden.contains(it.packageName) }
+        val hasHiddenCats = hiddenCats.isNotEmpty()
+
+        AppsAndCategoriesData(
+            apps = processedApps,
+            hiddenApps = hiddenAppsList,
+            categories = allCategories,
+            hasHiddenCategories = hasHiddenCats
+        )
     }
 
     val uiState: StateFlow<HomeUiState> = combine(
@@ -215,8 +233,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         settingsFlow,
         combine(_searchQuery, _selectedCategoryId, _isSearchActive) { q, c, active -> Triple(q, c, active) },
         _selectedApp,
-        _isSettingsOpen
-    ) { appsData, (appearance, general), (query, catId, isSearchActive), selApp, isSettingsOpen ->
+        combine(_isSettingsOpen, _isHiddenAppsSheetOpen) { settings, hiddenApps -> Pair(settings, hiddenApps) }
+    ) { appsData, (appearance, general), (query, catId, isSearchActive), selApp, (isSettingsOpen, isHiddenAppsOpen) ->
 
         val visibleApps = appsData.apps
         val favoritesList = visibleApps.filter { it.isFavorite }
@@ -245,7 +263,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             allApps = visibleApps,
             favorites = favoritesList,
             displayApps = finalDisplayApps,
+            hiddenApps = appsData.hiddenApps,
             categories = appsData.categories,
+            hasHiddenCategories = appsData.hasHiddenCategories,
             selectedCategoryId = catId,
             availableLetters = letters,
             letterIndices = indices,
@@ -264,6 +284,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             showCategories = appearance.showCategories,
             twoLineAppNames = appearance.twoLineAppNames,
             isSettingsOpen = isSettingsOpen,
+            isHiddenAppsSheetOpen = isHiddenAppsOpen,
             selectedApp = selApp
         )
     }.stateIn(
@@ -331,6 +352,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _searchQuery.value = ""
         _isSearchActive.value = false
         _isSettingsOpen.value = false
+        _isHiddenAppsSheetOpen.value = false
         _selectedApp.value = null
         _appForCategoryChange.value = null
         _categoryToDelete.value = null
@@ -423,11 +445,32 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             _isSettingsOpen.value = true
             return true
         }
-        return appRepository.launchApp(app)
+        val launched = appRepository.launchApp(app)
+        if (launched && _isSearchActive.value) {
+            _isSearchActive.value = false
+            _searchQuery.value = ""
+        }
+        return launched
     }
 
     fun openSettings(open: Boolean) {
         _isSettingsOpen.value = open
+    }
+
+    fun openHiddenAppsSheet(open: Boolean) {
+        _isHiddenAppsSheetOpen.value = open
+    }
+
+    fun unhideApp(packageName: String) {
+        viewModelScope.launch {
+            preferencesRepository.unhideApp(packageName)
+        }
+    }
+
+    fun restoreDefaultCategories() {
+        viewModelScope.launch {
+            preferencesRepository.unhideAllCategories()
+        }
     }
 
     fun setShowMaoneArtBanner(show: Boolean) {

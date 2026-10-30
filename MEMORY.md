@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.20)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.21)
 
 ---
 
@@ -192,3 +192,21 @@
       - Di `DigitalClockHeader.kt`, mengintegrasikan `DisposableEffect` broadcast receiver untuk `ACTION_BATTERY_CHANGED`. Status petir `⚡`, persentase baterai, dan suhu hardware langsung berubah seketika saat kabel charger dicolokkan atau dicabut.
     - **Kontras Ikon Status Bar Android**:
       - Di `MainActivity.kt`, menerapkan `SystemBarStyle.dark(Color.TRANSPARENT)` pada `enableEdgeToEdge()` agar teks dan ikon status bar Android selalu putih terang dan estetik di semua tema sistem.
+  - **Audit Menyeluruh Stabilitas Sistem, Keamanan DataStore, & Manajemen Aplikasi Tersembunyi (Release v1.0.21)**:
+    - **Proteksi Menyeluruh Mutasi DataStore (`safeEdit`)**:
+      - Di `PreferencesRepository.kt`, membungkus seluruh 17 pemanggilan `dataStore.edit` dalam helper `safeEdit` berpelindung `try-catch`. Mencegah crash fatal saat ponsel mengalami disk write lock atau memori penyimpanan penuh.
+    - **Perbaikan Bug Empty Favorites**:
+      - Memeriksa `prefs.contains(Keys.FAVORITES)` sebelum fallback, sehingga ketika pengguna sengaja menghapus semua aplikasi favorit, 4 favorit default tidak bangkit kembali secara otomatis.
+    - **Pencegahan Badges Notifikasi Nyangkut**:
+      - Di `NotificationService.kt`, mereset `_notificationCounts.value = emptyMap()` secara eksplisit saat `activeNotifications` bernilai null, array kosong, atau service terputus (`onListenerDisconnected`), menghilangkan bug badge notifikasi tertahan permanen.
+    - **Kelola Aplikasi Tersembunyi & Pemulihan Kategori**:
+      - Menyediakan `HiddenAppsBottomSheet.kt` dan opsi "Kelola Aplikasi Tersembunyi" pada menu Pengaturan Flow, memungkinkan pengguna melihat daftar aplikasi yang disembunyikan dan memulihkannya ke launcher dengan 1 tap.
+      - Menambahkan fitur "Pulihkan Kategori Bawaan" untuk memunculkan kembali tab kategori sistem yang terhapus/disembunyikan.
+    - **Auto-Reset Search State pada Peluncuran Aplikasi**:
+      - Di `HomeViewModel.launchApp()`, mereset status pencarian otomatis saat aplikasi berhasil dibuka, sehingga ketika kembali ke launcher, beranda bersih tanpa teks pencarian lama.
+    - **Pencegahan Penutupan App Terbawah oleh Tombol Floating**:
+      - Di `HomeScreen.kt`, mengalibrasi `contentPadding` bawah `LazyColumn` menjadi `114.dp` saat mode tombol search logo "G" aktif, menjamin item aplikasi paling bawah dapat di-scroll tuntas melewati tombol search.
+    - **Sensitivitas Tombol Back Scroll-to-Top**:
+      - Di `HomeScreen.kt`, mendeteksi `firstVisibleItemScrollOffset > 0` pada BackHandler, sehingga sentuhan tombol Back merespons scroll ke posisi paling atas meski bergeser hanya beberapa piksel.
+    - **Placeholder Ikon Aplikasi**:
+      - Di `AppListItem.kt`, menyematkan tile huruf estetik `FlowElectricBlue` sebagai fallback saat ikon aplikasi sistem belum termuat.
