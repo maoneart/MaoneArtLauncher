@@ -146,14 +146,14 @@ fun DigitalClockHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = if (showBanner) 12.dp else 8.dp)
+            .padding(horizontal = 24.dp, vertical = if (showBanner) 8.dp else 6.dp)
     ) {
         // --- 1. EXCLUSIVE "MAONEART FLOW" GRAFFITI LOGO (Can be hidden via Settings) ---
         if (showBanner) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 6.dp)
+                    .padding(bottom = 4.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -167,7 +167,7 @@ fun DigitalClockHeader(
                     contentDescription = "MaoneArt Flow",
                     modifier = Modifier
                         .fillMaxWidth(0.98f)
-                        .height(118.dp),
+                        .height(106.dp),
                     contentScale = ContentScale.Fit,
                     alignment = Alignment.Center
                 )
@@ -301,11 +301,11 @@ fun DigitalClockHeader(
             // --- 2B. MAONEART CLASSIC MINIMALIST DIGITAL CLOCK ---
             Text(
                 text = timeString,
-                fontSize = 62.sp,
+                fontSize = 54.sp,
                 fontWeight = FontWeight.Light,
                 letterSpacing = (-2.5).sp,
                 color = FlowTextPrimary,
-                lineHeight = 62.sp,
+                lineHeight = 54.sp,
                 modifier = Modifier
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -328,7 +328,7 @@ fun DigitalClockHeader(
                     }
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // ELEGANT DATE & BATTERY STATUS ROW
             Row(

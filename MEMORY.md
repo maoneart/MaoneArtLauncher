@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.23)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.24)
 
 ---
 
@@ -234,3 +234,15 @@
         2. Membungkus seluruh coroutine scroll (`safeScrollToLetter`, `BackHandler`, `LaunchedEffect`) dengan `try-catch (_: Throwable)` dan validasi batas `coerceAtLeast(0)`.
         3. Menambahkan blok `try-finally` pada pointer gesture loop `AlphabetWaveScroller` agar status sentuhan selalu bersih saat diinterupsi oleh gesture navbar.
         4. Mengoptimalkan `resetToHomeScreen()` agar hanya mengupdate StateFlow yang nilainya benar-benar berubah, serta membungkus pemanggilan `onNewIntent` dengan `try-catch`.
+  - **Perbaikan Glitch Abjad Terpotong Vertikal pada Mode MaoneArt Classic (Release v1.0.24)**:
+    - **Solusi Huruf Scroller A-Z Terpotong Bawah**:
+      - Root Cause:
+        1. Di mode Classic, header jam besar 62sp dan logo grafiti 118dp memakan tinggi ~340dp, menyisakan area vertikal terbatas (~310dp) untuk Row.
+        2. Dengan 27 huruf abjad, tinggi per item Box tertekan hingga ~11.5dp.
+        3. Font bawaan Android mengaktifkan `includeFontPadding = true` secara default dan ukuran font statis `10.5.sp` membutuhkan tinggi minimal ~16dp. Akibatnya, Canvas teks di-clip oleh Compose di batas `maxHeight`, memotong ~40% bagian bawah setiap huruf (B menyerupai R tanpa lengkung bawah, D seperti n, E seperti F, O seperti lengkung atas, U seperti dua garis, dan Z seperti 7).
+      - Solusi:
+        1. Mengimplementasikan tipografi adaptif di `AlphabetWaveScroller.kt`: `letterFontSize` dan `letterLineHeight` dihitung dinamis proporsional terhadap `itemHeightDp` (`(itemHeightDp * 0.70f).coerceIn(7.5f, 10.5f).sp`).
+        2. Mengaktifkan `PlatformTextStyle(includeFontPadding = false)` dan `LineHeightStyle(Alignment.Center, Trim.Both)` untuk menghilangkan font padding liar dan menempatkan glif huruf tepat di tengah em-box.
+        3. Menambahkan `wrapContentSize(Alignment.Center, unbounded = true)` pada teks agar Canvas teks tidak terpotong saat terjadi pembulatan sub-piksel.
+        4. Mengurangi padding vertikal `Column` scroller dari `top = 8.dp, bottom = 18.dp` menjadi `top = 2.dp, bottom = 4.dp`, mengembalikan ruang vertikal bebas sebesar ~20dp ke abjad A-Z.
+        5. Mengalibrasi tinggi header di `DigitalClockHeader.kt` (grafiti logo `106.dp`, padding `8.dp`, jam classic `54.sp`), memberikan ruang bernapas ekstra ~32dp sehingga abjad A-Z tampil 100% utuh, proporsional, dan tajam di semua tema.

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +41,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -190,10 +194,10 @@ fun AlphabetWaveScroller(
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(
-                    top = 8.dp,
-                    bottom = 18.dp,
-                    start = if (isRightSide) 0.dp else 8.dp,
-                    end = if (isRightSide) 8.dp else 0.dp
+                    top = 2.dp,
+                    bottom = 4.dp,
+                    start = if (isRightSide) 0.dp else 6.dp,
+                    end = if (isRightSide) 6.dp else 0.dp
                 )
                 .onGloballyPositioned { coordinates ->
                     columnHeight = coordinates.size.height.toFloat()
@@ -205,6 +209,12 @@ fun AlphabetWaveScroller(
             val waveRadiusPx = with(density) { 180.dp.toPx() }
             val maxDisplacementPx = with(density) { (if (isRightSide) -68.dp else 68.dp).toPx() }
             val itemHeight = if (columnHeight > 0f) columnHeight / alphabet.size else 22f
+            val itemHeightDp = with(density) {
+                if (columnHeight > 0f) (columnHeight / alphabet.size).toDp() else 16.dp
+            }
+            // Adaptive typography: dynamically scales font & line-height to fit compact headers without vertical glyph clipping
+            val letterFontSize = (itemHeightDp.value * 0.70f).coerceIn(7.5f, 10.5f).sp
+            val letterLineHeight = (itemHeightDp.value * 0.85f).coerceIn(8.5f, 12f).sp
 
             alphabet.forEachIndexed { i, letter ->
                 val letterCenterY = columnTopY + (i + 0.5f) * itemHeight
@@ -252,7 +262,18 @@ fun AlphabetWaveScroller(
 
                     Text(
                         text = letter.toString(),
-                        fontSize = 10.5.sp,
+                        style = TextStyle(
+                            fontSize = letterFontSize,
+                            lineHeight = letterLineHeight,
+                            @Suppress("DEPRECATION")
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            lineHeightStyle = LineHeightStyle(
+                                alignment = LineHeightStyle.Alignment.Center,
+                                trim = LineHeightStyle.Trim.Both
+                            )
+                        ),
                         fontWeight = when {
                             isApex -> FontWeight.ExtraBold
                             hasApps -> FontWeight.Bold
@@ -266,7 +287,8 @@ fun AlphabetWaveScroller(
                         softWrap = false,
                         maxLines = 1,
                         overflow = TextOverflow.Visible,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.wrapContentSize(Alignment.Center, unbounded = true)
                     )
                 }
             }
