@@ -60,6 +60,7 @@ import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+@Suppress("DEPRECATION")
 @Composable
 fun AlphabetWaveScroller(
     availableLetters: Set<Char>,
@@ -215,6 +216,17 @@ fun AlphabetWaveScroller(
             // Adaptive typography: dynamically scales font & line-height to fit compact headers without vertical glyph clipping
             val letterFontSize = (itemHeightDp.value * 0.70f).coerceIn(7.5f, 10.5f).sp
             val letterLineHeight = (itemHeightDp.value * 0.85f).coerceIn(8.5f, 12f).sp
+            val letterBaseStyle = TextStyle(
+                fontSize = letterFontSize,
+                lineHeight = letterLineHeight,
+                platformStyle = PlatformTextStyle(
+                    includeFontPadding = false
+                ),
+                lineHeightStyle = LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center,
+                    trim = LineHeightStyle.Trim.Both
+                )
+            )
 
             alphabet.forEachIndexed { i, letter ->
                 val letterCenterY = columnTopY + (i + 0.5f) * itemHeight
@@ -262,18 +274,7 @@ fun AlphabetWaveScroller(
 
                     Text(
                         text = letter.toString(),
-                        style = TextStyle(
-                            fontSize = letterFontSize,
-                            lineHeight = letterLineHeight,
-                            @Suppress("DEPRECATION")
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            ),
-                            lineHeightStyle = LineHeightStyle(
-                                alignment = LineHeightStyle.Alignment.Center,
-                                trim = LineHeightStyle.Trim.Both
-                            )
-                        ),
+                        style = letterBaseStyle,
                         fontWeight = when {
                             isApex -> FontWeight.ExtraBold
                             hasApps -> FontWeight.Bold
