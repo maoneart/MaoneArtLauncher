@@ -238,14 +238,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         val letters = finalDisplayApps.map { it.firstLetter }.toSet()
-
-        // Compute index mapping for instant alphabet jump
-        val indices = mutableMapOf<Char, Int>()
-        finalDisplayApps.forEachIndexed { index, app ->
-            if (!indices.containsKey(app.firstLetter)) {
-                indices[app.firstLetter] = index
-            }
-        }
+        val indices = computeAlphabetIndices(finalDisplayApps)
 
         HomeUiState(
             allApps = visibleApps,
@@ -278,10 +271,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = run {
             val cached = AppRepository.getCachedApps() ?: emptyList()
             val letters = cached.map { it.firstLetter }.toSet()
-            val indices = mutableMapOf<Char, Int>()
-            cached.forEachIndexed { idx, app ->
-                if (!indices.containsKey(app.firstLetter)) indices[app.firstLetter] = idx
-            }
+            val indices = computeAlphabetIndices(cached)
             HomeUiState(
                 allApps = cached,
                 displayApps = cached,
@@ -290,6 +280,51 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
     )
+
+    private fun computeAlphabetIndices(apps: List<AppInfo>): Map<Char, Int> {
+        if (apps.isEmpty()) return emptyMap()
+        val exactIndices = mutableMapOf<Char, Int>()
+        apps.forEachIndexed { index, app ->
+            if (!exactIndices.containsKey(app.firstLetter)) {
+                exactIndices[app.firstLetter] = index
+            }
+        }
+
+        val fullAlphabet = ('A'..'Z').toList() + listOf('#')
+        val completeIndices = mutableMapOf<Char, Int>()
+
+        for (i in fullAlphabet.indices) {
+            val letter = fullAlphabet[i]
+            val exact = exactIndices[letter]
+            if (exact != null) {
+                completeIndices[letter] = exact
+            } else {
+                // Find nearest forward letter with apps
+                var foundIndex: Int? = null
+                for (f in (i + 1) until fullAlphabet.size) {
+                    val fLetter = fullAlphabet[f]
+                    if (exactIndices.containsKey(fLetter)) {
+                        foundIndex = exactIndices[fLetter]
+                        break
+                    }
+                }
+                // If no forward, find nearest backward letter with apps
+                if (foundIndex == null) {
+                    for (b in (i - 1) downTo 0) {
+                        val bLetter = fullAlphabet[b]
+                        if (exactIndices.containsKey(bLetter)) {
+                            foundIndex = exactIndices[bLetter]
+                            break
+                        }
+                    }
+                }
+                if (foundIndex != null) {
+                    completeIndices[letter] = foundIndex
+                }
+            }
+        }
+        return completeIndices
+    }
 
     fun checkNotificationPermission() {
         _hasNotificationAccess.value = NotificationService.isNotificationAccessGranted(getApplication())

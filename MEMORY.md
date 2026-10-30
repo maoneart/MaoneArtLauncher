@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.17)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.18)
 
 ---
 
@@ -157,3 +157,15 @@
         3. Nama aplikasi pendek ("DANA", "Copilot", "Dark War", "Daya Auto", "Discord", "Dokumen") tetap rapi di 1 baris.
         4. Nama aplikasi panjang ("Clash of Clans", "Digital Korlantas", dll.) otomatis membungkus ke 2 baris ("Clash of" / "Clans", "Digital" / "Korlantas") dan 100% terkunci rapi di dalam kolom dinding tanpa menyenggol karakter anime.
         5. Menambahkan switch kustomisasi persisten di `LauncherSettingsBottomSheet.kt`: "Nama Aplikasi 2 Baris" (aktif secara default).
+  - **Penyempurnaan Audit Sistem & Logika Arsitektur (Release v1.0.18)**:
+    - **Proteksi Anti Soft-Lock Launcher Sendiri**:
+      - Pada `AppActionBottomSheet.kt`, jika paket aplikasi adalah launcher (`id.maoneart.flow`), opsi "Sembunyikan dari Daftar" dan "Hapus Instalasi (Uninstall)" otomatis disembunyikan untuk mencegah hilangnya akses pengaturan. Tombol "Buka Pengaturan Flow" disematkan sebagai akses alternatif langsung.
+    - **Akurasi Peluncuran Multi-Activity App**:
+      - Menggunakan peluncuran eksplisit `ComponentName(app.packageName, app.activityName)` dengan fallback ke `packageManager.getLaunchIntentForPackage()` pada `AppRepository.kt`, menjamin shortcut/aktivitas launcher sekunder terbuka tepat sesuai sasaran.
+    - **Zero Dead-Zone Alphabet Wave Scroller**:
+      - Mengembangkan algoritma `computeAlphabetIndices` pada `HomeViewModel.kt` yang memetakan seluruh 27 huruf (A-Z + #) ke huruf aktif terdekat (*nearest forward/backward available letter*). Scrolling alfabet kini 100% mulus tanpa ada titik mati saat melewati huruf tanpa aplikasi (Q, X, Z, dll).
+    - **Hierarki Navigasi Backhandler Komprehensif**:
+      - Mengurutkan konsumsi tombol Back: Dialog Kategori -> App Action Sheet -> Settings -> Search -> Kategori "Semua" -> Scroll to Top.
+    - **Sinkronisasi Detik Jam Sub-Detik & Sensor Suhu Dinamis**:
+      - Sinkronisasi loop jam di `DigitalClockHeader.kt` ke detik `00` menit berikutnya secara presisi (`60000L - (nowMs % 60000L)`).
+      - Menampilkan suhu baterai real-time dari sensor hardware Android (`BatteryManager.EXTRA_TEMPERATURE`) pada tema Niagara Trio Pills.

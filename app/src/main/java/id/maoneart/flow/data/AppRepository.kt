@@ -1,6 +1,7 @@
 package id.maoneart.flow.data
 
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -227,6 +228,21 @@ class AppRepository(private val context: Context) {
     }
 
     fun launchApp(app: AppInfo): Boolean {
+        // 1. Try launching with explicit ComponentName (accurate for apps with multiple launcher activities)
+        if (app.activityName.isNotBlank()) {
+            try {
+                val component = ComponentName(app.packageName, app.activityName)
+                val intent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                    this.component = component
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                }
+                context.startActivity(intent)
+                return true
+            } catch (_: Throwable) {}
+        }
+
+        // 2. Fallback to package launcher intent
         return try {
             val intent = packageManager.getLaunchIntentForPackage(app.packageName)?.apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)

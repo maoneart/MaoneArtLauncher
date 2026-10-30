@@ -100,13 +100,27 @@ fun HomeScreen(
     }
 
     // Back Navigation Hierarchy (Strict Zero Leakage Focus):
-    // 1. If settings open -> close settings
-    // 2. If searching -> clear search query
-    // 3. If in a specific category (e.g. Game) -> return to "all" (Semua) category & reset chip to index 0
-    // 4. If scrolled down in "all" category -> smoothly scroll back to top
-    // 5. If already at top and in "all" -> lock chip to 0 and consume event so it never leaks focus
+    // 1. If category dialog open -> close dialog
+    // 2. If app action sheet open -> close sheet
+    // 3. If settings open -> close settings
+    // 4. If searching -> clear search query
+    // 5. If in a specific category (e.g. Game) -> return to "all" (Semua) category & reset chip to index 0
+    // 6. If scrolled down in "all" category -> smoothly scroll back to top
+    // 7. If already at top and in "all" -> lock chip to 0 and consume event so it never leaks focus
     BackHandler(enabled = true) {
         when {
+            appForCategoryChange != null -> {
+                viewModel.openCategoryChangeDialog(null)
+            }
+            categoryToDelete != null -> {
+                viewModel.openDeleteCategoryDialog(null)
+            }
+            isCreateCategoryOpen -> {
+                viewModel.openCreateCategoryDialog(false)
+            }
+            uiState.selectedApp != null -> {
+                viewModel.selectAppForAction(null)
+            }
             uiState.isSettingsOpen -> {
                 viewModel.openSettings(false)
             }
@@ -435,6 +449,10 @@ fun HomeScreen(
                 iconDrawable = viewModel.getAppIcon(app.packageName),
                 onDismiss = { viewModel.selectAppForAction(null) },
                 onLaunch = { viewModel.launchApp(app) },
+                onOpenSettings = {
+                    viewModel.selectAppForAction(null)
+                    viewModel.openSettings(true)
+                },
                 onToggleFavorite = { viewModel.toggleFavorite(app) },
                 onChangeCategory = { viewModel.openCategoryChangeDialog(app) },
                 onOpenInfo = { viewModel.openAppDetails(app) },

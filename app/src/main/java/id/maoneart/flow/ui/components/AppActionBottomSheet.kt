@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -57,10 +58,12 @@ fun AppActionBottomSheet(
     onChangeCategory: () -> Unit,
     onOpenInfo: () -> Unit,
     onUninstall: () -> Unit,
-    onToggleHidden: () -> Unit
+    onToggleHidden: () -> Unit,
+    onOpenSettings: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
+    val isSelf = (app.packageName == context.packageName)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -128,71 +131,94 @@ fun AppActionBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Action: Launch
-            ActionItem(
-                icon = Icons.Rounded.PlayArrow,
-                title = "Buka Aplikasi",
-                iconTint = FlowElectricBlue,
-                onClick = {
-                    onDismiss()
-                    onLaunch()
-                }
-            )
+            if (isSelf) {
+                // Self (Launcher): Provide direct access to Launcher Settings and App Info, protect against hiding/uninstall
+                ActionItem(
+                    icon = Icons.Rounded.Settings,
+                    title = "Buka Pengaturan Flow",
+                    iconTint = FlowElectricBlue,
+                    onClick = {
+                        onDismiss()
+                        onOpenSettings?.invoke()
+                    }
+                )
 
-            // Action: Favorite Toggle
-            ActionItem(
-                icon = if (app.isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                title = if (app.isFavorite) "Hapus dari Favorit" else "Jadikan Favorit",
-                iconTint = FlowOrange,
-                onClick = {
-                    onToggleFavorite()
-                    onDismiss()
-                }
-            )
+                ActionItem(
+                    icon = Icons.Rounded.Info,
+                    title = "Info Aplikasi",
+                    iconTint = FlowElectricBlue,
+                    onClick = {
+                        onDismiss()
+                        onOpenInfo()
+                    }
+                )
+            } else {
+                // Action: Launch
+                ActionItem(
+                    icon = Icons.Rounded.PlayArrow,
+                    title = "Buka Aplikasi",
+                    iconTint = FlowElectricBlue,
+                    onClick = {
+                        onDismiss()
+                        onLaunch()
+                    }
+                )
 
-            // Action: Change Category
-            ActionItem(
-                icon = Icons.Rounded.Folder,
-                title = "Ubah Kategori (${app.categoryTitle})",
-                iconTint = FlowElectricBlue,
-                onClick = {
-                    onDismiss()
-                    onChangeCategory()
-                }
-            )
+                // Action: Favorite Toggle
+                ActionItem(
+                    icon = if (app.isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                    title = if (app.isFavorite) "Hapus dari Favorit" else "Jadikan Favorit",
+                    iconTint = FlowOrange,
+                    onClick = {
+                        onToggleFavorite()
+                        onDismiss()
+                    }
+                )
 
-            // Action: App Info
-            ActionItem(
-                icon = Icons.Rounded.Info,
-                title = "Info Aplikasi",
-                iconTint = FlowElectricBlue,
-                onClick = {
-                    onDismiss()
-                    onOpenInfo()
-                }
-            )
+                // Action: Change Category
+                ActionItem(
+                    icon = Icons.Rounded.Folder,
+                    title = "Ubah Kategori (${app.categoryTitle})",
+                    iconTint = FlowElectricBlue,
+                    onClick = {
+                        onDismiss()
+                        onChangeCategory()
+                    }
+                )
 
-            // Action: Hide
-            ActionItem(
-                icon = Icons.Rounded.VisibilityOff,
-                title = "Sembunyikan dari Daftar",
-                iconTint = FlowTextSecondary,
-                onClick = {
-                    onToggleHidden()
-                    onDismiss()
-                }
-            )
+                // Action: App Info
+                ActionItem(
+                    icon = Icons.Rounded.Info,
+                    title = "Info Aplikasi",
+                    iconTint = FlowElectricBlue,
+                    onClick = {
+                        onDismiss()
+                        onOpenInfo()
+                    }
+                )
 
-            // Action: Uninstall
-            ActionItem(
-                icon = Icons.Rounded.Delete,
-                title = "Hapus Instalasi (Uninstall)",
-                iconTint = FlowRed,
-                onClick = {
-                    onDismiss()
-                    onUninstall()
-                }
-            )
+                // Action: Hide
+                ActionItem(
+                    icon = Icons.Rounded.VisibilityOff,
+                    title = "Sembunyikan dari Daftar",
+                    iconTint = FlowTextSecondary,
+                    onClick = {
+                        onToggleHidden()
+                        onDismiss()
+                    }
+                )
+
+                // Action: Uninstall
+                ActionItem(
+                    icon = Icons.Rounded.Delete,
+                    title = "Hapus Instalasi (Uninstall)",
+                    iconTint = FlowRed,
+                    onClick = {
+                        onDismiss()
+                        onUninstall()
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.height(28.dp))
         }

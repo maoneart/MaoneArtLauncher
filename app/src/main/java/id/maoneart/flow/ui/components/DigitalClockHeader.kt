@@ -73,6 +73,7 @@ fun DigitalClockHeader(
     var dateString by remember { mutableStateOf("") }
     var fullDateString by remember { mutableStateOf("") }
     var batteryLevel by remember { mutableIntStateOf(100) }
+    var batteryTemp by remember { mutableIntStateOf(28) }
     var isCharging by remember { mutableStateOf(false) }
 
     LaunchedEffect(is24Hour) {
@@ -89,7 +90,7 @@ fun DigitalClockHeader(
             dateString = shortDateFormat.format(now)
             fullDateString = fullDateFormat.format(now)
 
-            // Update live battery status
+            // Update live battery status & hardware temperature
             try {
                 val batteryStatus = context.registerReceiver(
                     null,
@@ -100,12 +101,19 @@ fun DigitalClockHeader(
                 if (level >= 0 && scale > 0) {
                     batteryLevel = (level * 100) / scale
                 }
+                val rawTemp = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: -1
+                if (rawTemp > 0) {
+                    batteryTemp = rawTemp / 10
+                }
                 val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
                 isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                              status == BatteryManager.BATTERY_STATUS_FULL
             } catch (_: Throwable) {}
 
-            delay(15000L)
+            // Synchronize delay exactly to the start of the next minute (sub-second accuracy with Android status bar)
+            val nowMs = System.currentTimeMillis()
+            val delayUntilNextMinute = (60000L - (nowMs % 60000L) + 50L).coerceIn(1000L, 60000L)
+            delay(delayUntilNextMinute)
         }
     }
 
@@ -256,7 +264,7 @@ fun DigitalClockHeader(
                             letterSpacing = 1.4.sp
                         )
                         Text(
-                            text = "⚡ $batteryLevel% • Cerah 28°C",
+                            text = if (isCharging) "⚡ $batteryLevel% (Mengisi) • Cerah ${batteryTemp}°C" else "⚡ $batteryLevel% • Cerah ${batteryTemp}°C",
                             fontSize = 13.sp,
                             color = FlowTextSecondary
                         )
