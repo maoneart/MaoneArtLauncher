@@ -1,5 +1,6 @@
 package id.maoneart.flow.ui.components
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -76,6 +78,39 @@ fun DigitalClockHeader(
     var batteryTemp by remember { mutableIntStateOf(28) }
     var isCharging by remember { mutableStateOf(false) }
 
+    // Instant real-time battery & charging listener (0ms reaction when charger is plugged or unplugged)
+    DisposableEffect(context) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context?, intent: Intent?) {
+                intent?.let { batteryStatus ->
+                    val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                    val scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                    if (level >= 0 && scale > 0) {
+                        batteryLevel = (level * 100) / scale
+                    }
+                    val rawTemp = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+                    if (rawTemp > 0) {
+                        batteryTemp = rawTemp / 10
+                    }
+                    val status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                    isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                                 status == BatteryManager.BATTERY_STATUS_FULL
+                }
+            }
+        }
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        try {
+            val initial = context.registerReceiver(receiver, filter)
+            initial?.let { receiver.onReceive(context, it) }
+        } catch (_: Throwable) {}
+
+        onDispose {
+            try {
+                context.unregisterReceiver(receiver)
+            } catch (_: Throwable) {}
+        }
+    }
+
     LaunchedEffect(is24Hour) {
         val localeId = Locale("id", "ID")
         val timeFormat = SimpleDateFormat(if (is24Hour) "HH:mm" else "hh:mm a", localeId)
@@ -89,26 +124,6 @@ fun DigitalClockHeader(
             dayOfWeekString = dayFormat.format(now).uppercase()
             dateString = shortDateFormat.format(now)
             fullDateString = fullDateFormat.format(now)
-
-            // Update live battery status & hardware temperature
-            try {
-                val batteryStatus = context.registerReceiver(
-                    null,
-                    IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-                )
-                val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-                val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-                if (level >= 0 && scale > 0) {
-                    batteryLevel = (level * 100) / scale
-                }
-                val rawTemp = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: -1
-                if (rawTemp > 0) {
-                    batteryTemp = rawTemp / 10
-                }
-                val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-                isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                             status == BatteryManager.BATTERY_STATUS_FULL
-            } catch (_: Throwable) {}
 
             // Synchronize delay exactly to the start of the next minute (sub-second accuracy with Android status bar)
             val nowMs = System.currentTimeMillis()

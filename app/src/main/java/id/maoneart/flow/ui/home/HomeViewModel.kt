@@ -451,6 +451,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setShowCategories(show: Boolean) {
+        if (!show) {
+            _selectedCategoryId.value = "all"
+        }
         viewModelScope.launch { preferencesRepository.setShowCategories(show) }
     }
 

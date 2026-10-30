@@ -418,11 +418,12 @@ fun HomeScreen(
 
         // Floating Google/Search Button (Active when searchAsIcon is true and not searching, comfortably above system navbar)
         if (uiState.searchAsIcon && !uiState.isSearching) {
+            val searchButtonEndPadding = if (uiState.showAlphabetScroller && uiState.alphabetSide == "right") 64.dp else 20.dp
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
-                    .padding(end = 20.dp, bottom = 48.dp)
+                    .padding(end = searchButtonEndPadding, bottom = 48.dp)
                     .size(52.dp)
                     .shadow(14.dp, CircleShape)
                     .clip(CircleShape)

@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.19)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.20)
 
 ---
 
@@ -181,3 +181,14 @@
       - Membungkus seluruh aliran data DataStore dengan `.catch { if (it is IOException) emit(emptyPreferences()) }` di `PreferencesRepository.kt` untuk mencegah force close jika file preferensi korup saat baterai drop.
     - **Handler `onNewIntent` Tombol Home**:
       - Menambahkan override `onNewIntent` di `MainActivity.kt` yang memanggil `viewModel.resetToHomeScreen()` untuk mengembalikan status launcher ke beranda bersih saat tombol Home fisik/gesture ditekan.
+  - **Penyempurnaan Gestur, Status Bar Kontras, & Baterai Real-Time (Release v1.0.20)**:
+    - **Anti Collision Tombol Search "G" vs Scroller Alfabet A-Z**:
+      - Di `HomeScreen.kt`, padding horizontal tombol search "G" otomatis bergeser ke kiri (`end = 64.dp`) saat scroller A-Z aktif di kanan, dan kembali ke `end = 20.dp` saat scroller A-Z disembunyikan. Menghilangkan tabrakan sentuh pada huruf W, X, Y, Z, dan #.
+    - **Pencegahan Soft-Lock Filter Kategori**:
+      - Di `HomeViewModel.kt`, saat pengguna mematikan saklar "Tampilkan Baris Kategori", filter kategori otomatis direset kembali ke master `"all"`.
+    - **Full-Row Touch Target pada Baris Pengaturan**:
+      - Di `LauncherSettingsBottomSheet.kt`, seluruh baris `SettingsSwitchRow` dibuat dapat diklik (`Modifier.clickable { onCheckedChange(!checked) }`) untuk kemudahan aktivasi toggle.
+    - **Baterai & Pengisian Daya Real-Time (0ms Delay)**:
+      - Di `DigitalClockHeader.kt`, mengintegrasikan `DisposableEffect` broadcast receiver untuk `ACTION_BATTERY_CHANGED`. Status petir `⚡`, persentase baterai, dan suhu hardware langsung berubah seketika saat kabel charger dicolokkan atau dicabut.
+    - **Kontras Ikon Status Bar Android**:
+      - Di `MainActivity.kt`, menerapkan `SystemBarStyle.dark(Color.TRANSPARENT)` pada `enableEdgeToEdge()` agar teks dan ikon status bar Android selalu putih terang dan estetik di semua tema sistem.

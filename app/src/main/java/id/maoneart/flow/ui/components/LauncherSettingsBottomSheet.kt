@@ -331,6 +331,8 @@ private fun SettingsSwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onCheckedChange(!checked) }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
