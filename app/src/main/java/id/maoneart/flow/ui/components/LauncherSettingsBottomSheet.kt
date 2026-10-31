@@ -1,6 +1,5 @@
 package id.maoneart.flow.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,9 +18,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -143,36 +150,28 @@ fun LauncherSettingsBottomSheet(
             // --- 1. WIDGET & HEADER THEME SECTION ---
             SettingsSectionHeader(title = "TEMA WIDGET & HEADER")
 
-            Text(
-                text = "Pilih Gaya Widget",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = FlowTextPrimary,
-                modifier = Modifier.padding(bottom = 8.dp)
+            SettingsDropdownRow(
+                title = "Gaya Widget & Header",
+                subtitle = "Pilih desain jam digital & kartu informasi launcher",
+                selectedTitle = when (widgetTheme) {
+                    "niagara_pills" -> "Niagara Trio Pills"
+                    else -> "MaoneArt Classic"
+                },
+                options = listOf(
+                    DropdownOption(
+                        key = "classic",
+                        title = "MaoneArt Classic",
+                        subtitle = "Jam tipografi besar + kalender & info baterai"
+                    ),
+                    DropdownOption(
+                        key = "niagara_pills",
+                        title = "Niagara Trio Pills",
+                        subtitle = "Kartu kapsul neon cuaca, kalender, dan baterai"
+                    )
+                ),
+                selectedKey = widgetTheme,
+                onSelect = onSelectWidgetTheme
             )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                WidgetThemeOptionCard(
-                    title = "MaoneArt Classic",
-                    subtitle = "Jam tipografi besar + kalender",
-                    isSelected = widgetTheme == "classic",
-                    onClick = { onSelectWidgetTheme("classic") },
-                    modifier = Modifier.weight(1f)
-                )
-
-                WidgetThemeOptionCard(
-                    title = "Niagara Trio Pills",
-                    subtitle = "Kartu kapsul neon (Bug Theme)",
-                    isSelected = widgetTheme == "niagara_pills",
-                    onClick = { onSelectWidgetTheme("niagara_pills") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
 
             SettingsSwitchRow(
                 title = "Tampilkan Banner Grafiti MaoneArt",
@@ -194,61 +193,40 @@ fun LauncherSettingsBottomSheet(
             )
 
             if (searchAsIcon) {
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "Aksi Long-Press Tombol 'G'",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = FlowTextPrimary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                SettingsDropdownRow(
+                    title = "Aksi Long-Press Tombol 'G'",
+                    subtitle = "Tindakan saat tombol logo 'G' ditekan lama",
+                    selectedTitle = when (searchLongPressAction) {
+                        "gemini" -> "Google Gemini"
+                        "chatgpt" -> "OpenAI ChatGPT"
+                        "assistant" -> "Google Assistant"
+                        else -> "Menu Pilihan AI"
+                    },
+                    options = listOf(
+                        DropdownOption(
+                            key = "menu",
+                            title = "Menu Pilihan AI",
+                            subtitle = "Tampilkan dialog pilihan Gemini, ChatGPT & Asisten"
+                        ),
+                        DropdownOption(
+                            key = "gemini",
+                            title = "Google Gemini",
+                            subtitle = "Langsung buka Google Gemini (Aplikasi / Web)"
+                        ),
+                        DropdownOption(
+                            key = "chatgpt",
+                            title = "OpenAI ChatGPT",
+                            subtitle = "Langsung buka ChatGPT (Aplikasi / Web)"
+                        ),
+                        DropdownOption(
+                            key = "assistant",
+                            title = "Google Assistant",
+                            subtitle = "Buka asisten suara sistem Android"
+                        )
+                    ),
+                    selectedKey = searchLongPressAction,
+                    onSelect = onSelectSearchLongPressAction
                 )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    WidgetThemeOptionCard(
-                        title = "Menu Pilihan AI",
-                        subtitle = "Buka sheet Gemini & ChatGPT",
-                        isSelected = searchLongPressAction == "menu",
-                        onClick = { onSelectSearchLongPressAction("menu") },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    WidgetThemeOptionCard(
-                        title = "Google Gemini",
-                        subtitle = "Langsung buka Gemini",
-                        isSelected = searchLongPressAction == "gemini",
-                        onClick = { onSelectSearchLongPressAction("gemini") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    WidgetThemeOptionCard(
-                        title = "ChatGPT",
-                        subtitle = "Langsung buka ChatGPT",
-                        isSelected = searchLongPressAction == "chatgpt",
-                        onClick = { onSelectSearchLongPressAction("chatgpt") },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    WidgetThemeOptionCard(
-                        title = "Google Assistant",
-                        subtitle = "Asisten suara sistem Android",
-                        isSelected = searchLongPressAction == "assistant",
-                        onClick = { onSelectSearchLongPressAction("assistant") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -492,44 +470,124 @@ private fun SettingsSwitchRow(
     }
 }
 
+data class DropdownOption(
+    val key: String,
+    val title: String,
+    val subtitle: String = ""
+)
+
 @Composable
-private fun WidgetThemeOptionCard(
+private fun SettingsDropdownRow(
     title: String,
-    subtitle: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
+    subtitle: String? = null,
+    selectedTitle: String,
+    options: List<DropdownOption>,
+    selectedKey: String,
+    onSelect: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) FlowElectricBlue else Color(0x22FFFFFF),
-        label = "border_color"
-    )
-    val bgColor by animateColorAsState(
-        targetValue = if (isSelected) FlowElectricBlue.copy(alpha = 0.18f) else Color(0x14FFFFFF),
-        label = "bg_color"
-    )
+    var expanded by remember { mutableStateOf(false) }
 
-    Box(
+    Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(bgColor)
-            .border(1.5.dp, borderColor, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(12.dp)
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = title,
-                fontSize = 13.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (isSelected) FlowElectricBlue else FlowTextPrimary
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = FlowTextPrimary
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = subtitle,
-                fontSize = 10.sp,
-                color = FlowTextSecondary
-            )
+            if (!subtitle.isNullOrEmpty()) {
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = FlowTextSecondary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0x18FFFFFF))
+                    .border(
+                        1.dp,
+                        if (expanded) FlowCyan else Color(0x22FFFFFF),
+                        RoundedCornerShape(12.dp)
+                    )
+                    .clickable { expanded = !expanded }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = selectedTitle,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = FlowCyan,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Icon(
+                    imageVector = if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = if (expanded) FlowCyan else FlowTextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .fillMaxWidth(0.88f)
+                    .background(Color(0xF5181920))
+                    .border(1.dp, Color(0x3300E5FF), RoundedCornerShape(14.dp))
+            ) {
+                options.forEach { option ->
+                    val isSelected = (option.key == selectedKey)
+                    DropdownMenuItem(
+                        text = {
+                            Column(modifier = Modifier.padding(vertical = 2.dp)) {
+                                Text(
+                                    text = option.title,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) FlowCyan else FlowTextPrimary
+                                )
+                                if (option.subtitle.isNotEmpty()) {
+                                    Text(
+                                        text = option.subtitle,
+                                        fontSize = 10.5.sp,
+                                        color = FlowTextSecondary
+                                    )
+                                }
+                            }
+                        },
+                        trailingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = FlowCyan,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        } else null,
+                        onClick = {
+                            onSelect(option.key)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }

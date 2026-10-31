@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.25)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.26)
 
 ---
 
@@ -256,3 +256,8 @@
       3. Opsi "Ingat pilihan saya" untuk langsung membuka asisten AI favorit di masa mendatang tanpa dialog perantara.
       4. Menu pengaturan baru di `LauncherSettingsBottomSheet.kt`: "Aksi Long-Press Tombol 'G'" dengan 4 opsi instan (Menu Pilihan AI, Gemini, ChatGPT, dan Asisten Suara).
       5. Menambahkan query package visibility di `AndroidManifest.xml` (`<queries>`) untuk paket Gemini, ChatGPT, dan asisten suara sistem Android.
+  - **Transformasi Pilihan Tema Widget & Asisten AI Menjadi Dropdown Menu Elegan (Release v1.0.26 - 31 Okt 2026)**:
+    - **Solusi Desain Form Dropdown**:
+      - Menggantikan kartu pilihan ganda (`WidgetThemeOptionCard`) yang memakan ruang vertikal besar menjadi komponen dropdown kaca modern (`SettingsDropdownRow`).
+      - Diterapkan pada **Gaya Widget & Header** (MaoneArt Classic & Niagara Trio Pills) dan **Aksi Long-Press Tombol 'G'** (Menu Pilihan AI, Gemini, ChatGPT, Google Assistant).
+      - Dilengkapi trigger box dengan highlight cyan, chevron up/down dinamis, dropdown popup ber-border glowing, dan indikator checkmark pada item yang aktif.
