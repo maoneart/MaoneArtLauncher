@@ -37,6 +37,7 @@ class PreferencesRepository(private val context: Context) {
         val PURE_TRANSPARENT_BG = booleanPreferencesKey("pure_transparent_bg")
         val SHOW_CATEGORIES = booleanPreferencesKey("show_categories")
         val TWO_LINE_APP_NAMES = booleanPreferencesKey("two_line_app_names")
+        val SEARCH_LONG_PRESS_ACTION = stringPreferencesKey("search_long_press_action")
     }
 
     // IO-Safe preferences flow that catches any disk corruption gracefully without crashing the app
@@ -116,6 +117,10 @@ class PreferencesRepository(private val context: Context) {
 
     val twoLineAppNamesFlow: Flow<Boolean> = safePreferences.map { prefs ->
         prefs[Keys.TWO_LINE_APP_NAMES] ?: true
+    }
+
+    val searchLongPressActionFlow: Flow<String> = safePreferences.map { prefs ->
+        prefs[Keys.SEARCH_LONG_PRESS_ACTION] ?: "menu"
     }
 
     val customCategoriesFlow: Flow<List<String>> = safePreferences.map { prefs ->
@@ -312,5 +317,9 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun setTwoLineAppNames(enabled: Boolean) {
         safeEdit { prefs -> prefs[Keys.TWO_LINE_APP_NAMES] = enabled }
+    }
+
+    suspend fun setSearchLongPressAction(action: String) {
+        safeEdit { prefs -> prefs[Keys.SEARCH_LONG_PRESS_ACTION] = action }
     }
 }

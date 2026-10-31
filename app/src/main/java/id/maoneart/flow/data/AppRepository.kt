@@ -293,4 +293,77 @@ class AppRepository(private val context: Context) {
             context.startActivity(intent)
         } catch (_: Throwable) {}
     }
+
+    fun isPackageInstalled(packageName: String): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    fun launchPackage(packageName: String): Boolean {
+        return try {
+            val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+            }
+            if (intent != null) {
+                context.startActivity(intent)
+                true
+            } else {
+                false
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    fun launchWebUrl(url: String): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    fun launchVoiceAssistant(): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VOICE_COMMAND).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+            true
+        } catch (_: Throwable) {
+            try {
+                val assistIntent = Intent(Intent.ACTION_ASSIST).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(assistIntent)
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
+    }
+
+    fun launchGemini(): Boolean {
+        val geminiPackage = "com.google.android.apps.bard"
+        if (isPackageInstalled(geminiPackage) && launchPackage(geminiPackage)) {
+            return true
+        }
+        return launchWebUrl("https://gemini.google.com")
+    }
+
+    fun launchChatGpt(): Boolean {
+        val chatGptPackage = "com.openai.chatgpt"
+        if (isPackageInstalled(chatGptPackage) && launchPackage(chatGptPackage)) {
+            return true
+        }
+        return launchWebUrl("https://chatgpt.com")
+    }
 }

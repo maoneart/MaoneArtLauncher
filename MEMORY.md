@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.24)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.25)
 
 ---
 
@@ -246,3 +246,13 @@
         3. Menambahkan `wrapContentSize(Alignment.Center, unbounded = true)` pada teks agar Canvas teks tidak terpotong saat terjadi pembulatan sub-piksel.
         4. Mengurangi padding vertikal `Column` scroller dari `top = 8.dp, bottom = 18.dp` menjadi `top = 2.dp, bottom = 4.dp`, mengembalikan ruang vertikal bebas sebesar ~20dp ke abjad A-Z.
         5. Mengalibrasi tinggi header di `DigitalClockHeader.kt` (grafiti logo `106.dp`, padding `8.dp`, jam classic `54.sp`), memberikan ruang bernapas ekstra ~32dp sehingga abjad A-Z tampil 100% utuh, proporsional, dan tajam di semua tema.
+  - **Aksi Long-Press Tombol 'G' Membuka Asisten AI (Gemini & ChatGPT) (Release v1.0.25 - 31 Okt 2026)**:
+    - **Fitur Baru**:
+      1. Menambahkan gestur long-press taktil (`combinedClickable` + `haptics.heavyClick`) pada tombol floating logo "G" (`searchAsIcon`).
+      2. Membangun modal MaoneArt Glassmorphism `AiAssistantBottomSheet.kt` untuk memilih asisten AI favorit:
+         - **Google Gemini** (`com.google.android.apps.bard` / fallback Web `gemini.google.com`)
+         - **OpenAI ChatGPT** (`com.openai.chatgpt` / fallback Web `chatgpt.com`)
+         - **Google Assistant / Asisten Suara** (`ACTION_VOICE_COMMAND` / `ACTION_ASSIST`)
+      3. Opsi "Ingat pilihan saya" untuk langsung membuka asisten AI favorit di masa mendatang tanpa dialog perantara.
+      4. Menu pengaturan baru di `LauncherSettingsBottomSheet.kt`: "Aksi Long-Press Tombol 'G'" dengan 4 opsi instan (Menu Pilihan AI, Gemini, ChatGPT, dan Asisten Suara).
+      5. Menambahkan query package visibility di `AndroidManifest.xml` (`<queries>`) untuk paket Gemini, ChatGPT, dan asisten suara sistem Android.

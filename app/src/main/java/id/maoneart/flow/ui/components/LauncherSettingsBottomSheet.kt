@@ -51,6 +51,8 @@ fun LauncherSettingsBottomSheet(
     onToggleShowBanner: (Boolean) -> Unit,
     searchAsIcon: Boolean,
     onToggleSearchAsIcon: (Boolean) -> Unit,
+    searchLongPressAction: String = "menu",
+    onSelectSearchLongPressAction: (String) -> Unit = {},
     widgetTheme: String,
     onSelectWidgetTheme: (String) -> Unit,
     showAlphabetScroller: Boolean,
@@ -182,14 +184,72 @@ fun LauncherSettingsBottomSheet(
             Spacer(modifier = Modifier.height(14.dp))
 
             // --- 2. PENCARIAN (SEARCH BAR) SECTION ---
-            SettingsSectionHeader(title = "GAYA PENCARIAN")
+            SettingsSectionHeader(title = "GAYA PENCARIAN & ASISTEN AI")
 
             SettingsSwitchRow(
-                title = "Search Bar Jadi Tombol Logo",
-                subtitle = "Tampilkan logo Google di kanan bawah (seperti di foto bug)",
+                title = "Tombol Cari Sebagai Ikon 'G'",
+                subtitle = "Tampilkan logo Google mengambang di pojok kanan bawah",
                 checked = searchAsIcon,
                 onCheckedChange = onToggleSearchAsIcon
             )
+
+            if (searchAsIcon) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Aksi Long-Press Tombol 'G'",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = FlowTextPrimary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    WidgetThemeOptionCard(
+                        title = "Menu Pilihan AI",
+                        subtitle = "Buka sheet Gemini & ChatGPT",
+                        isSelected = searchLongPressAction == "menu",
+                        onClick = { onSelectSearchLongPressAction("menu") },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    WidgetThemeOptionCard(
+                        title = "Google Gemini",
+                        subtitle = "Langsung buka Gemini",
+                        isSelected = searchLongPressAction == "gemini",
+                        onClick = { onSelectSearchLongPressAction("gemini") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    WidgetThemeOptionCard(
+                        title = "ChatGPT",
+                        subtitle = "Langsung buka ChatGPT",
+                        isSelected = searchLongPressAction == "chatgpt",
+                        onClick = { onSelectSearchLongPressAction("chatgpt") },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    WidgetThemeOptionCard(
+                        title = "Google Assistant",
+                        subtitle = "Asisten suara sistem Android",
+                        isSelected = searchLongPressAction == "assistant",
+                        onClick = { onSelectSearchLongPressAction("assistant") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 

@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Essential Android 11+ Package Visibility for Launcher -->
+    <!-- Essential Android 11+ Package Visibility for Launcher & AI Assistants -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.google.android.apps.bard" />
+        <package android:name="com.openai.chatgpt" />
+        <package android:name="com.google.android.googlequicksearchbox" />
+        <intent>
+            <action android:name="android.intent.action.VOICE_COMMAND" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.ASSIST" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 

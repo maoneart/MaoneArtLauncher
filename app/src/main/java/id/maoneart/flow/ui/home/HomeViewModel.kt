@@ -42,9 +42,20 @@ data class HomeUiState(
     val pureTransparentBg: Boolean = false,
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
+    val searchLongPressAction: String = "menu",
+    val isAiAssistantSheetOpen: Boolean = false,
+    val isGeminiInstalled: Boolean = false,
+    val isChatGptInstalled: Boolean = false,
     val isSettingsOpen: Boolean = false,
     val isHiddenAppsSheetOpen: Boolean = false,
     val selectedApp: AppInfo? = null
+)
+
+private data class InnerAppearance(
+    val pureBg: Boolean,
+    val showCats: Boolean,
+    val twoLine: Boolean,
+    val longPressAction: String
 )
 
 private data class AppearanceSettings(
@@ -54,7 +65,8 @@ private data class AppearanceSettings(
     val showAlphabetScroller: Boolean = true,
     val pureTransparentBg: Boolean = false,
     val showCategories: Boolean = true,
-    val twoLineAppNames: Boolean = true
+    val twoLineAppNames: Boolean = true,
+    val searchLongPressAction: String = "menu"
 )
 
 private data class GeneralSettings(
@@ -100,6 +112,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _isHiddenAppsSheetOpen = MutableStateFlow(false)
     val isHiddenAppsSheetOpen: StateFlow<Boolean> = _isHiddenAppsSheetOpen.asStateFlow()
 
+    private val _isAiAssistantSheetOpen = MutableStateFlow(false)
+    val isAiAssistantSheetOpen: StateFlow<Boolean> = _isAiAssistantSheetOpen.asStateFlow()
+
+    val isGeminiInstalled: Boolean
+        get() = appRepository.isPackageInstalled("com.google.android.apps.bard")
+
+    val isChatGptInstalled: Boolean
+        get() = appRepository.isPackageInstalled("com.openai.chatgpt")
+
     // Dialog & bottom sheet states - directly observable for 0ms immediate response
     private val _appForCategoryChange = MutableStateFlow<AppInfo?>(null)
     val appForCategoryChange: StateFlow<AppInfo?> = _appForCategoryChange.asStateFlow()
@@ -118,10 +139,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         combine(
             preferencesRepository.pureTransparentBgFlow,
             preferencesRepository.showCategoriesFlow,
-            preferencesRepository.twoLineAppNamesFlow
-        ) { pureBg, showCats, twoLine -> Triple(pureBg, showCats, twoLine) }
-    ) { banner, asIcon, theme, scroller, (pureBg, showCats, twoLine) ->
-        AppearanceSettings(banner, asIcon, theme, scroller, pureBg, showCats, twoLine)
+            preferencesRepository.twoLineAppNamesFlow,
+            preferencesRepository.searchLongPressActionFlow
+        ) { pureBg, showCats, twoLine, longPressAction ->
+            InnerAppearance(pureBg, showCats, twoLine, longPressAction)
+        }
+    ) { banner, asIcon, theme, scroller, inner ->
+        AppearanceSettings(
+            showMaoneArtBanner = banner,
+            searchAsIcon = asIcon,
+            widgetTheme = theme,
+            showAlphabetScroller = scroller,
+            pureTransparentBg = inner.pureBg,
+            showCategories = inner.showCats,
+            twoLineAppNames = inner.twoLine,
+            searchLongPressAction = inner.longPressAction
+        )
     }
 
     private val generalSettingsFlow = combine(
@@ -233,8 +266,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         settingsFlow,
         combine(_searchQuery, _selectedCategoryId, _isSearchActive) { q, c, active -> Triple(q, c, active) },
         _selectedApp,
-        combine(_isSettingsOpen, _isHiddenAppsSheetOpen) { settings, hiddenApps -> Pair(settings, hiddenApps) }
-    ) { appsData, (appearance, general), (query, catId, isSearchActive), selApp, (isSettingsOpen, isHiddenAppsOpen) ->
+        combine(_isSettingsOpen, _isHiddenAppsSheetOpen, _isAiAssistantSheetOpen) { settings, hiddenApps, aiSheet ->
+            Triple(settings, hiddenApps, aiSheet)
+        }
+    ) { appsData, (appearance, general), (query, catId, isSearchActive), selApp, (isSettingsOpen, isHiddenAppsOpen, isAiSheetOpen) ->
 
         val visibleApps = appsData.apps
         val favoritesList = visibleApps.filter { it.isFavorite }
@@ -283,6 +318,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             pureTransparentBg = appearance.pureTransparentBg,
             showCategories = appearance.showCategories,
             twoLineAppNames = appearance.twoLineAppNames,
+            searchLongPressAction = appearance.searchLongPressAction,
+            isAiAssistantSheetOpen = isAiSheetOpen,
+            isGeminiInstalled = isGeminiInstalled,
+            isChatGptInstalled = isChatGptInstalled,
             isSettingsOpen = isSettingsOpen,
             isHiddenAppsSheetOpen = isHiddenAppsOpen,
             selectedApp = selApp
@@ -353,6 +392,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (_isSearchActive.value) _isSearchActive.value = false
         if (_isSettingsOpen.value) _isSettingsOpen.value = false
         if (_isHiddenAppsSheetOpen.value) _isHiddenAppsSheetOpen.value = false
+        if (_isAiAssistantSheetOpen.value) _isAiAssistantSheetOpen.value = false
         if (_selectedApp.value != null) _selectedApp.value = null
         if (_appForCategoryChange.value != null) _appForCategoryChange.value = null
         if (_categoryToDelete.value != null) _categoryToDelete.value = null
@@ -538,5 +578,48 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun uninstallApp(app: AppInfo) {
         appRepository.uninstallApp(app.packageName)
+    }
+
+    fun openAiAssistantSheet(open: Boolean) {
+        _isAiAssistantSheetOpen.value = open
+    }
+
+    fun setSearchLongPressAction(action: String) {
+        viewModelScope.launch {
+            preferencesRepository.setSearchLongPressAction(action)
+        }
+    }
+
+    fun onSearchButtonLongPress() {
+        when (uiState.value.searchLongPressAction) {
+            "gemini" -> launchGemini()
+            "chatgpt" -> launchChatGpt()
+            "assistant" -> launchVoiceAssistant()
+            else -> openAiAssistantSheet(true)
+        }
+    }
+
+    fun launchGemini(rememberAsDefault: Boolean = false) {
+        if (rememberAsDefault) {
+            setSearchLongPressAction("gemini")
+        }
+        openAiAssistantSheet(false)
+        appRepository.launchGemini()
+    }
+
+    fun launchChatGpt(rememberAsDefault: Boolean = false) {
+        if (rememberAsDefault) {
+            setSearchLongPressAction("chatgpt")
+        }
+        openAiAssistantSheet(false)
+        appRepository.launchChatGpt()
+    }
+
+    fun launchVoiceAssistant(rememberAsDefault: Boolean = false) {
+        if (rememberAsDefault) {
+            setSearchLongPressAction("assistant")
+        }
+        openAiAssistantSheet(false)
+        appRepository.launchVoiceAssistant()
     }
 }

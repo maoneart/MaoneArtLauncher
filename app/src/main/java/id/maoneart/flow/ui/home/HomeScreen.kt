@@ -9,6 +9,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,6 +53,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.shadow
+import id.maoneart.flow.ui.components.AiAssistantBottomSheet
 import id.maoneart.flow.ui.components.AlphabetWaveScroller
 import id.maoneart.flow.ui.components.AppActionBottomSheet
 import id.maoneart.flow.ui.components.AppListItem
@@ -448,10 +450,16 @@ fun HomeScreen(
                     .clip(CircleShape)
                     .background(Color(0xEE1A1B20))
                     .border(1.2.dp, Color(0x3300E5FF), CircleShape)
-                    .clickable {
-                        if (uiState.hapticsEnabled) haptics.click(view)
-                        viewModel.setSearchActive(true)
-                    },
+                    .combinedClickable(
+                        onClick = {
+                            if (uiState.hapticsEnabled) haptics.click(view)
+                            viewModel.setSearchActive(true)
+                        },
+                        onLongClick = {
+                            if (uiState.hapticsEnabled) haptics.heavyClick(view)
+                            viewModel.onSearchButtonLongPress()
+                        }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -489,6 +497,8 @@ fun HomeScreen(
                 onToggleShowBanner = viewModel::setShowMaoneArtBanner,
                 searchAsIcon = uiState.searchAsIcon,
                 onToggleSearchAsIcon = viewModel::setSearchAsIcon,
+                searchLongPressAction = uiState.searchLongPressAction,
+                onSelectSearchLongPressAction = viewModel::setSearchLongPressAction,
                 widgetTheme = uiState.widgetTheme,
                 onSelectWidgetTheme = viewModel::setWidgetTheme,
                 showAlphabetScroller = uiState.showAlphabetScroller,
@@ -554,6 +564,27 @@ fun HomeScreen(
                 category = category,
                 onDismiss = { viewModel.openDeleteCategoryDialog(null) },
                 onConfirm = { viewModel.deleteCategory(category) }
+            )
+        }
+
+        // AI Assistant Selection Bottom Sheet
+        if (uiState.isAiAssistantSheetOpen) {
+            AiAssistantBottomSheet(
+                isGeminiInstalled = uiState.isGeminiInstalled,
+                isChatGptInstalled = uiState.isChatGptInstalled,
+                onSelectGemini = { rememberChoice ->
+                    if (uiState.hapticsEnabled) haptics.click(view)
+                    viewModel.launchGemini(rememberChoice)
+                },
+                onSelectChatGpt = { rememberChoice ->
+                    if (uiState.hapticsEnabled) haptics.click(view)
+                    viewModel.launchChatGpt(rememberChoice)
+                },
+                onSelectAssistant = { rememberChoice ->
+                    if (uiState.hapticsEnabled) haptics.click(view)
+                    viewModel.launchVoiceAssistant(rememberChoice)
+                },
+                onDismiss = { viewModel.openAiAssistantSheet(false) }
             )
         }
     }
