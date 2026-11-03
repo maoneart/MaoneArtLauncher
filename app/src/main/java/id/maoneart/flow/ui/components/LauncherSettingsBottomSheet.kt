@@ -171,8 +171,9 @@ fun LauncherSettingsBottomSheet(
                         subtitle = "Tata letak 1-tangan minimalis dengan Alphabet Wave Scroller"
                     )
                 ),
-                onSelectOption = { option ->
-                    onSelectLauncherMode(option.key)
+                selectedKey = launcherMode,
+                onSelect = { key ->
+                    onSelectLauncherMode(key)
                 }
             )
 

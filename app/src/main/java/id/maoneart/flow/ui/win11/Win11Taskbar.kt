@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.drawable.Drawable
 import android.os.BatteryManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,6 +69,7 @@ fun Win11Taskbar(
     isStartMenuOpen: Boolean,
     isActionCenterOpen: Boolean,
     pinnedApps: List<AppInfo>,
+    getAppIcon: (String) -> Drawable?,
     onStartClick: () -> Unit,
     onSearchClick: () -> Unit,
     onActionCenterClick: () -> Unit,
@@ -200,6 +202,7 @@ fun Win11Taskbar(
             pinnedApps.take(maxPinned).forEach { app ->
                 TaskbarAppButton(
                     app = app,
+                    getAppIcon = getAppIcon,
                     onClick = {
                         haptics.letterTick()
                         onAppClick(app)
@@ -386,6 +389,7 @@ private fun TaskbarIconButton(
 @Composable
 private fun TaskbarAppButton(
     app: AppInfo,
+    getAppIcon: (String) -> Drawable?,
     onClick: () -> Unit
 ) {
     Box(
@@ -396,7 +400,7 @@ private fun TaskbarAppButton(
         contentAlignment = Alignment.Center
     ) {
         AsyncImage(
-            model = app.iconDrawable,
+            model = getAppIcon(app.packageName),
             contentDescription = app.label,
             modifier = Modifier.size(24.dp)
         )

@@ -2,6 +2,7 @@ package id.maoneart.flow.ui.win11
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -53,6 +54,7 @@ import id.maoneart.flow.ui.util.rememberFlowHaptics
 fun Win11Desktop(
     isLandscape: Boolean,
     desktopApps: List<AppInfo>,
+    getAppIcon: (String) -> Drawable?,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit,
     onRecycleBinClick: () -> Unit,
@@ -137,7 +139,7 @@ fun Win11Desktop(
                     title = app.label,
                     icon = {
                         AsyncImage(
-                            model = app.iconDrawable,
+                            model = getAppIcon(app.packageName),
                             contentDescription = app.label,
                             modifier = Modifier.size(40.dp)
                         )

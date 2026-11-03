@@ -1,5 +1,6 @@
 package id.maoneart.flow.ui.win11
 
+import android.graphics.drawable.Drawable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -70,6 +71,7 @@ fun Win11StartMenu(
     isLandscape: Boolean,
     allApps: List<AppInfo>,
     pinnedApps: List<AppInfo>,
+    getAppIcon: (String) -> Drawable?,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onAppClick: (AppInfo) -> Unit,
@@ -203,6 +205,7 @@ fun Win11StartMenu(
                             items(filteredApps, key = { it.id }) { app ->
                                 StartMenuAppRow(
                                     app = app,
+                                    getAppIcon = getAppIcon,
                                     onClick = {
                                         haptics.letterTick()
                                         onAppClick(app)
@@ -280,6 +283,7 @@ fun Win11StartMenu(
                                         items(appsInLetter, key = { it.id }) { app ->
                                             StartMenuAppRow(
                                                 app = app,
+                                                getAppIcon = getAppIcon,
                                                 onClick = {
                                                     haptics.letterTick()
                                                     onAppClick(app)
@@ -346,6 +350,7 @@ fun Win11StartMenu(
                                     items(pinnedToShow, key = { it.id }) { app ->
                                         StartMenuGridItem(
                                             app = app,
+                                            getAppIcon = getAppIcon,
                                             onClick = {
                                                 haptics.letterTick()
                                                 onAppClick(app)
@@ -387,6 +392,7 @@ fun Win11StartMenu(
                                         }
                                         RecommendedAppRow(
                                             app = app,
+                                            getAppIcon = getAppIcon,
                                             subtitle = subtitle,
                                             onClick = {
                                                 haptics.letterTick()
@@ -509,6 +515,7 @@ fun Win11StartMenu(
 @Composable
 private fun StartMenuGridItem(
     app: AppInfo,
+    getAppIcon: (String) -> Drawable?,
     onClick: () -> Unit
 ) {
     Column(
@@ -519,7 +526,7 @@ private fun StartMenuGridItem(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AsyncImage(
-            model = app.iconDrawable,
+            model = getAppIcon(app.packageName),
             contentDescription = app.label,
             modifier = Modifier.size(36.dp)
         )
@@ -543,6 +550,7 @@ private fun StartMenuGridItem(
 @Composable
 private fun RecommendedAppRow(
     app: AppInfo,
+    getAppIcon: (String) -> Drawable?,
     subtitle: String,
     onClick: () -> Unit
 ) {
@@ -555,7 +563,7 @@ private fun RecommendedAppRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = app.iconDrawable,
+            model = getAppIcon(app.packageName),
             contentDescription = app.label,
             modifier = Modifier.size(28.dp)
         )
@@ -586,6 +594,7 @@ private fun RecommendedAppRow(
 @Composable
 private fun StartMenuAppRow(
     app: AppInfo,
+    getAppIcon: (String) -> Drawable?,
     onClick: () -> Unit
 ) {
     Row(
@@ -597,7 +606,7 @@ private fun StartMenuAppRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = app.iconDrawable,
+            model = getAppIcon(app.packageName),
             contentDescription = app.label,
             modifier = Modifier.size(32.dp)
         )

@@ -52,6 +52,8 @@ class FlowHaptics(private val context: Context) {
      * Non-blocking background vibrator dispatch + 38ms rate limiting completely eliminates
      * UI thread Binder IPC stalls and eliminates lag.
      */
+    fun letterTick(view: View? = null) = tick(view)
+
     fun tick(view: View? = null) {
         val now = SystemClock.uptimeMillis()
         if (now - lastTickTime < 38L) return

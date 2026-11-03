@@ -87,6 +87,7 @@ fun Win11Screen(
         Win11Desktop(
             isLandscape = isLandscape,
             desktopApps = uiState.favorites.ifEmpty { uiState.allApps.take(16) },
+            getAppIcon = viewModel::getAppIcon,
             onAppClick = { app ->
                 dismissAllFlyouts()
                 viewModel.launchApp(app)
@@ -138,6 +139,7 @@ fun Win11Screen(
                 isStartMenuOpen = isStartMenuOpen,
                 isActionCenterOpen = isActionCenterOpen,
                 pinnedApps = uiState.favorites,
+                getAppIcon = viewModel::getAppIcon,
                 onStartClick = {
                     isActionCenterOpen = false
                     isContextMenuOpen = false
@@ -196,6 +198,7 @@ fun Win11Screen(
                 isLandscape = isLandscape,
                 allApps = uiState.allApps,
                 pinnedApps = uiState.favorites,
+                getAppIcon = viewModel::getAppIcon,
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = { viewModel.onSearchQueryChange(it) },
                 onAppClick = { app ->
