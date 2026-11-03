@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.31)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.32)
 
 ---
 
@@ -337,3 +337,13 @@
       - Dimensi landscape disesuaikan menjadi lebar `540dp` x tinggi `270dp`. Notifikasi 100% tampak jelas dan dapat diakses bersamaan dengan kalender tanpa terpotong di tepi atas layar.
     - **Bumping Versi**:
       - `versionCode 32`, `versionName "1.0.31"`. Target APK siap update langsung tanpa uninstall.
+  - **Flyout Kalender & Notifikasi Ramping Vertikal "Slender Sidebar" (Release v1.0.32 - 4 Nov 2026)**:
+    - **Lebar Kalender & Notifikasi Dikecilkan Drastis (260dp x 450dp)**:
+      - Memenuhi permintaan desain "panjang ke atas doang gak lebar", lebar flyout di portrait dipangkas dari 315dp menjadi **`260dp`** dan tinggi diperpanjang menjadi **`450dp`** (aspek rasio ramping 1:1.7 ala Windows 11 Notification Sidebar).
+      - Menyesuaikan ukuran sel grid kalender menjadi 22dp dengan font 9.5sp, header "Notifikasi" yang ramping, serta kartu notifikasi (ikon 18dp, judul 10.5sp, teks 9.5sp, tombol dismiss 16dp) sehingga tertata sangat rapi dan elegan.
+      - Tertambat di sudut kanan bawah dengan jarak tepi `8dp` di atas Taskbar tray, menyisakan margin lapang di sisi kiri layar.
+    - **Penyesuaian Quick Settings & Mode Landscape**:
+      - Quick Settings Portrait disesuaikan menjadi `280dp` x `270dp`.
+      - Mode Landscape disempurnakan menjadi `440dp` x `265dp`.
+    - **Bumping Versi**:
+      - `versionCode 33`, `versionName "1.0.32"`. Target APK siap update langsung tanpa uninstall.

@@ -259,12 +259,12 @@ fun Win11ActionCenter(
 
     val cardModifier = if (isLandscape) {
         Modifier
-            .width(320.dp)
-            .height(260.dp)
+            .width(300.dp)
+            .height(255.dp)
     } else {
         Modifier
-            .width(310.dp)
-            .height(275.dp)
+            .width(280.dp)
+            .height(270.dp)
     }
 
     Box(

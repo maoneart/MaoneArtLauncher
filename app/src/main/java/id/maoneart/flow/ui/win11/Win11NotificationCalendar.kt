@@ -109,12 +109,12 @@ fun Win11NotificationCalendar(
 
     val cardModifier = if (isLandscape) {
         Modifier
-            .width(540.dp)
-            .height(270.dp)
+            .width(440.dp)
+            .height(265.dp)
     } else {
         Modifier
-            .width(315.dp)
-            .height(400.dp)
+            .width(260.dp)
+            .height(450.dp)
     }
 
     Box(
@@ -269,26 +269,26 @@ private fun NotificationsHeader(
                 imageVector = Icons.Rounded.Notifications,
                 contentDescription = "Notifications",
                 tint = Color(0xFF60A5FA),
-                modifier = Modifier.size(15.dp)
+                modifier = Modifier.size(14.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(5.dp))
             Text(
-                text = "Pemberitahuan",
+                text = "Notifikasi",
                 color = Color(0xFFF1F5F9),
-                fontSize = 12.5.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
         }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             if (activeCount > 0) {
                 Text(
                     text = "Hapus Semua",
                     color = Color(0xFF60A5FA),
-                    fontSize = 10.5.sp,
+                    fontSize = 10.sp,
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .clickable {
@@ -302,7 +302,7 @@ private fun NotificationsHeader(
             Text(
                 text = "Pengaturan",
                 color = Color(0xFF94A3B8),
-                fontSize = 10.5.sp,
+                fontSize = 10.sp,
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .clickable {
@@ -510,14 +510,14 @@ private fun CalendarDaysGrid(
     ) {
         items((0 until totalCells).toList()) { index ->
             if (index < firstDayOfWeek) {
-                Box(modifier = Modifier.size(23.dp))
+                Box(modifier = Modifier.size(22.dp))
             } else {
                 val dayNumber = index - firstDayOfWeek + 1
                 val isToday = isCurrentMonth && dayNumber == todayDate
 
                 Box(
                     modifier = Modifier
-                        .size(23.dp)
+                        .size(22.dp)
                         .clip(CircleShape)
                         .background(if (isToday) Color(0xFF0078D7) else Color.Transparent)
                         .clickable {
@@ -528,7 +528,7 @@ private fun CalendarDaysGrid(
                     Text(
                         text = "$dayNumber",
                         color = if (isToday) Color.White else Color(0xFFCBD5E1),
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                         textAlign = TextAlign.Center
                     )
@@ -573,7 +573,7 @@ private fun NotificationItemCard(
                     model = iconDrawable,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(20.dp)
+                        .size(18.dp)
                         .clip(RoundedCornerShape(4.dp))
                 )
             } else {
@@ -581,11 +581,11 @@ private fun NotificationItemCard(
                     imageVector = Icons.Rounded.Notifications,
                     contentDescription = null,
                     tint = Color(0xFF60A5FA),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(7.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -594,9 +594,9 @@ private fun NotificationItemCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = notif.title.ifEmpty { "Pemberitahuan" },
+                        text = notif.title.ifEmpty { "Notifikasi" },
                         color = Color(0xFFF1F5F9),
-                        fontSize = 11.sp,
+                        fontSize = 10.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -607,7 +607,7 @@ private fun NotificationItemCard(
                         Text(
                             text = formattedTime,
                             color = Color(0xFF94A3B8),
-                            fontSize = 9.sp,
+                            fontSize = 8.5.sp,
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
@@ -618,7 +618,7 @@ private fun NotificationItemCard(
                     Text(
                         text = notif.text,
                         color = Color(0xFFCBD5E1),
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -629,13 +629,13 @@ private fun NotificationItemCard(
 
             IconButton(
                 onClick = onDismiss,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = "Hapus",
                     tint = Color(0xFF94A3B8),
-                    modifier = Modifier.size(12.dp)
+                    modifier = Modifier.size(11.dp)
                 )
             }
         }

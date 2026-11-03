@@ -248,7 +248,7 @@ fun Win11Screen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-                .padding(bottom = 54.dp, end = 10.dp)
+                .padding(bottom = 54.dp, end = 8.dp)
         ) {
             Win11ActionCenter(
                 isLandscape = isLandscape,
@@ -267,7 +267,7 @@ fun Win11Screen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-                .padding(bottom = 54.dp, end = 10.dp)
+                .padding(bottom = 54.dp, end = 8.dp)
         ) {
             Win11NotificationCalendar(
                 isLandscape = isLandscape,
