@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.29)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.30)
 
 ---
 
@@ -309,3 +309,15 @@
       - Kolom pencarian kini dapat diketik dengan lancar dan otomatis fokus serta memunculkan keyboard saat ikon Search di Taskbar ditekan.
     - **Popup Dialog "Tentang Windows" (Winver / About)**:
       - Menambahkan opsi "Tentang Windows" pada Context Menu (saat layar ditekan lama) yang memunculkan modal bergaya `winver.exe` lengkap dengan branding *Windows 11 Pro MaoneArt Edition*, versi 24H2, versi peluncur v1.0.29, dan atribusi pengembang Hermawan (MaoneArt).
+  - **Logo Start Resmi Windows 11, Perbaikan Force Close, & Slider Volume Nyata Responsif (Release v1.0.30 - 4 Nov 2026)**:
+    - **Logo Start Otentik Windows 11 (4 Kotak Biru Fluent Design)**:
+      - Mengganti ikon C: drive harddisk dengan aset resmi 500x500 RGBA *Windows 11 Start Button* (`ic_win11_logo.png`) yang memiliki 4 kotak biru bergradasi Fluent otentik (#42C5F8 -> #0B84DA) dan sudut melengkung presisi.
+    - **Perbaikan Force Close (Pencegahan Crash Android 14+)**:
+      - Memperbaiki `registerReceiver` di `Win11ActionCenter.kt` dan `Win11Taskbar.kt` dengan `ContextCompat.RECEIVER_EXPORTED` dan blok `try/catch` berlapis sehingga kebal terhadap pembatasan izin siaran dinamis Android 14/15/16.
+    - **Kontrol Audio Volume Nyata & Visual Feedback**:
+      - Menambahkan izin `android.permission.MODIFY_AUDIO_SETTINGS` pada `AndroidManifest.xml`.
+      - Menghubungkan Slider Volume ke `AudioManager.STREAM_MUSIC` dengan flag `AudioManager.FLAG_SHOW_UI` (memunculkan indikator volume sistem Samsung One UI) saat digeser dan `AudioManager.FLAG_PLAY_SOUND` (bunyi feedback bip) saat jari dilepas.
+      - Menambahkan indikator persentase dinamis `0% - 100%` pada slider Kecerahan dan Volume.
+      - Ikon speaker interaktif: tap ikon volume untuk *Mute* langsung (0%) atau memulihkan volume normal (50%).
+    - **Bumping Versi**:
+      - `versionCode 31`, `versionName "1.0.30"`. Target APK siap update langsung tanpa uninstall.

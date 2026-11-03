@@ -25,6 +25,9 @@
     <!-- Haptic feedback tactile pulse -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Audio Volume Adjustment -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
     <!-- Camera flashlight torch control -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />

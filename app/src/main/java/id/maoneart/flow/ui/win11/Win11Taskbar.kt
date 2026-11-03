@@ -122,7 +122,18 @@ fun Win11Taskbar(
             }
         }
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        context.registerReceiver(receiver, filter)
+        try {
+            androidx.core.content.ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                androidx.core.content.ContextCompat.RECEIVER_EXPORTED
+            )
+        } catch (_: Throwable) {
+            try {
+                context.registerReceiver(receiver, filter)
+            } catch (_: Throwable) {}
+        }
         onDispose {
             try { context.unregisterReceiver(receiver) } catch (_: Throwable) {}
         }

@@ -40,6 +40,8 @@ import androidx.compose.material.icons.rounded.DoNotDisturb
 import androidx.compose.material.icons.rounded.FlashlightOn
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.VolumeDown
+import androidx.compose.material.icons.rounded.VolumeOff
 import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
@@ -62,9 +64,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import id.maoneart.flow.ui.util.rememberFlowHaptics
 
 /**
@@ -205,13 +210,12 @@ fun Win11ActionCenter(
                         isAirplaneOn = intent.getBooleanExtra("state", false)
                     }
                     "android.media.VOLUME_CHANGED_ACTION" -> {
-                        val streamType = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_TYPE", -1)
-                        if (streamType == AudioManager.STREAM_MUSIC) {
-                            val newVol = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_VALUE", -1)
-                            if (newVol >= 0) {
-                                volumeValue = (newVol.toFloat() / maxVolume).coerceIn(0f, 1f)
+                        try {
+                            val currentVol = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC)
+                            if (currentVol != null) {
+                                volumeValue = (currentVol.toFloat() / maxVolume).coerceIn(0f, 1f)
                             }
-                        }
+                        } catch (_: Throwable) {}
                     }
                     Intent.ACTION_BATTERY_CHANGED -> {
                         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
@@ -234,7 +238,18 @@ fun Win11ActionCenter(
             addAction("android.media.VOLUME_CHANGED_ACTION")
             addAction(Intent.ACTION_BATTERY_CHANGED)
         }
-        context.registerReceiver(receiver, filter)
+        try {
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                ContextCompat.RECEIVER_EXPORTED
+            )
+        } catch (_: Throwable) {
+            try {
+                context.registerReceiver(receiver, filter)
+            } catch (_: Throwable) {}
+        }
 
         onDispose {
             try { context.unregisterReceiver(receiver) } catch (_: Throwable) {}
@@ -433,18 +448,20 @@ fun Win11ActionCenter(
                         imageVector = Icons.Rounded.BrightnessHigh,
                         contentDescription = "Brightness",
                         tint = Color(0xFFCBD5E1),
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Slider(
                         value = brightnessValue,
                         onValueChange = { newBrightness ->
                             brightnessValue = newBrightness
-                            val lp = activity?.window?.attributes
-                            if (lp != null) {
-                                lp.screenBrightness = newBrightness.coerceIn(0.02f, 1.0f)
-                                activity.window.attributes = lp
-                            }
+                            try {
+                                val lp = activity?.window?.attributes
+                                if (lp != null) {
+                                    lp.screenBrightness = newBrightness.coerceIn(0.02f, 1.0f)
+                                    activity.window.attributes = lp
+                                }
+                            } catch (_: Throwable) {}
                         },
                         colors = SliderDefaults.colors(
                             thumbColor = Color(0xFF4CC2FF),
@@ -452,6 +469,15 @@ fun Win11ActionCenter(
                             inactiveTrackColor = Color(0x33FFFFFF)
                         ),
                         modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${Math.round(brightnessValue * 100)}%",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        modifier = Modifier.width(32.dp),
+                        textAlign = TextAlign.End
                     )
                 }
 
@@ -460,19 +486,46 @@ fun Win11ActionCenter(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val volumeIcon = when {
+                        volumeValue <= 0.01f -> Icons.Rounded.VolumeOff
+                        volumeValue < 0.5f -> Icons.Rounded.VolumeDown
+                        else -> Icons.Rounded.VolumeUp
+                    }
                     Icon(
-                        imageVector = Icons.Rounded.VolumeUp,
+                        imageVector = volumeIcon,
                         contentDescription = "Volume",
                         tint = Color(0xFFCBD5E1),
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clickable {
+                                haptics.letterTick()
+                                try {
+                                    if (volumeValue > 0.01f) {
+                                        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, 0, AudioManager.FLAG_SHOW_UI)
+                                        volumeValue = 0f
+                                    } else {
+                                        val restoreVol = (maxVolume / 2).coerceAtLeast(1)
+                                        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, restoreVol, AudioManager.FLAG_PLAY_SOUND or AudioManager.FLAG_SHOW_UI)
+                                        volumeValue = (restoreVol.toFloat() / maxVolume).coerceIn(0f, 1f)
+                                    }
+                                } catch (_: Throwable) {}
+                            }
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Slider(
                         value = volumeValue,
                         onValueChange = { newVolRatio ->
                             volumeValue = newVolRatio
-                            val targetVol = (newVolRatio * maxVolume).toInt().coerceIn(0, maxVolume)
-                            audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, 0)
+                            try {
+                                val targetVol = Math.round(newVolRatio * maxVolume).toInt().coerceIn(0, maxVolume)
+                                audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, AudioManager.FLAG_SHOW_UI)
+                            } catch (_: Throwable) {}
+                        },
+                        onValueChangeFinished = {
+                            try {
+                                val targetVol = Math.round(volumeValue * maxVolume).toInt().coerceIn(0, maxVolume)
+                                audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, AudioManager.FLAG_PLAY_SOUND or AudioManager.FLAG_SHOW_UI)
+                            } catch (_: Throwable) {}
                         },
                         colors = SliderDefaults.colors(
                             thumbColor = Color(0xFF4CC2FF),
@@ -480,6 +533,15 @@ fun Win11ActionCenter(
                             inactiveTrackColor = Color(0x33FFFFFF)
                         ),
                         modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${Math.round(volumeValue * 100)}%",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        modifier = Modifier.width(32.dp),
+                        textAlign = TextAlign.End
                     )
                 }
             }
