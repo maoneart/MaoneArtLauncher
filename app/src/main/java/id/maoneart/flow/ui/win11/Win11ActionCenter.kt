@@ -363,15 +363,9 @@ fun Win11ActionCenter(
                         isActive = isAirplaneOn,
                         onClick = {
                             haptics.letterTick()
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                try {
-                                    context.startActivity(Intent(Settings.Panel.ACTION_AIRPLANE_MODE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                                } catch (_: Throwable) {
-                                    context.startActivity(Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                                }
-                            } else {
+                            try {
                                 context.startActivity(Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                            }
+                            } catch (_: Throwable) {}
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -413,7 +407,7 @@ fun Win11ActionCenter(
                                     Settings.System.putInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION, next)
                                     isRotationOn = next == 1
                                 } else {
-                                    context.startActivity(Intent(Settings.ACTION_AUTO_ROTATE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                                    context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                                 }
                             } catch (_: Throwable) {
                                 try {
