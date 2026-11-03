@@ -246,9 +246,9 @@ fun Win11Screen(
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 4 }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 4 }),
             modifier = Modifier
-                .align(if (isLandscape) Alignment.BottomEnd else Alignment.BottomCenter)
+                .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-                .padding(bottom = 56.dp, end = if (isLandscape) 12.dp else 0.dp)
+                .padding(bottom = 54.dp, end = 10.dp)
         ) {
             Win11ActionCenter(
                 isLandscape = isLandscape,
@@ -265,9 +265,9 @@ fun Win11Screen(
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 4 }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 4 }),
             modifier = Modifier
-                .align(if (isLandscape) Alignment.BottomEnd else Alignment.BottomCenter)
+                .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-                .padding(bottom = 56.dp, end = if (isLandscape) 12.dp else 0.dp)
+                .padding(bottom = 54.dp, end = 10.dp)
         ) {
             Win11NotificationCalendar(
                 isLandscape = isLandscape,

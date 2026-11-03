@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.30)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.31)
 
 ---
 
@@ -321,3 +321,19 @@
       - Ikon speaker interaktif: tap ikon volume untuk *Mute* langsung (0%) atau memulihkan volume normal (50%).
     - **Bumping Versi**:
       - `versionCode 31`, `versionName "1.0.30"`. Target APK siap update langsung tanpa uninstall.
+  - **Rotasi Layar On/Off Mandiri, Perampingan Flyout Portrait, & Dua-Kolom Notifikasi-Kalender Landscape (Release v1.0.31 - 4 Nov 2026)**:
+    - **Toggle Rotasi Layar Mandiri (Zero Redirect ke Settings)**:
+      - Menghapus pembukaan paksa `Settings.ACTION_DISPLAY_SETTINGS`.
+      - Tombol *Rotasi* pada Quick Settings kini langsung mengunci/membuka kunci orientasi layar via `activity.requestedOrientation` (`ActivityInfo.SCREEN_ORIENTATION_PORTRAIT` vs `SCREEN_ORIENTATION_UNSPECIFIED`) serta menyinkronkan ke `Settings.System.ACCELEROMETER_ROTATION`.
+      - Status tile langsung berganti warna (aktif biru / mati gelap) seketika tanpa gangguan.
+    - **Perampingan Ukuran Flyout di Mode Portrait**:
+      - `Win11ActionCenter`: Dirampingkan dari `fillMaxWidth(0.92f)` x 350dp menjadi `310dp` x `275dp` (tertambat elegan di sisi kanan atas System Tray).
+      - `Win11NotificationCalendar`: Dirampingkan dari `fillMaxWidth(0.94f)` x 490dp menjadi `315dp` x `400dp`.
+    - **Tata Letak Dua Kolom Side-by-Side Notifikasi & Kalender di Landscape**:
+      - Pada orientasi Landscape (tinggi layar terbatas ~360dp), struktur flyout otomatis bertransformasi dari tumpukan vertikal menjadi dua kolom berdampingan (*Side-by-Side*):
+        1. Kolom Kiri: Pusat Pemberitahuan lengkap (header, tombol "Hapus Semua", list scrollable kartu notifikasi aktif).
+        2. Garis Pemisah Vertikal: 1dp acrylic divider.
+        3. Kolom Kanan: Widget Kalender Bulanan lengkap (navigasi bulan, label hari, grid tanggal dengan hari ini disorot biru).
+      - Dimensi landscape disesuaikan menjadi lebar `540dp` x tinggi `270dp`. Notifikasi 100% tampak jelas dan dapat diakses bersamaan dengan kalender tanpa terpotong di tepi atas layar.
+    - **Bumping Versi**:
+      - `versionCode 32`, `versionName "1.0.31"`. Target APK siap update langsung tanpa uninstall.

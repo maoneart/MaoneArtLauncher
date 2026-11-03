@@ -128,7 +128,7 @@ fun Win11AboutDialog(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     InfoRow(label = "Versi", value = "24H2 (OS Build 26100.1)")
-                    InfoRow(label = "Peluncur", value = "MaoneArt Flow Launcher v1.0.30")
+                    InfoRow(label = "Peluncur", value = "MaoneArt Flow Launcher v1.0.31")
                     InfoRow(label = "Pengembang", value = "Hermawan (MaoneArt)")
                     InfoRow(label = "Mesin", value = "Android (Niagara & Win11 Hybrid Engine)")
                     InfoRow(label = "Perangkat", value = android.os.Build.MODEL)

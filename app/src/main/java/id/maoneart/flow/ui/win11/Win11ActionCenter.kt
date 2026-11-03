@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
@@ -258,12 +259,12 @@ fun Win11ActionCenter(
 
     val cardModifier = if (isLandscape) {
         Modifier
-            .width(360.dp)
-            .height(350.dp)
+            .width(320.dp)
+            .height(260.dp)
     } else {
         Modifier
-            .fillMaxWidth(0.92f)
-            .height(350.dp)
+            .width(310.dp)
+            .height(275.dp)
     }
 
     Box(
@@ -409,26 +410,31 @@ fun Win11ActionCenter(
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Auto-rotation / Rotasi Tile
+                    // Auto-rotation / Rotasi Tile (Direct On/Off Toggle)
                     ActionCenterTile(
                         icon = Icons.Rounded.ScreenRotation,
                         label = "Rotasi",
                         isActive = isRotationOn,
                         onClick = {
                             haptics.letterTick()
+                            val nextState = !isRotationOn
+                            isRotationOn = nextState
+                            try {
+                                if (nextState) {
+                                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                                } else {
+                                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                }
+                            } catch (_: Throwable) {}
                             try {
                                 if (Settings.System.canWrite(context)) {
-                                    val next = if (isRotationOn) 0 else 1
-                                    Settings.System.putInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION, next)
-                                    isRotationOn = next == 1
-                                } else {
-                                    context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                                    Settings.System.putInt(
+                                        context.contentResolver,
+                                        Settings.System.ACCELEROMETER_ROTATION,
+                                        if (nextState) 1 else 0
+                                    )
                                 }
-                            } catch (_: Throwable) {
-                                try {
-                                    context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                                } catch (_: Throwable) {}
-                            }
+                            } catch (_: Throwable) {}
                         },
                         modifier = Modifier.weight(1f)
                     )
