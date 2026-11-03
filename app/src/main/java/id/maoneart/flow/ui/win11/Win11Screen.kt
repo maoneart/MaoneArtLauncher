@@ -315,16 +315,18 @@ fun Win11Screen(
         uiState.selectedApp?.let { app ->
             AppActionBottomSheet(
                 app = app,
+                iconDrawable = viewModel.getAppIcon(app.packageName),
                 onDismiss = { viewModel.selectAppForAction(null) },
-                onToggleFavorite = { viewModel.toggleFavorite(it) },
-                onToggleHidden = { viewModel.toggleHidden(it) },
-                onChangeCategory = { viewModel.openCategoryChangeDialog(it) },
-                onAppDetails = { viewModel.openAppDetails(it) },
-                onUninstall = { viewModel.uninstallApp(it) },
+                onLaunch = { viewModel.launchApp(app) },
                 onOpenSettings = {
                     viewModel.selectAppForAction(null)
                     viewModel.openSettings(true)
-                }
+                },
+                onToggleFavorite = { viewModel.toggleFavorite(app) },
+                onChangeCategory = { viewModel.openCategoryChangeDialog(app) },
+                onOpenInfo = { viewModel.openAppDetails(app) },
+                onUninstall = { viewModel.uninstallApp(app) },
+                onToggleHidden = { viewModel.toggleHidden(app) }
             )
         }
 
@@ -332,7 +334,10 @@ fun Win11Screen(
         if (uiState.isHiddenAppsSheetOpen) {
             HiddenAppsBottomSheet(
                 hiddenApps = uiState.hiddenApps,
-                onUnhideApp = { viewModel.unhideApp(it) },
+                hasHiddenCategories = uiState.hasHiddenCategories,
+                getAppIcon = viewModel::getAppIcon,
+                onUnhideApp = viewModel::unhideApp,
+                onRestoreCategories = viewModel::restoreDefaultCategories,
                 onDismiss = { viewModel.openHiddenAppsSheet(false) }
             )
         }
