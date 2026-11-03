@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.27)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.28)
 
 ---
 
@@ -281,3 +281,11 @@
       - Klik kanan / sentuh tahan (long-press) memunculkan Context Menu Windows 11 asli (*Tampilan, Urutkan, Segarkan, Personalisasi, Beralih ke Flow*).
     - **Dukungan Penuh Portrait & Landscape**:
       - Tata letak otomatis menyesuaikan orientasi layar ponsel (ala Windows 11 Mobile di portrait dan ala PC/Tablet Surface di landscape).
+  - **Pencegahan Tuntas Tabrakan Ikon Taskbar & System Tray pada Mode Portrait (Release v1.0.28 - 3 Nov 2026)**:
+    - **Penyebab Tabrakan (Root Cause)**:
+      - Pada `Win11Taskbar`, deretan ikon aplikasi tengah (`Alignment.Center`, total ~304dp) dan System Tray (`Alignment.CenterEnd`, total ~135dp) berada di dalam `Box` yang sama tanpa batasan alur. Pada layar portrait selebar 360-390dp, jam, tanggal, baterai, dan ikon Wi-Fi menabrak langsung di atas ikon browser Edge, Explorer, dan pinned apps.
+    - **Solusi Arsitektur**:
+      1. Mengisolasi tata letak Portrait menjadi satu baris `Row` independen dengan `horizontalArrangement = Arrangement.SpaceBetween` (100% bebas tabrakan).
+      2. Sisi kiri memuat navigasi inti Windows 11 (Start Button, Search, File Explorer, Browser Edge, 1 pinned app).
+      3. Sisi kanan memuat System Tray mobile yang ramping (Wi-Fi, Baterai % & petir, Jam `HH:mm`).
+      4. Mengalibrasi tinggi Start Menu flyout di portrait menggunakan `LocalConfiguration` (`screenHeightDp * 0.70f`) dan merampingkan grid pinned apps menjadi 150dp agar muat lega dan elegan di layar portrait.

@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,15 +86,17 @@ fun Win11StartMenu(
     var isAllAppsView by remember { mutableStateOf(false) }
     var isPowerMenuOpen by remember { mutableStateOf(false) }
 
-    // Width and height adapt based on orientation
+    // Width and height adapt based on orientation to prevent overflow
+    val configuration = LocalConfiguration.current
     val cardModifier = if (isLandscape) {
         Modifier
             .width(480.dp)
             .height(490.dp)
     } else {
+        val portraitHeight = (configuration.screenHeightDp * 0.70f).coerceIn(400f, 510f).dp
         Modifier
             .fillMaxWidth(0.95f)
-            .height(540.dp)
+            .height(portraitHeight)
     }
 
     Box(
@@ -343,7 +346,7 @@ fun Win11StartMenu(
                                     columns = GridCells.Fixed(columns),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(if (isLandscape) 180.dp else 190.dp),
+                                        .height(if (isLandscape) 170.dp else 150.dp),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {

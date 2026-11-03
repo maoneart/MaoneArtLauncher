@@ -126,119 +126,93 @@ fun Win11Taskbar(
         }
     }
 
-    // Taskbar height: 50dp
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .background(Color(0xE6181C24)) // Windows 11 Dark Acrylic Mica
-            .border(
-                width = 1.dp,
-                color = Color(0x22FFFFFF),
-                shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
-            )
-    ) {
-        // --- 1. CENTERED ICONS ROW ---
+    // Taskbar layout: Separate Portrait and Landscape to strictly prevent overlap
+    if (!isLandscape) {
+        // --- 1. PORTRAIT: DEDICATED MOBILE ROW (100% ZERO OVERLAP) ---
         Row(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxHeight(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // WINDOWS 11 START BUTTON
-            TaskbarIconButton(
-                isSelected = isStartMenuOpen,
-                onClick = {
-                    haptics.letterTick()
-                    onStartClick()
-                }
-            ) {
-                Win11Icons.WindowsLogo(size = 22.dp)
-            }
-
-            // SEARCH BUTTON
-            TaskbarIconButton(
-                isSelected = false,
-                onClick = {
-                    haptics.letterTick()
-                    onSearchClick()
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Search,
-                    contentDescription = "Search",
-                    tint = Color(0xFFE2E8F0),
-                    modifier = Modifier.size(22.dp)
+            modifier = modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(Color(0xE6181C24)) // Windows 11 Dark Acrylic Mica
+                .border(
+                    width = 1.dp,
+                    color = Color(0x22FFFFFF),
+                    shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
                 )
-            }
-
-            // FILE EXPLORER
-            TaskbarIconButton(
-                isSelected = false,
-                hasRunningIndicator = true,
-                onClick = {
-                    haptics.letterTick()
-                    onExplorerClick()
-                }
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // LEFT: Windows 11 Core Navigation & App Shortcuts
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Win11Icons.FileExplorerIcon(size = 24.dp)
-            }
-
-            // BROWSER (EDGE / CHROME)
-            TaskbarIconButton(
-                isSelected = false,
-                hasRunningIndicator = true,
-                onClick = {
-                    haptics.letterTick()
-                    onBrowserClick()
-                }
-            ) {
-                Win11Icons.EdgeBrowserIcon(size = 24.dp)
-            }
-
-            // PINNED / FAVORITE APPS (Up to 3 in portrait, 6 in landscape)
-            val maxPinned = if (isLandscape) 6 else 3
-            pinnedApps.take(maxPinned).forEach { app ->
-                TaskbarAppButton(
-                    app = app,
-                    getAppIcon = getAppIcon,
+                // Windows Start Button
+                TaskbarIconButton(
+                    isSelected = isStartMenuOpen,
                     onClick = {
                         haptics.letterTick()
-                        onAppClick(app)
+                        onStartClick()
                     }
-                )
-            }
-        }
+                ) {
+                    Win11Icons.WindowsLogo(size = 20.dp)
+                }
 
-        // --- 2. SYSTEM TRAY (BOTTOM RIGHT) ---
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .padding(end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            // Hidden Icons Caret (Landscape only to save space in Portrait)
-            if (isLandscape) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 20.dp, height = 36.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { haptics.letterTick() },
-                    contentAlignment = Alignment.Center
+                // Search Button
+                TaskbarIconButton(
+                    isSelected = false,
+                    onClick = {
+                        haptics.letterTick()
+                        onSearchClick()
+                    }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.KeyboardArrowUp,
-                        contentDescription = "Hidden Icons",
-                        tint = Color(0xFFA0AEC0),
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search",
+                        tint = Color(0xFFE2E8F0),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                // File Explorer
+                TaskbarIconButton(
+                    isSelected = false,
+                    hasRunningIndicator = true,
+                    onClick = {
+                        haptics.letterTick()
+                        onExplorerClick()
+                    }
+                ) {
+                    Win11Icons.FileExplorerIcon(size = 22.dp)
+                }
+
+                // Browser (Edge / Chrome)
+                TaskbarIconButton(
+                    isSelected = false,
+                    hasRunningIndicator = true,
+                    onClick = {
+                        haptics.letterTick()
+                        onBrowserClick()
+                    }
+                ) {
+                    Win11Icons.EdgeBrowserIcon(size = 22.dp)
+                }
+
+                // 1 Favorite App if available
+                pinnedApps.firstOrNull()?.let { firstApp ->
+                    TaskbarAppButton(
+                        app = firstApp,
+                        getAppIcon = getAppIcon,
+                        onClick = {
+                            haptics.letterTick()
+                            onAppClick(firstApp)
+                        }
                     )
                 }
             }
 
-            // QUICK SETTINGS GROUP PILL (Wi-Fi, Volume, Battery)
+            // RIGHT: Compact Mobile System Tray (Wi-Fi, Battery %, Time)
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
@@ -255,14 +229,7 @@ fun Win11Taskbar(
                     imageVector = Icons.Rounded.Wifi,
                     contentDescription = "Wi-Fi",
                     tint = Color(0xFFCBD5E1),
-                    modifier = Modifier.size(14.dp)
-                )
-
-                Icon(
-                    imageVector = Icons.Rounded.VolumeUp,
-                    contentDescription = "Audio",
-                    tint = Color(0xFFCBD5E1),
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(13.dp)
                 )
 
                 if (isCharging) {
@@ -270,18 +237,187 @@ fun Win11Taskbar(
                         imageVector = Icons.Rounded.BatteryChargingFull,
                         contentDescription = "Battery Charging",
                         tint = Color(0xFF4ADE80),
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(13.dp)
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Rounded.BatteryFull,
                         contentDescription = "Battery",
                         tint = Color(0xFFCBD5E1),
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(13.dp)
                     )
                 }
 
-                if (isLandscape) {
+                Text(
+                    text = "$batteryPct%",
+                    color = Color(0xFFCBD5E1),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Spacer(modifier = Modifier.width(3.dp))
+
+                Text(
+                    text = timeText.ifEmpty { "12:00" },
+                    color = Color(0xFFF1F5F9),
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    } else {
+        // --- 2. LANDSCAPE: FULL DESKTOP TASKBAR (CENTERED ICONS & RIGHT TRAY) ---
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .background(Color(0xE6181C24)) // Windows 11 Dark Acrylic Mica
+                .border(
+                    width = 1.dp,
+                    color = Color(0x22FFFFFF),
+                    shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
+                )
+        ) {
+            // CENTERED ICONS ROW
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxHeight(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // WINDOWS 11 START BUTTON
+                TaskbarIconButton(
+                    isSelected = isStartMenuOpen,
+                    onClick = {
+                        haptics.letterTick()
+                        onStartClick()
+                    }
+                ) {
+                    Win11Icons.WindowsLogo(size = 22.dp)
+                }
+
+                // SEARCH BUTTON
+                TaskbarIconButton(
+                    isSelected = false,
+                    onClick = {
+                        haptics.letterTick()
+                        onSearchClick()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search",
+                        tint = Color(0xFFE2E8F0),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                // FILE EXPLORER
+                TaskbarIconButton(
+                    isSelected = false,
+                    hasRunningIndicator = true,
+                    onClick = {
+                        haptics.letterTick()
+                        onExplorerClick()
+                    }
+                ) {
+                    Win11Icons.FileExplorerIcon(size = 24.dp)
+                }
+
+                // BROWSER (EDGE / CHROME)
+                TaskbarIconButton(
+                    isSelected = false,
+                    hasRunningIndicator = true,
+                    onClick = {
+                        haptics.letterTick()
+                        onBrowserClick()
+                    }
+                ) {
+                    Win11Icons.EdgeBrowserIcon(size = 24.dp)
+                }
+
+                // PINNED / FAVORITE APPS (Up to 6 in landscape)
+                pinnedApps.take(6).forEach { app ->
+                    TaskbarAppButton(
+                        app = app,
+                        getAppIcon = getAppIcon,
+                        onClick = {
+                            haptics.letterTick()
+                            onAppClick(app)
+                        }
+                    )
+                }
+            }
+
+            // SYSTEM TRAY (BOTTOM RIGHT)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .padding(end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                // Hidden Icons Caret
+                Box(
+                    modifier = Modifier
+                        .size(width = 20.dp, height = 36.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { haptics.letterTick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowUp,
+                        contentDescription = "Hidden Icons",
+                        tint = Color(0xFFA0AEC0),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                // QUICK SETTINGS GROUP PILL (Wi-Fi, Volume, Battery)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isActionCenterOpen) Color(0x33FFFFFF) else Color.Transparent)
+                        .clickable {
+                            haptics.letterTick()
+                            onActionCenterClick()
+                        }
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Wifi,
+                        contentDescription = "Wi-Fi",
+                        tint = Color(0xFFCBD5E1),
+                        modifier = Modifier.size(14.dp)
+                    )
+
+                    Icon(
+                        imageVector = Icons.Rounded.VolumeUp,
+                        contentDescription = "Audio",
+                        tint = Color(0xFFCBD5E1),
+                        modifier = Modifier.size(14.dp)
+                    )
+
+                    if (isCharging) {
+                        Icon(
+                            imageVector = Icons.Rounded.BatteryChargingFull,
+                            contentDescription = "Battery Charging",
+                            tint = Color(0xFF4ADE80),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.BatteryFull,
+                            contentDescription = "Battery",
+                            tint = Color(0xFFCBD5E1),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+
                     Text(
                         text = "$batteryPct%",
                         color = Color(0xFFCBD5E1),
@@ -289,59 +425,59 @@ fun Win11Taskbar(
                         fontWeight = FontWeight.Medium
                     )
                 }
-            }
 
-            // CLOCK & DATE (2 Stacked Lines ala Windows 11)
-            Column(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable {
-                        haptics.letterTick()
-                        onActionCenterClick()
-                    }
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = timeText.ifEmpty { "12:00" },
-                    color = Color(0xFFF1F5F9),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.End,
-                    lineHeight = 13.sp
-                )
-                Text(
-                    text = dateText.ifEmpty { "01/01/2026" },
-                    color = Color(0xFF94A3B8),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.End,
-                    lineHeight = 11.sp
-                )
-            }
+                // CLOCK & DATE (2 Stacked Lines ala Windows 11)
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable {
+                            haptics.letterTick()
+                            onActionCenterClick()
+                        }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = timeText.ifEmpty { "12:00" },
+                        color = Color(0xFFF1F5F9),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.End,
+                        lineHeight = 13.sp
+                    )
+                    Text(
+                        text = dateText.ifEmpty { "01/01/2026" },
+                        color = Color(0xFF94A3B8),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Normal,
+                        textAlign = TextAlign.End,
+                        lineHeight = 11.sp
+                    )
+                }
 
-            // SHOW DESKTOP PEEK LINE (Vertical 1dp line at far right)
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(6.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        haptics.heavyClick()
-                        onShowDesktopClick()
-                    }
-                    .padding(start = 2.dp),
-                contentAlignment = Alignment.Center
-            ) {
+                // SHOW DESKTOP PEEK LINE
                 Box(
                     modifier = Modifier
-                        .fillMaxHeight(0.6f)
-                        .width(1.dp)
-                        .background(Color(0x33FFFFFF))
-                )
+                        .fillMaxHeight()
+                        .width(6.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            haptics.heavyClick()
+                            onShowDesktopClick()
+                        }
+                        .padding(start = 2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight(0.6f)
+                            .width(1.dp)
+                            .background(Color(0x33FFFFFF))
+                    )
+                }
             }
         }
     }
