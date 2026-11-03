@@ -54,6 +54,8 @@ import id.maoneart.flow.ui.theme.FlowTextSecondary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LauncherSettingsBottomSheet(
+    launcherMode: String = "win11",
+    onSelectLauncherMode: (String) -> Unit = {},
     showBanner: Boolean,
     onToggleShowBanner: (Boolean) -> Unit,
     searchAsIcon: Boolean,
@@ -146,6 +148,33 @@ fun LauncherSettingsBottomSheet(
                     )
                 }
             }
+
+            // --- 0. LAUNCHER CORE MODE (WINDOWS 11 VS NIAGARA FLOW) ---
+            SettingsSectionHeader(title = "MODE SISTEM PELUNCUR")
+
+            SettingsDropdownRow(
+                title = "Gaya Tampilan Utama",
+                subtitle = "Pilih arsitektur antarmuka: Windows 11 otentik atau Flow minimalis",
+                selectedTitle = when (launcherMode) {
+                    "flow" -> "MaoneArt Flow (Niagara Style)"
+                    else -> "Windows 11 (Mobile & Desktop)"
+                },
+                options = listOf(
+                    DropdownOption(
+                        key = "win11",
+                        title = "Windows 11 (Mobile & Desktop)",
+                        subtitle = "Taskbar terpusat, Start Menu, Desktop Icons & Action Center"
+                    ),
+                    DropdownOption(
+                        key = "flow",
+                        title = "MaoneArt Flow (Niagara Style)",
+                        subtitle = "Tata letak 1-tangan minimalis dengan Alphabet Wave Scroller"
+                    )
+                ),
+                onSelectOption = { option ->
+                    onSelectLauncherMode(option.key)
+                }
+            )
 
             // --- 1. WIDGET & HEADER THEME SECTION ---
             SettingsSectionHeader(title = "TEMA WIDGET & HEADER")

@@ -65,6 +65,7 @@ import id.maoneart.flow.ui.components.FlowSearchBar
 import id.maoneart.flow.ui.components.HiddenAppsBottomSheet
 import id.maoneart.flow.ui.components.LauncherSettingsBottomSheet
 import id.maoneart.flow.ui.components.SelectCategoryBottomSheet
+import id.maoneart.flow.ui.win11.Win11Screen
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextSecondary
 import kotlinx.coroutines.Job
@@ -76,6 +77,13 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // 🪟 Windows 11 Mode Transformation (Mobile & Landscape)
+    if (uiState.launcherMode == "win11") {
+        Win11Screen(viewModel = viewModel, modifier = modifier)
+        return
+    }
+
     val isCreateCategoryOpen by viewModel.isCreateCategoryOpen.collectAsState()
     val categoryToDelete by viewModel.categoryToDelete.collectAsState()
     val appForCategoryChange by viewModel.appForCategoryChange.collectAsState()
@@ -493,6 +501,8 @@ fun HomeScreen(
         // Launcher Settings Bottom Sheet (Opened when clicking MaoneArt Flow app or header)
         if (uiState.isSettingsOpen) {
             LauncherSettingsBottomSheet(
+                launcherMode = uiState.launcherMode,
+                onSelectLauncherMode = viewModel::setLauncherMode,
                 showBanner = uiState.showMaoneArtBanner,
                 onToggleShowBanner = viewModel::setShowMaoneArtBanner,
                 searchAsIcon = uiState.searchAsIcon,

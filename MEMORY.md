@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.26)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.27)
 
 ---
 
@@ -261,3 +261,23 @@
       - Menggantikan kartu pilihan ganda (`WidgetThemeOptionCard`) yang memakan ruang vertikal besar menjadi komponen dropdown kaca modern (`SettingsDropdownRow`).
       - Diterapkan pada **Gaya Widget & Header** (MaoneArt Classic & Niagara Trio Pills) dan **Aksi Long-Press Tombol 'G'** (Menu Pilihan AI, Gemini, ChatGPT, Google Assistant).
       - Dilengkapi trigger box dengan highlight cyan, chevron up/down dinamis, dropdown popup ber-border glowing, dan indikator checkmark pada item yang aktif.
+  - **Transformasi Penuh Mode Windows 11 Mobile & Landscape Desktop (Release v1.0.27 - 3 Nov 2026)**:
+    - **Arsitektur Dual Mode (Flow vs Windows 11)**:
+      - Pengguna dapat beralih secara drastis antara mode *MaoneArt Flow (Niagara minimalis)* dan mode *Windows 11* melalui menu Pengaturan Launcher maupun Context Menu Desktop.
+    - **Windows 11 Bloom Wallpaper**:
+      - Rendering prosedural GPU Canvas 120 FPS yang mereplikasi wallpaper legendaris Windows 11 Bloom Dark (pita kelopak bunga sutra biru elektrik dengan radial glow mendalam).
+    - **Centered Taskbar & System Tray**:
+      - Taskbar melayang di dasar layar dengan tombol Windows 4-kotak biru, Search bar, File Explorer, Edge browser, serta indikator aplikasi aktif (*running app pill*).
+      - System Tray di pojok kanan bawah memuat jam 2-baris (`HH:mm` di atas `dd/MM/yyyy`), persentase baterai real-time & status charging, Wi-Fi, Audio, dan tombol intip desktop (*peek line*).
+    - **Start Menu Otentik (Mica Acrylic Floating Flyout)**:
+      - Search bar "Ketik di sini untuk mencari..." dengan pencarian instan.
+      - Bagian *Disematkan (Pinned Apps)* dalam grid ikon rapi, bagian *Disarankan (Recommended)* menampilkan aplikasi yang baru dibuka/sering digunakan.
+      - Tombol "Semua aplikasi >" membuka laci alfabetis A-Z ala Windows 11.
+      - Footer bar menampilkan avatar profil pengguna dan tombol Power dengan opsi beralih instan ke mode Flow.
+    - **Action Center & Quick Settings**:
+      - Panel pengaturan cepat melayang di atas System Tray dengan toggle Wi-Fi, Bluetooth, Senter, Mode Pesawat, Jangan Ganggu, Rotasi, serta slider Volume dan Kecerahan.
+    - **Desktop Surface & Context Menu**:
+      - Ikon desktop khas *This PC*, *Recycle Bin*, dan *Microsoft Edge* dengan teks berselubung bayangan kontras.
+      - Klik kanan / sentuh tahan (long-press) memunculkan Context Menu Windows 11 asli (*Tampilan, Urutkan, Segarkan, Personalisasi, Beralih ke Flow*).
+    - **Dukungan Penuh Portrait & Landscape**:
+      - Tata letak otomatis menyesuaikan orientasi layar ponsel (ala Windows 11 Mobile di portrait dan ala PC/Tablet Surface di landscape).

@@ -43,6 +43,7 @@ data class HomeUiState(
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
     val searchLongPressAction: String = "menu",
+    val launcherMode: String = "win11",
     val isAiAssistantSheetOpen: Boolean = false,
     val isGeminiInstalled: Boolean = false,
     val isChatGptInstalled: Boolean = false,
@@ -55,7 +56,8 @@ private data class InnerAppearance(
     val pureBg: Boolean,
     val showCats: Boolean,
     val twoLine: Boolean,
-    val longPressAction: String
+    val longPressAction: String,
+    val launcherMode: String
 )
 
 private data class AppearanceSettings(
@@ -66,7 +68,8 @@ private data class AppearanceSettings(
     val pureTransparentBg: Boolean = false,
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
-    val searchLongPressAction: String = "menu"
+    val searchLongPressAction: String = "menu",
+    val launcherMode: String = "win11"
 )
 
 private data class GeneralSettings(
@@ -140,9 +143,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             preferencesRepository.pureTransparentBgFlow,
             preferencesRepository.showCategoriesFlow,
             preferencesRepository.twoLineAppNamesFlow,
-            preferencesRepository.searchLongPressActionFlow
-        ) { pureBg, showCats, twoLine, longPressAction ->
-            InnerAppearance(pureBg, showCats, twoLine, longPressAction)
+            preferencesRepository.searchLongPressActionFlow,
+            preferencesRepository.launcherModeFlow
+        ) { pureBg, showCats, twoLine, longPressAction, mode ->
+            InnerAppearance(pureBg, showCats, twoLine, longPressAction, mode)
         }
     ) { banner, asIcon, theme, scroller, inner ->
         AppearanceSettings(
@@ -153,7 +157,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             pureTransparentBg = inner.pureBg,
             showCategories = inner.showCats,
             twoLineAppNames = inner.twoLine,
-            searchLongPressAction = inner.longPressAction
+            searchLongPressAction = inner.longPressAction,
+            launcherMode = inner.launcherMode
         )
     }
 
@@ -319,6 +324,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             showCategories = appearance.showCategories,
             twoLineAppNames = appearance.twoLineAppNames,
             searchLongPressAction = appearance.searchLongPressAction,
+            launcherMode = appearance.launcherMode,
             isAiAssistantSheetOpen = isAiSheetOpen,
             isGeminiInstalled = isGeminiInstalled,
             isChatGptInstalled = isChatGptInstalled,
@@ -621,5 +627,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         openAiAssistantSheet(false)
         appRepository.launchVoiceAssistant()
+    }
+
+    fun setLauncherMode(mode: String) {
+        viewModelScope.launch {
+            preferencesRepository.setLauncherMode(mode)
+        }
     }
 }
