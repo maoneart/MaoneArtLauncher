@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.32)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.33)
 
 ---
 
@@ -347,3 +347,15 @@
       - Mode Landscape disempurnakan menjadi `440dp` x `265dp`.
     - **Bumping Versi**:
       - `versionCode 33`, `versionName "1.0.32"`. Target APK siap update langsung tanpa uninstall.
+  - **Ultra-Slender Sidebar Notifikasi & Kalender 225dp (Release v1.0.33 - 4 Nov 2026)**:
+    - **Lebar Kalender & Notifikasi Ultra-Ramping (225dp x 450dp, Rasio 1:2)**:
+      - Lebar flyout dipangkas lebih ramping lagi menjadi **`225dp`** (dari 260dp) dengan tinggi tetap **`450dp`** sehingga bentuknya memanjang vertikal ramping 1:2.
+      - Grid kalender disesuaikan dengan badge tanggal 20dp dan font weekday 8sp.
+      - Header notifikasi dipersingkat menjadi tombol aksi cepat "Hapus" & "Atur".
+      - Kartu notifikasi dibuat kompak dengan ikon 16dp, judul 10sp, dan teks cuplikan 9sp.
+      - Menyisakan ~150dp ruang terbuka di sisi kiri layar ponsel.
+    - **Quick Settings Lebih Kompak (245dp x 270dp)**:
+      - Quick Settings Portrait diperkecil menjadi `245dp` x `270dp` dengan tile 48dp dan padding 10dp.
+      - Landscape disesuaikan menjadi `390dp` x `260dp` (Kalender & Notif) dan `280dp` x `250dp` (Quick Settings).
+    - **Bumping Versi**:
+      - `versionCode 34`, `versionName "1.0.33"`. Target APK siap update langsung tanpa uninstall.

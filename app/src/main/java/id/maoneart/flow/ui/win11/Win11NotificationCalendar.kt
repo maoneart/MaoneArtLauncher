@@ -109,11 +109,11 @@ fun Win11NotificationCalendar(
 
     val cardModifier = if (isLandscape) {
         Modifier
-            .width(440.dp)
-            .height(265.dp)
+            .width(390.dp)
+            .height(260.dp)
     } else {
         Modifier
-            .width(260.dp)
+            .width(225.dp)
             .height(450.dp)
     }
 
@@ -125,7 +125,7 @@ fun Win11NotificationCalendar(
             .background(Color(0xF21C222E)) // Win11 Dark Mica
             .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(12.dp))
             .clickable(enabled = false) {}
-            .padding(12.dp)
+            .padding(10.dp)
     ) {
         if (isLandscape) {
             // --- LANDSCAPE: SIDE-BY-SIDE (NOTIFICATIONS LEFT | CALENDAR RIGHT) ---
@@ -282,34 +282,34 @@ private fun NotificationsHeader(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             if (activeCount > 0) {
                 Text(
-                    text = "Hapus Semua",
+                    text = "Hapus",
                     color = Color(0xFF60A5FA),
-                    fontSize = 10.sp,
+                    fontSize = 9.5.sp,
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .clickable {
                             haptics.letterTick()
                             onClearAll()
                         }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                        .padding(horizontal = 3.dp, vertical = 2.dp)
                 )
             }
 
             Text(
-                text = "Pengaturan",
+                text = "Atur",
                 color = Color(0xFF94A3B8),
-                fontSize = 10.sp,
+                fontSize = 9.5.sp,
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .clickable {
                         haptics.letterTick()
                         onOpenSettings()
                     }
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                    .padding(horizontal = 3.dp, vertical = 2.dp)
             )
         }
     }
@@ -478,7 +478,7 @@ private fun CalendarWeekdayHeader() {
             Text(
                 text = day,
                 color = Color(0xFF64748B),
-                fontSize = 9.sp,
+                fontSize = 8.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f)
@@ -505,19 +505,19 @@ private fun CalendarDaysGrid(
         modifier = Modifier
             .fillMaxWidth()
             .height(gridHeight),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp)
     ) {
         items((0 until totalCells).toList()) { index ->
             if (index < firstDayOfWeek) {
-                Box(modifier = Modifier.size(22.dp))
+                Box(modifier = Modifier.size(20.dp))
             } else {
                 val dayNumber = index - firstDayOfWeek + 1
                 val isToday = isCurrentMonth && dayNumber == todayDate
 
                 Box(
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                         .background(if (isToday) Color(0xFF0078D7) else Color.Transparent)
                         .clickable {
@@ -528,7 +528,7 @@ private fun CalendarDaysGrid(
                     Text(
                         text = "$dayNumber",
                         color = if (isToday) Color.White else Color(0xFFCBD5E1),
-                        fontSize = 9.5.sp,
+                        fontSize = 9.sp,
                         fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                         textAlign = TextAlign.Center
                     )
@@ -561,7 +561,7 @@ private fun NotificationItemCard(
             .background(Color(0x22FFFFFF))
             .border(1.dp, Color(0x15FFFFFF), RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(6.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -573,7 +573,7 @@ private fun NotificationItemCard(
                     model = iconDrawable,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(18.dp)
+                        .size(16.dp)
                         .clip(RoundedCornerShape(4.dp))
                 )
             } else {
@@ -581,11 +581,11 @@ private fun NotificationItemCard(
                     imageVector = Icons.Rounded.Notifications,
                     contentDescription = null,
                     tint = Color(0xFF60A5FA),
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(15.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(7.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -596,7 +596,7 @@ private fun NotificationItemCard(
                     Text(
                         text = notif.title.ifEmpty { "Notifikasi" },
                         color = Color(0xFFF1F5F9),
-                        fontSize = 10.5.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -607,8 +607,8 @@ private fun NotificationItemCard(
                         Text(
                             text = formattedTime,
                             color = Color(0xFF94A3B8),
-                            fontSize = 8.5.sp,
-                            modifier = Modifier.padding(start = 4.dp)
+                            fontSize = 8.sp,
+                            modifier = Modifier.padding(start = 3.dp)
                         )
                     }
                 }
@@ -618,24 +618,24 @@ private fun NotificationItemCard(
                     Text(
                         text = notif.text,
                         color = Color(0xFFCBD5E1),
-                        fontSize = 9.5.sp,
+                        fontSize = 9.sp,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(3.dp))
 
             IconButton(
                 onClick = onDismiss,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(14.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = "Hapus",
                     tint = Color(0xFF94A3B8),
-                    modifier = Modifier.size(11.dp)
+                    modifier = Modifier.size(10.dp)
                 )
             }
         }
