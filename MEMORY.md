@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.33)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.34)
 
 ---
 
@@ -359,3 +359,15 @@
       - Landscape disesuaikan menjadi `390dp` x `260dp` (Kalender & Notif) dan `280dp` x `250dp` (Quick Settings).
     - **Bumping Versi**:
       - `versionCode 34`, `versionName "1.0.33"`. Target APK siap update langsung tanpa uninstall.
+  - **Quick Settings Sempurna Center 305dp & Kalender-Tanggal Ultra-Compact 195dp (Release v1.0.34 - 4 Nov 2026)**:
+    - **Pelebaran & Centering Tombol Quick Settings (Wi-Fi, Bluetooth, dll)**:
+      - Memenuhi permintaan "yg wifi bluetooth di besari lagi aja soalnya tombolnya jadi kurang center", lebar flyout Quick Settings diperlebar kembali ke **`305dp`** x `285dp` (padding 14dp).
+      - Tinggi tombol tile disesuaikan ke `52dp`, ikon `19dp`, dan teks label `9.5sp` bertata letak simetris di tengah (*perfectly centered*).
+    - **Kalender & Tanggal/Notifikasi Dikecilkan Lebih Ramping Lagi (195dp x 410dp)**:
+      - Lebar flyout kalender dan tanggal dipangkas menjadi **`195dp`** x `410dp`.
+      - Label nama hari disederhanakan menjadi 1 huruf inisial ("M", "S", "S", "R", "K", "J", "S") dengan font 8.5sp semi-bold.
+      - Lingkaran tanggal dibuat 18dp dengan font 8.5sp.
+      - Format bulan dipersingkat menjadi "Nov 2026" (11.5sp).
+      - Kartu notifikasi dibuat ultra-kompak (ikon 15dp, teks 8.5-9.5sp, tombol 13dp).
+    - **Bumping Versi**:
+      - `versionCode 35`, `versionName "1.0.34"`. Target APK siap update langsung tanpa uninstall.

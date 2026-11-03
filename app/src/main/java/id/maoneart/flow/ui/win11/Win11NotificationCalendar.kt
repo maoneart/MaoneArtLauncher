@@ -95,7 +95,7 @@ fun Win11NotificationCalendar(
     val todayCalendar = remember { Calendar.getInstance() }
     val isCurrentMonth = monthOffset == 0
 
-    val monthYearFormat = remember { SimpleDateFormat("MMMM yyyy", Locale("id", "ID")) }
+    val monthYearFormat = remember { SimpleDateFormat("MMM yyyy", Locale("id", "ID")) }
     val monthYearText = remember(calendar) { monthYearFormat.format(calendar.time).replaceFirstChar { it.uppercase() } }
 
     val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -109,12 +109,12 @@ fun Win11NotificationCalendar(
 
     val cardModifier = if (isLandscape) {
         Modifier
-            .width(390.dp)
-            .height(260.dp)
+            .width(380.dp)
+            .height(255.dp)
     } else {
         Modifier
-            .width(225.dp)
-            .height(450.dp)
+            .width(195.dp)
+            .height(410.dp)
     }
 
     Box(
@@ -125,7 +125,7 @@ fun Win11NotificationCalendar(
             .background(Color(0xF21C222E)) // Win11 Dark Mica
             .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(12.dp))
             .clickable(enabled = false) {}
-            .padding(10.dp)
+            .padding(8.dp)
     ) {
         if (isLandscape) {
             // --- LANDSCAPE: SIDE-BY-SIDE (NOTIFICATIONS LEFT | CALENDAR RIGHT) ---
@@ -269,47 +269,47 @@ private fun NotificationsHeader(
                 imageVector = Icons.Rounded.Notifications,
                 contentDescription = "Notifications",
                 tint = Color(0xFF60A5FA),
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(13.dp)
             )
-            Spacer(modifier = Modifier.width(5.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "Notifikasi",
                 color = Color(0xFFF1F5F9),
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
             )
         }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             if (activeCount > 0) {
                 Text(
                     text = "Hapus",
                     color = Color(0xFF60A5FA),
-                    fontSize = 9.5.sp,
+                    fontSize = 9.sp,
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .clickable {
                             haptics.letterTick()
                             onClearAll()
                         }
-                        .padding(horizontal = 3.dp, vertical = 2.dp)
+                        .padding(horizontal = 3.dp, vertical = 1.dp)
                 )
             }
 
             Text(
                 text = "Atur",
                 color = Color(0xFF94A3B8),
-                fontSize = 9.5.sp,
+                fontSize = 9.sp,
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .clickable {
                         haptics.letterTick()
                         onOpenSettings()
                     }
-                    .padding(horizontal = 3.dp, vertical = 2.dp)
+                    .padding(horizontal = 3.dp, vertical = 1.dp)
             )
         }
     }
@@ -426,23 +426,23 @@ private fun CalendarMonthHeader(
         Text(
             text = monthYearText,
             color = Color(0xFFF1F5F9),
-            fontSize = 12.5.sp,
+            fontSize = 11.5.sp,
             fontWeight = FontWeight.Bold
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
             IconButton(
                 onClick = {
                     haptics.letterTick()
                     onPrevMonth()
                 },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.ChevronLeft,
                     contentDescription = "Bulan Lalu",
                     tint = Color(0xFFCBD5E1),
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(12.dp)
                 )
             }
 
@@ -451,13 +451,13 @@ private fun CalendarMonthHeader(
                     haptics.letterTick()
                     onNextMonth()
                 },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.ChevronRight,
                     contentDescription = "Bulan Berikut",
                     tint = Color(0xFFCBD5E1),
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(12.dp)
                 )
             }
         }
@@ -465,11 +465,11 @@ private fun CalendarMonthHeader(
 }
 
 /**
- * Weekday labels (Min, Sen, Sel, Rab, Kam, Jum, Sab)
+ * Weekday labels (M, S, S, R, K, J, S)
  */
 @Composable
 private fun CalendarWeekdayHeader() {
-    val weekdays = listOf("Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab")
+    val weekdays = listOf("M", "S", "S", "R", "K", "J", "S")
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceAround
@@ -478,8 +478,8 @@ private fun CalendarWeekdayHeader() {
             Text(
                 text = day,
                 color = Color(0xFF64748B),
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f)
             )
@@ -510,14 +510,14 @@ private fun CalendarDaysGrid(
     ) {
         items((0 until totalCells).toList()) { index ->
             if (index < firstDayOfWeek) {
-                Box(modifier = Modifier.size(20.dp))
+                Box(modifier = Modifier.size(18.dp))
             } else {
                 val dayNumber = index - firstDayOfWeek + 1
                 val isToday = isCurrentMonth && dayNumber == todayDate
 
                 Box(
                     modifier = Modifier
-                        .size(20.dp)
+                        .size(18.dp)
                         .clip(CircleShape)
                         .background(if (isToday) Color(0xFF0078D7) else Color.Transparent)
                         .clickable {
@@ -528,7 +528,7 @@ private fun CalendarDaysGrid(
                     Text(
                         text = "$dayNumber",
                         color = if (isToday) Color.White else Color(0xFFCBD5E1),
-                        fontSize = 9.sp,
+                        fontSize = 8.5.sp,
                         fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                         textAlign = TextAlign.Center
                     )
@@ -561,7 +561,7 @@ private fun NotificationItemCard(
             .background(Color(0x22FFFFFF))
             .border(1.dp, Color(0x15FFFFFF), RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(6.dp)
+            .padding(5.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -573,19 +573,19 @@ private fun NotificationItemCard(
                     model = iconDrawable,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(16.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .size(15.dp)
+                        .clip(RoundedCornerShape(3.dp))
                 )
             } else {
                 Icon(
                     imageVector = Icons.Rounded.Notifications,
                     contentDescription = null,
                     tint = Color(0xFF60A5FA),
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(14.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(5.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -596,7 +596,7 @@ private fun NotificationItemCard(
                     Text(
                         text = notif.title.ifEmpty { "Notifikasi" },
                         color = Color(0xFFF1F5F9),
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -607,35 +607,35 @@ private fun NotificationItemCard(
                         Text(
                             text = formattedTime,
                             color = Color(0xFF94A3B8),
-                            fontSize = 8.sp,
-                            modifier = Modifier.padding(start = 3.dp)
+                            fontSize = 7.5.sp,
+                            modifier = Modifier.padding(start = 2.dp)
                         )
                     }
                 }
 
                 if (notif.text.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(1.dp))
                     Text(
                         text = notif.text,
                         color = Color(0xFFCBD5E1),
-                        fontSize = 9.sp,
+                        fontSize = 8.5.sp,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(3.dp))
+            Spacer(modifier = Modifier.width(2.dp))
 
             IconButton(
                 onClick = onDismiss,
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(13.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = "Hapus",
                     tint = Color(0xFF94A3B8),
-                    modifier = Modifier.size(10.dp)
+                    modifier = Modifier.size(9.dp)
                 )
             }
         }

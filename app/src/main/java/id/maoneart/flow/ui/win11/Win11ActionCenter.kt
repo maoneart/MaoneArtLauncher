@@ -259,12 +259,12 @@ fun Win11ActionCenter(
 
     val cardModifier = if (isLandscape) {
         Modifier
-            .width(280.dp)
-            .height(250.dp)
+            .width(310.dp)
+            .height(260.dp)
     } else {
         Modifier
-            .width(245.dp)
-            .height(270.dp)
+            .width(305.dp)
+            .height(285.dp)
     }
 
     Box(
@@ -275,7 +275,7 @@ fun Win11ActionCenter(
             .background(Color(0xF21C222E)) // Win11 Dark Mica
             .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(12.dp))
             .clickable(enabled = false) {}
-            .padding(10.dp)
+            .padding(14.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -617,7 +617,7 @@ private fun ActionCenterTile(
 ) {
     Box(
         modifier = modifier
-            .height(48.dp)
+            .height(52.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (isActive) Color(0xFF0078D7) else Color(0x22FFFFFF))
             .border(
@@ -626,7 +626,7 @@ private fun ActionCenterTile(
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 2.dp, vertical = 4.dp),
+            .padding(horizontal = 4.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -637,15 +637,16 @@ private fun ActionCenterTile(
                 imageVector = icon,
                 contentDescription = label,
                 tint = if (isActive) Color.White else Color(0xFFCBD5E1),
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(19.dp)
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = label,
                 color = if (isActive) Color.White else Color(0xFF94A3B8),
-                fontSize = 8.5.sp,
+                fontSize = 9.5.sp,
                 fontWeight = FontWeight.Medium,
-                maxLines = 1
+                maxLines = 1,
+                textAlign = TextAlign.Center
             )
         }
     }
