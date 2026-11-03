@@ -35,14 +35,16 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,9 +53,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.ui.util.rememberFlowHaptics
+import kotlinx.coroutines.delay
 
 /**
  * Authentic Windows 11 Start Menu with Mica Acrylic design,
@@ -74,6 +82,7 @@ fun Win11StartMenu(
     pinnedApps: List<AppInfo>,
     getAppIcon: (String) -> Drawable?,
     searchQuery: String,
+    autoFocusSearch: Boolean = false,
     onSearchQueryChange: (String) -> Unit,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit,
@@ -83,8 +92,16 @@ fun Win11StartMenu(
     modifier: Modifier = Modifier
 ) {
     val haptics = rememberFlowHaptics()
+    val focusRequester = remember { FocusRequester() }
     var isAllAppsView by remember { mutableStateOf(false) }
     var isPowerMenuOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(autoFocusSearch) {
+        if (autoFocusSearch) {
+            delay(150)
+            try { focusRequester.requestFocus() } catch (_: Throwable) {}
+        }
+    }
 
     // Width and height adapt based on orientation to prevent overflow
     val configuration = LocalConfiguration.current
@@ -119,10 +136,13 @@ fun Win11StartMenu(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(38.dp)
-                        .clip(RoundedCornerShape(19.dp))
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(20.dp))
                         .background(Color(0x33000000))
-                        .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(19.dp))
+                        .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(20.dp))
+                        .clickable {
+                            try { focusRequester.requestFocus() } catch (_: Throwable) {}
+                        }
                         .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -133,35 +153,58 @@ fun Win11StartMenu(
                         modifier = Modifier.size(18.dp)
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                    TextField(
+                    BasicTextField(
                         value = searchQuery,
                         onValueChange = onSearchQueryChange,
-                        placeholder = {
-                            Text(
-                                text = "Ketik di sini untuk mencari...",
-                                color = Color(0xFF718096),
-                                fontSize = 13.sp
-                            )
-                        },
                         singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedTextColor = Color(0xFFF1F5F9),
-                            unfocusedTextColor = Color(0xFFF1F5F9),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                        textStyle = TextStyle(
+                            color = Color(0xFFF1F5F9),
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Normal
                         ),
+                        cursorBrush = SolidColor(Color(0xFF4CC2FF)),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Search
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                val filtered = allApps.filter {
+                                    it.label.contains(searchQuery.trim(), ignoreCase = true) ||
+                                            it.packageName.contains(searchQuery.trim(), ignoreCase = true)
+                                }
+                                filtered.firstOrNull()?.let { firstApp ->
+                                    onAppClick(firstApp)
+                                }
+                            }
+                        ),
+                        decorationBox = { innerTextField ->
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        text = "Ketik di sini untuk mencari...",
+                                        color = Color(0xFF718096),
+                                        fontSize = 13.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        },
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight()
+                            .focusRequester(focusRequester)
                     )
 
                     if (searchQuery.isNotEmpty()) {
                         IconButton(
-                            onClick = { onSearchQueryChange("") },
+                            onClick = {
+                                onSearchQueryChange("")
+                                try { focusRequester.requestFocus() } catch (_: Throwable) {}
+                            },
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(

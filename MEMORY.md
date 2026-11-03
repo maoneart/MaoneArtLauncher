@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.28)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.29)
 
 ---
 
@@ -289,3 +289,23 @@
       2. Sisi kiri memuat navigasi inti Windows 11 (Start Button, Search, File Explorer, Browser Edge, 1 pinned app).
       3. Sisi kanan memuat System Tray mobile yang ramping (Wi-Fi, Baterai % & petir, Jam `HH:mm`).
       4. Mengalibrasi tinggi Start Menu flyout di portrait menggunakan `LocalConfiguration` (`screenHeightDp * 0.70f`) dan merampingkan grid pinned apps menjadi 150dp agar muat lega dan elegan di layar portrait.
+  - **Wallpaper Resmi 4K, Ikon Fluent Windows 11 Asli, Pemisahan Jam vs Pengaturan Cepat, & Pencarian Start Menu Responsif (Release v1.0.29 - 4 Nov 2026)**:
+    - **Wallpaper 4K Windows 11 Bloom Dark Asli (`win11_bloom_dark.jpg`)**:
+      - Mengganti rendering kanvas buatan dengan wallpaper resmi 4K (3840x2400) Microsoft Windows 11 Bloom Dark yang jernih dan tajam di segala orientasi.
+    - **Ikon Fluent Design Otentik Microsoft Windows 11 (256x256 PNG)**:
+      - Mengganti ikon kanvas sederhana dengan aset resmi 256x256 Fluent Design: *This PC* (`ic_win11_this_pc.png`), *Recycle Bin* (`ic_win11_recycle_bin.png`), *File Explorer* (`ic_win11_explorer.png`), *Microsoft Edge* (`ic_win11_edge.png`), dan *Logo Windows 11 4-Kotak* (`ic_win11_logo.png`).
+    - **Pemisahan Klik Jam vs Klik Quick Settings**:
+      - Klik pada Jam/Tanggal membuka **Pusat Pemberitahuan & Kalender Bulanan** (`Win11NotificationCalendar.kt`).
+      - Klik pada pil Wi-Fi / Baterai / Suara membuka **Pusat Pengaturan Cepat / Action Center** (`Win11ActionCenter.kt`).
+    - **Pengaturan Cepat Nyata (Live Device Controls)**:
+      - Status nyata Wi-Fi, Bluetooth, Mode Pesawat, Senter, Jangan Ganggu (DND), dan Rotasi Layar.
+      - Toggle fisik senter LED kamera via `CameraManager.setTorchMode` secara instan.
+      - Slider kecerahan layar langsung mengatur `window.attributes.screenBrightness`.
+      - Slider volume media langsung terhubung dengan `AudioManager.STREAM_MUSIC` dan tersinkronisasi dengan tombol volume hardware.
+    - **Integrasi Pemberitahuan Aktif**:
+      - `NotificationService` diperkaya dengan pelacakan notifikasi aktif (ikon aplikasi, judul, teks cuplikan, waktu posting, tombol dismiss per item, dan tombol Hapus Semua).
+    - **Perbaikan Kolom Pencarian Start Menu**:
+      - Mengganti Material 3 `TextField` (yang terkendala batasan tinggi minimum) dengan `BasicTextField` + `FocusRequester` + `KeyboardOptions(imeAction = ImeAction.Search)`.
+      - Kolom pencarian kini dapat diketik dengan lancar dan otomatis fokus serta memunculkan keyboard saat ikon Search di Taskbar ditekan.
+    - **Popup Dialog "Tentang Windows" (Winver / About)**:
+      - Menambahkan opsi "Tentang Windows" pada Context Menu (saat layar ditekan lama) yang memunculkan modal bergaya `winver.exe` lengkap dengan branding *Windows 11 Pro MaoneArt Edition*, versi 24H2, versi peluncur v1.0.29, dan atribusi pengembang Hermawan (MaoneArt).

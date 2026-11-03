@@ -57,20 +57,26 @@ fun Win11Screen(
     // Win11 Flyout States
     var isStartMenuOpen by remember { mutableStateOf(false) }
     var isActionCenterOpen by remember { mutableStateOf(false) }
+    var isCalendarNotificationOpen by remember { mutableStateOf(false) }
     var isContextMenuOpen by remember { mutableStateOf(false) }
+    var isAboutDialogOpen by remember { mutableStateOf(false) }
+    var autoFocusSearch by remember { mutableStateOf(false) }
     var contextMenuOffset by remember { mutableStateOf(Offset.Zero) }
 
     // Close flyouts helper
     fun dismissAllFlyouts() {
         isStartMenuOpen = false
         isActionCenterOpen = false
+        isCalendarNotificationOpen = false
         isContextMenuOpen = false
     }
 
     // Android Hardware / Gesture Back Button Handler
-    BackHandler(enabled = isStartMenuOpen || isActionCenterOpen || isContextMenuOpen || uiState.isSettingsOpen || uiState.selectedApp != null) {
+    BackHandler(enabled = isAboutDialogOpen || isStartMenuOpen || isActionCenterOpen || isCalendarNotificationOpen || isContextMenuOpen || uiState.isSettingsOpen || uiState.selectedApp != null) {
         when {
+            isAboutDialogOpen -> isAboutDialogOpen = false
             isContextMenuOpen -> isContextMenuOpen = false
+            isCalendarNotificationOpen -> isCalendarNotificationOpen = false
             isActionCenterOpen -> isActionCenterOpen = false
             isStartMenuOpen -> isStartMenuOpen = false
             uiState.selectedApp != null -> viewModel.selectAppForAction(null)
@@ -138,22 +144,34 @@ fun Win11Screen(
                 isLandscape = isLandscape,
                 isStartMenuOpen = isStartMenuOpen,
                 isActionCenterOpen = isActionCenterOpen,
+                isCalendarOpen = isCalendarNotificationOpen,
                 pinnedApps = uiState.favorites,
                 getAppIcon = viewModel::getAppIcon,
                 onStartClick = {
                     isActionCenterOpen = false
+                    isCalendarNotificationOpen = false
                     isContextMenuOpen = false
+                    autoFocusSearch = false
                     isStartMenuOpen = !isStartMenuOpen
                 },
                 onSearchClick = {
                     isActionCenterOpen = false
+                    isCalendarNotificationOpen = false
                     isContextMenuOpen = false
+                    autoFocusSearch = true
                     isStartMenuOpen = true
                 },
                 onActionCenterClick = {
                     isStartMenuOpen = false
+                    isCalendarNotificationOpen = false
                     isContextMenuOpen = false
                     isActionCenterOpen = !isActionCenterOpen
+                },
+                onClockClick = {
+                    isStartMenuOpen = false
+                    isActionCenterOpen = false
+                    isContextMenuOpen = false
+                    isCalendarNotificationOpen = !isCalendarNotificationOpen
                 },
                 onAppClick = { app ->
                     dismissAllFlyouts()
@@ -200,6 +218,7 @@ fun Win11Screen(
                 pinnedApps = uiState.favorites,
                 getAppIcon = viewModel::getAppIcon,
                 searchQuery = uiState.searchQuery,
+                autoFocusSearch = autoFocusSearch,
                 onSearchQueryChange = { viewModel.onSearchQueryChange(it) },
                 onAppClick = { app ->
                     dismissAllFlyouts()
@@ -221,7 +240,7 @@ fun Win11Screen(
             )
         }
 
-        // --- LAYER 3B: FLOATING WIN 11 ACTION CENTER ---
+        // --- LAYER 3B: FLOATING WIN 11 ACTION CENTER (QUICK SETTINGS) ---
         AnimatedVisibility(
             visible = isActionCenterOpen,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 4 }),
@@ -240,7 +259,41 @@ fun Win11Screen(
             )
         }
 
-        // --- LAYER 3C: FLOATING WIN 11 CONTEXT MENU ---
+        // --- LAYER 3C: FLOATING WIN 11 NOTIFICATION & CALENDAR CENTER ---
+        AnimatedVisibility(
+            visible = isCalendarNotificationOpen,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 4 }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 4 }),
+            modifier = Modifier
+                .align(if (isLandscape) Alignment.BottomEnd else Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 56.dp, end = if (isLandscape) 12.dp else 0.dp)
+        ) {
+            Win11NotificationCalendar(
+                isLandscape = isLandscape,
+                getAppIcon = viewModel::getAppIcon,
+                onOpenNotificationSettings = {
+                    dismissAllFlyouts()
+                    viewModel.openNotificationSettings()
+                },
+                onLaunchApp = { pkg ->
+                    dismissAllFlyouts()
+                    val app = uiState.allApps.firstOrNull { it.packageName == pkg }
+                    if (app != null) {
+                        viewModel.launchApp(app)
+                    } else {
+                        try {
+                            val launchIntent = context.packageManager.getLaunchIntentForPackage(pkg)
+                            if (launchIntent != null) {
+                                context.startActivity(launchIntent)
+                            }
+                        } catch (_: Throwable) {}
+                    }
+                }
+            )
+        }
+
+        // --- LAYER 3D: FLOATING WIN 11 CONTEXT MENU ---
         if (isContextMenuOpen) {
             val offsetX = with(density) { contextMenuOffset.x.toDp() }.coerceIn(12.dp, (configuration.screenWidthDp - 232).dp)
             val offsetY = with(density) { contextMenuOffset.y.toDp() }.coerceIn(40.dp, (configuration.screenHeightDp - 220).dp)
@@ -267,10 +320,21 @@ fun Win11Screen(
                         isContextMenuOpen = false
                         viewModel.setLauncherMode("flow")
                     },
+                    onAboutClick = {
+                        isContextMenuOpen = false
+                        isAboutDialogOpen = true
+                    },
                     onDismiss = { isContextMenuOpen = false },
                     modifier = Modifier.offset(x = offsetX, y = offsetY)
                 )
             }
+        }
+
+        // --- LAYER 3E: WIN 11 ABOUT DIALOG (WINVER) ---
+        if (isAboutDialogOpen) {
+            Win11AboutDialog(
+                onDismiss = { isAboutDialogOpen = false }
+            )
         }
 
         // --- LAYER 4: BOTTOM SHEETS (SETTINGS, ACTIONS, HIDDEN APPS) ---

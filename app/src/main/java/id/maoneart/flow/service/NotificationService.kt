@@ -11,11 +11,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+data class ActiveNotification(
+    val key: String,
+    val packageName: String,
+    val title: String,
+    val text: String,
+    val postTime: Long
+)
+
 class NotificationService : NotificationListenerService() {
 
     companion object {
         private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
         val notificationCounts: StateFlow<Map<String, Int>> = _notificationCounts.asStateFlow()
+
+        private val _activeNotificationList = MutableStateFlow<List<ActiveNotification>>(emptyList())
+        val activeNotificationList: StateFlow<List<ActiveNotification>> = _activeNotificationList.asStateFlow()
+
+        var currentInstance: NotificationService? = null
+            private set
 
         var isServiceConnected: Boolean = false
             private set
@@ -48,14 +62,17 @@ class NotificationService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        currentInstance = this
         isServiceConnected = true
         updateActiveNotifications()
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        currentInstance = null
         isServiceConnected = false
         _notificationCounts.value = emptyMap()
+        _activeNotificationList.value = emptyList()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -68,15 +85,31 @@ class NotificationService : NotificationListenerService() {
         updateActiveNotifications()
     }
 
+    fun dismissNotification(key: String) {
+        try {
+            cancelNotification(key)
+            updateActiveNotifications()
+        } catch (_: Throwable) {}
+    }
+
+    fun clearAllUserNotifications() {
+        try {
+            cancelAllNotifications()
+            updateActiveNotifications()
+        } catch (_: Throwable) {}
+    }
+
     private fun updateActiveNotifications() {
         try {
             val active = activeNotifications
             if (active == null || active.isEmpty()) {
                 _notificationCounts.value = emptyMap()
+                _activeNotificationList.value = emptyList()
                 return
             }
 
             val counts = mutableMapOf<String, Int>()
+            val notifs = mutableListOf<ActiveNotification>()
 
             for (sbn in active) {
                 // Ignore ongoing notifications like media playback or foreground service if desired,
@@ -90,11 +123,31 @@ class NotificationService : NotificationListenerService() {
                 val number = notif.number
                 val increment = if (number > 0) number else 1
                 counts[pkg] = (counts[pkg] ?: 0) + increment
+
+                val extras = notif.extras
+                val title = extras?.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()?.trim() ?: ""
+                val text = extras?.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()?.trim()
+                    ?: extras?.getCharSequence(android.app.Notification.EXTRA_BIG_TEXT)?.toString()?.trim()
+                    ?: ""
+
+                if (title.isNotEmpty() || text.isNotEmpty()) {
+                    notifs.add(
+                        ActiveNotification(
+                            key = sbn.key,
+                            packageName = pkg,
+                            title = title,
+                            text = text,
+                            postTime = sbn.postTime
+                        )
+                    )
+                }
             }
 
             _notificationCounts.value = counts
+            _activeNotificationList.value = notifs.sortedByDescending { it.postTime }.take(20)
         } catch (_: Throwable) {
             _notificationCounts.value = emptyMap()
+            _activeNotificationList.value = emptyList()
         }
     }
 }

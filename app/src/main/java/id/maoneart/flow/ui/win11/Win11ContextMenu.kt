@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoFixHigh
 import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Sort
@@ -44,6 +45,7 @@ fun Win11ContextMenu(
     onRefresh: () -> Unit,
     onPersonalize: () -> Unit,
     onSwitchToFlow: () -> Unit,
+    onAboutClick: () -> Unit = {},
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -110,6 +112,17 @@ fun Win11ContextMenu(
                 onClick = {
                     haptics.letterTick()
                     onPersonalize()
+                    onDismiss()
+                }
+            )
+
+            ContextMenuItem(
+                icon = Icons.Rounded.Info,
+                title = "Tentang Windows",
+                textColor = Color(0xFFE2E8F0),
+                onClick = {
+                    haptics.letterTick()
+                    onAboutClick()
                     onDismiss()
                 }
             )

@@ -68,11 +68,13 @@ fun Win11Taskbar(
     isLandscape: Boolean,
     isStartMenuOpen: Boolean,
     isActionCenterOpen: Boolean,
+    isCalendarOpen: Boolean = false,
     pinnedApps: List<AppInfo>,
     getAppIcon: (String) -> Drawable?,
     onStartClick: () -> Unit,
     onSearchClick: () -> Unit,
     onActionCenterClick: () -> Unit,
+    onClockClick: () -> Unit = {},
     onAppClick: (AppInfo) -> Unit,
     onShowDesktopClick: () -> Unit,
     onExplorerClick: () -> Unit,
@@ -212,57 +214,74 @@ fun Win11Taskbar(
                 }
             }
 
-            // RIGHT: Compact Mobile System Tray (Wi-Fi, Battery %, Time)
+            // RIGHT: Compact Mobile System Tray split into Quick Settings Pill & Clock Pill
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isActionCenterOpen) Color(0x33FFFFFF) else Color.Transparent)
-                    .clickable {
-                        haptics.letterTick()
-                        onActionCenterClick()
-                    }
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Wifi,
-                    contentDescription = "Wi-Fi",
-                    tint = Color(0xFFCBD5E1),
-                    modifier = Modifier.size(13.dp)
-                )
-
-                if (isCharging) {
+                // 1. QUICK SETTINGS PILL (Wi-Fi + Battery)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isActionCenterOpen) Color(0x33FFFFFF) else Color.Transparent)
+                        .clickable {
+                            haptics.letterTick()
+                            onActionCenterClick()
+                        }
+                        .padding(horizontal = 5.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
                     Icon(
-                        imageVector = Icons.Rounded.BatteryChargingFull,
-                        contentDescription = "Battery Charging",
-                        tint = Color(0xFF4ADE80),
-                        modifier = Modifier.size(13.dp)
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Rounded.BatteryFull,
-                        contentDescription = "Battery",
+                        imageVector = Icons.Rounded.Wifi,
+                        contentDescription = "Wi-Fi & Quick Settings",
                         tint = Color(0xFFCBD5E1),
                         modifier = Modifier.size(13.dp)
                     )
+
+                    if (isCharging) {
+                        Icon(
+                            imageVector = Icons.Rounded.BatteryChargingFull,
+                            contentDescription = "Battery Charging",
+                            tint = Color(0xFF4ADE80),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.BatteryFull,
+                            contentDescription = "Battery",
+                            tint = Color(0xFFCBD5E1),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+
+                    Text(
+                        text = "$batteryPct%",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
-                Text(
-                    text = "$batteryPct%",
-                    color = Color(0xFFCBD5E1),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.width(3.dp))
-
-                Text(
-                    text = timeText.ifEmpty { "12:00" },
-                    color = Color(0xFFF1F5F9),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                // 2. CLOCK PILL (Time -> Opens Notification & Calendar Center)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isCalendarOpen) Color(0x33FFFFFF) else Color.Transparent)
+                        .clickable {
+                            haptics.letterTick()
+                            onClockClick()
+                        }
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = timeText.ifEmpty { "12:00" },
+                        color = Color(0xFFF1F5F9),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     } else {
@@ -426,13 +445,14 @@ fun Win11Taskbar(
                     )
                 }
 
-                // CLOCK & DATE (2 Stacked Lines ala Windows 11)
+                // CLOCK & DATE (2 Stacked Lines ala Windows 11 -> Opens Notification & Calendar Center)
                 Column(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
+                        .background(if (isCalendarOpen) Color(0x33FFFFFF) else Color.Transparent)
                         .clickable {
                             haptics.letterTick()
-                            onActionCenterClick()
+                            onClockClick()
                         }
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                     horizontalAlignment = Alignment.End,
