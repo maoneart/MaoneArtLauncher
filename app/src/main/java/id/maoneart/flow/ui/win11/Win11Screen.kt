@@ -1,23 +1,30 @@
 package id.maoneart.flow.ui.win11
 
+import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,11 +33,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.ui.components.AppActionBottomSheet
 import id.maoneart.flow.ui.components.HiddenAppsBottomSheet
@@ -54,14 +66,44 @@ fun Win11Screen(
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    // Win11 Flyout States
+    // Win11 Flyout & Window States
     var isStartMenuOpen by remember { mutableStateOf(false) }
     var isActionCenterOpen by remember { mutableStateOf(false) }
     var isCalendarNotificationOpen by remember { mutableStateOf(false) }
     var isContextMenuOpen by remember { mutableStateOf(false) }
     var isAboutDialogOpen by remember { mutableStateOf(false) }
+    var isFileExplorerOpen by remember { mutableStateOf(false) }
+    var isFileExplorerMinimized by remember { mutableStateOf(false) }
     var autoFocusSearch by remember { mutableStateOf(false) }
     var contextMenuOffset by remember { mutableStateOf(Offset.Zero) }
+    val view = LocalView.current
+
+    // Full Immersive Auto-Hide 3-Button Android Navigation Bar + Mica Navbar Blending
+    DisposableEffect(view) {
+        val window = (context as? Activity)?.window
+        val controller = if (window != null) WindowCompat.getInsetsController(window, view) else null
+        try {
+            window?.let { win ->
+                win.navigationBarColor = android.graphics.Color.parseColor("#181C24")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    win.isNavigationBarContrastEnforced = false
+                }
+            }
+            controller?.let { ctrl ->
+                ctrl.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                ctrl.hide(WindowInsetsCompat.Type.navigationBars())
+            }
+        } catch (_: Throwable) {}
+
+        onDispose {
+            try {
+                window?.let { win ->
+                    win.navigationBarColor = android.graphics.Color.TRANSPARENT
+                }
+                controller?.show(WindowInsetsCompat.Type.navigationBars())
+            } catch (_: Throwable) {}
+        }
+    }
 
     // Close flyouts helper
     fun dismissAllFlyouts() {
@@ -72,13 +114,14 @@ fun Win11Screen(
     }
 
     // Android Hardware / Gesture Back Button Handler
-    BackHandler(enabled = isAboutDialogOpen || isStartMenuOpen || isActionCenterOpen || isCalendarNotificationOpen || isContextMenuOpen || uiState.isSettingsOpen || uiState.selectedApp != null) {
+    BackHandler(enabled = isAboutDialogOpen || isStartMenuOpen || isActionCenterOpen || isCalendarNotificationOpen || isContextMenuOpen || (isFileExplorerOpen && !isFileExplorerMinimized) || uiState.isSettingsOpen || uiState.selectedApp != null) {
         when {
             isAboutDialogOpen -> isAboutDialogOpen = false
             isContextMenuOpen -> isContextMenuOpen = false
             isCalendarNotificationOpen -> isCalendarNotificationOpen = false
             isActionCenterOpen -> isActionCenterOpen = false
             isStartMenuOpen -> isStartMenuOpen = false
+            isFileExplorerOpen && !isFileExplorerMinimized -> isFileExplorerMinimized = true
             uiState.selectedApp != null -> viewModel.selectAppForAction(null)
             uiState.isSettingsOpen -> viewModel.openSettings(false)
         }
@@ -104,13 +147,8 @@ fun Win11Screen(
             },
             onThisPcClick = {
                 dismissAllFlyouts()
-                try {
-                    context.startActivity(Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS))
-                } catch (_: Throwable) {
-                    try {
-                        context.startActivity(Intent(Settings.ACTION_SETTINGS))
-                    } catch (_: Throwable) {}
-                }
+                isFileExplorerOpen = true
+                isFileExplorerMinimized = false
             },
             onRecycleBinClick = {
                 dismissAllFlyouts()
@@ -134,10 +172,31 @@ fun Win11Screen(
             }
         )
 
-        // --- LAYER 2: WIN 11 DOCKED TASKBAR ---
+        // --- LAYER 1B: WIN 11 FILE EXPLORER WINDOW (1 LAGU + 1 CV + THIS PC) ---
+        AnimatedVisibility(
+            visible = isFileExplorerOpen && !isFileExplorerMinimized,
+            enter = fadeIn() + scaleIn(initialScale = 0.95f),
+            exit = fadeOut() + scaleOut(targetScale = 0.95f),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Win11FileExplorer(
+                isLandscape = isLandscape,
+                onClose = {
+                    isFileExplorerOpen = false
+                    isFileExplorerMinimized = false
+                },
+                onMinimize = {
+                    isFileExplorerMinimized = true
+                }
+            )
+        }
+
+        // --- LAYER 2: WIN 11 DOCKED TASKBAR (UNIFIED MICA NAVBAR SURFACE) ---
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(Color(0xF2181C24))
                 .navigationBarsPadding()
         ) {
             Win11Taskbar(
@@ -145,6 +204,7 @@ fun Win11Screen(
                 isStartMenuOpen = isStartMenuOpen,
                 isActionCenterOpen = isActionCenterOpen,
                 isCalendarOpen = isCalendarNotificationOpen,
+                isExplorerOpen = isFileExplorerOpen && !isFileExplorerMinimized,
                 pinnedApps = uiState.favorites,
                 getAppIcon = viewModel::getAppIcon,
                 onStartClick = {
@@ -179,17 +239,18 @@ fun Win11Screen(
                 },
                 onShowDesktopClick = {
                     dismissAllFlyouts()
+                    if (isFileExplorerOpen) {
+                        isFileExplorerMinimized = !isFileExplorerMinimized
+                    }
                 },
                 onExplorerClick = {
                     dismissAllFlyouts()
-                    try {
-                        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                            type = "*/*"
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        context.startActivity(intent)
-                    } catch (_: Throwable) {}
+                    if (!isFileExplorerOpen) {
+                        isFileExplorerOpen = true
+                        isFileExplorerMinimized = false
+                    } else {
+                        isFileExplorerMinimized = !isFileExplorerMinimized
+                    }
                 },
                 onBrowserClick = {
                     dismissAllFlyouts()

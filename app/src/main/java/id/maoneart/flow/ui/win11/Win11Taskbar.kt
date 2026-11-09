@@ -69,6 +69,7 @@ fun Win11Taskbar(
     isStartMenuOpen: Boolean,
     isActionCenterOpen: Boolean,
     isCalendarOpen: Boolean = false,
+    isExplorerOpen: Boolean = false,
     pinnedApps: List<AppInfo>,
     getAppIcon: (String) -> Drawable?,
     onStartClick: () -> Unit,
@@ -190,7 +191,7 @@ fun Win11Taskbar(
 
                 // File Explorer
                 TaskbarIconButton(
-                    isSelected = false,
+                    isSelected = isExplorerOpen,
                     hasRunningIndicator = true,
                     onClick = {
                         haptics.letterTick()
@@ -345,7 +346,7 @@ fun Win11Taskbar(
 
                 // FILE EXPLORER
                 TaskbarIconButton(
-                    isSelected = false,
+                    isSelected = isExplorerOpen,
                     hasRunningIndicator = true,
                     onClick = {
                         haptics.letterTick()
