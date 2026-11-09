@@ -42,6 +42,8 @@ data class AppInfo(
     val isFavorite: Boolean = false,
     val isHidden: Boolean = false,
     val notificationCount: Int = 0,
+    val notificationPreview: String = "",
+    val canReplyDirectly: Boolean = false,
     val installTime: Long = 0L
 ) {
     val id: String get() = "$packageName/$activityName"

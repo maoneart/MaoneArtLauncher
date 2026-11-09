@@ -136,22 +136,66 @@ fun AppListItem(
             Spacer(modifier = Modifier.width(16.dp))
         }
 
-        // App Label (supports 2 lines wrapping for long names to prevent clashing with wallpapers)
+        // App Label + Niagara-style Inline Notification Preview & Quick Reply Pill
+        val hasInlinePreview = app.notificationPreview.isNotBlank()
         val textMaxWidth = if (showIcon) 110.dp else 165.dp
-        Text(
-            text = app.label,
-            fontSize = 16.5.sp,
-            fontWeight = FontWeight.Normal,
-            color = FlowTextPrimary,
-            maxLines = if (twoLineAppNames) 2 else 1,
-            lineHeight = 20.sp,
-            overflow = TextOverflow.Ellipsis,
-            modifier = if (twoLineAppNames) {
+
+        androidx.compose.foundation.layout.Column(
+            modifier = if (twoLineAppNames && !hasInlinePreview) {
                 Modifier.widthIn(max = textMaxWidth)
             } else {
                 Modifier.weight(1f)
             }
-        )
+        ) {
+            Text(
+                text = app.label,
+                fontSize = 16.5.sp,
+                fontWeight = if (hasInlinePreview) FontWeight.SemiBold else FontWeight.Normal,
+                color = FlowTextPrimary,
+                maxLines = if (twoLineAppNames && !hasInlinePreview) 2 else 1,
+                lineHeight = 20.sp,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            if (hasInlinePreview) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 2.dp)
+                ) {
+                    Text(
+                        text = app.notificationPreview,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color(0xFFCBD5E1),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    if (app.canReplyDirectly) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(FlowElectricBlue.copy(alpha = 0.18f))
+                                .border(0.8.dp, FlowElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                .combinedClickable(
+                                    onClick = onLongClick,
+                                    onLongClick = onLongClick
+                                )
+                                .padding(horizontal = 6.dp, vertical = 1.5.dp)
+                        ) {
+                            Text(
+                                text = "↩ Balas",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = FlowElectricBlue
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         // Spacer to absorb remaining row space if twoLineAppNames is active and there's a fallback badge
         if (twoLineAppNames && !showIcon && app.notificationCount > 0) {

@@ -192,14 +192,33 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         preferencesRepository.favoritesFlow,
         preferencesRepository.hiddenAppsFlow,
         categoryConfigFlow,
-        NotificationService.notificationCounts
-    ) { rawApps, favs, hidden, (overrides, customCats, hiddenCats), notifCounts ->
+        combine(
+            NotificationService.notificationCounts,
+            NotificationService.activeNotificationList
+        ) { counts, list -> Pair(counts, list) }
+    ) { rawApps, favs, hidden, (overrides, customCats, hiddenCats), (notifCounts, activeNotifs) ->
+
+        // Group active notifications by package for instant Niagara-style preview & direct reply lookup
+        val latestNotifByPkg = activeNotifs.groupBy { it.packageName }
 
         // 1. Filter out hidden apps and apply favorite & category overrides & notification counts
         val processedApps = rawApps
             .filter { !hidden.contains(it.packageName) }
             .map { app ->
                 val notifCount = notifCounts[app.packageName] ?: 0
+                val pkgNotifs = latestNotifByPkg[app.packageName].orEmpty()
+                val topNotif = pkgNotifs.firstOrNull()
+                val previewStr = if (topNotif != null) {
+                    val sender = topNotif.title.trim()
+                    val msg = topNotif.text.trim().replace("\n", " ")
+                    when {
+                        sender.isNotEmpty() && msg.isNotEmpty() -> "$sender: $msg"
+                        msg.isNotEmpty() -> msg
+                        else -> sender
+                    }
+                } else ""
+                val canReply = pkgNotifs.any { it.canReply }
+
                 val overrideCat = overrides[app.packageName]
                 if (overrideCat != null) {
                     val title = if (customCats.contains(overrideCat)) {
@@ -217,12 +236,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         categoryId = overrideCat,
                         categoryTitle = title,
                         categoryIcon = icon,
-                        notificationCount = notifCount
+                        notificationCount = notifCount,
+                        notificationPreview = previewStr,
+                        canReplyDirectly = canReply
                     )
                 } else {
                     app.copy(
                         isFavorite = favs.contains(app.packageName),
-                        notificationCount = notifCount
+                        notificationCount = notifCount,
+                        notificationPreview = previewStr,
+                        canReplyDirectly = canReply
                     )
                 }
             }
