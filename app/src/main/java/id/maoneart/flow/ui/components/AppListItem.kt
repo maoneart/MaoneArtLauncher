@@ -136,12 +136,12 @@ fun AppListItem(
             Spacer(modifier = Modifier.width(16.dp))
         }
 
-        // App Label + Niagara-style Inline Notification Preview & Quick Reply Pill
+        // App Label + Niagara-style Inline Notification Preview (Strictly locked to left half so it never bleeds right)
         val hasInlinePreview = app.notificationPreview.isNotBlank()
-        val textMaxWidth = if (showIcon) 110.dp else 165.dp
+        val textMaxWidth = if (showIcon) 118.dp else 172.dp
 
         androidx.compose.foundation.layout.Column(
-            modifier = if (twoLineAppNames && !hasInlinePreview) {
+            modifier = if (twoLineAppNames) {
                 Modifier.widthIn(max = textMaxWidth)
             } else {
                 Modifier.weight(1f)
@@ -158,40 +158,36 @@ fun AppListItem(
             )
 
             if (hasInlinePreview) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 2.dp)
-                ) {
-                    Text(
-                        text = app.notificationPreview,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color(0xFFCBD5E1),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
+                Text(
+                    text = app.notificationPreview,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFFCBD5E1),
+                    maxLines = 1,
+                    lineHeight = 14.sp,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 1.dp)
+                )
 
-                    if (app.canReplyDirectly) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(FlowElectricBlue.copy(alpha = 0.18f))
-                                .border(0.8.dp, FlowElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                                .combinedClickable(
-                                    onClick = onLongClick,
-                                    onLongClick = onLongClick
-                                )
-                                .padding(horizontal = 6.dp, vertical = 1.5.dp)
-                        ) {
-                            Text(
-                                text = "↩ Balas",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = FlowElectricBlue
+                if (app.canReplyDirectly) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 3.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(FlowElectricBlue.copy(alpha = 0.18f))
+                            .border(0.8.dp, FlowElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(5.dp))
+                            .combinedClickable(
+                                onClick = onLongClick,
+                                onLongClick = onLongClick
                             )
-                        }
+                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = "↩ Balas",
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = FlowElectricBlue
+                        )
                     }
                 }
             }
