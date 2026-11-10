@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         return try {
             super.dispatchKeyEvent(event)
         } catch (_: Throwable) {
