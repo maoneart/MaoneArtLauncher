@@ -3,6 +3,7 @@ package id.maoneart.flow
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -54,6 +55,15 @@ class MainActivity : ComponentActivity() {
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 controller.hide(WindowInsetsCompat.Type.navigationBars())
             } catch (_: Throwable) {}
+        }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        return try {
+            super.dispatchKeyEvent(event)
+        } catch (_: Throwable) {
+            // Absorb any Compose IME / focus dispatch crashes on Enter or navigation keys
+            true
         }
     }
 

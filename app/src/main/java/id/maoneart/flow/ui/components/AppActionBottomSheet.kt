@@ -57,6 +57,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -323,9 +325,12 @@ private fun NiagaraNotificationReplyCard(
     onDismissNotif: () -> Unit
 ) {
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val haptics = rememberFlowHaptics()
     var replyText by remember(notif.key) { mutableStateOf("") }
     val sentReplies = remember(notif.key) { mutableStateListOf<String>() }
+    var isSubmitting by remember(notif.key) { mutableStateOf(false) }
     val timeStr = remember(notif.postTime) {
         try {
             SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(notif.postTime))
@@ -335,13 +340,22 @@ private fun NiagaraNotificationReplyCard(
     }
 
     fun submitReply(messageToSend: String) {
+        if (isSubmitting) return
         val clean = messageToSend.trim()
         if (clean.isEmpty()) return
-        val ok = NotificationService.sendDirectReply(context, notif, clean)
-        if (ok) {
-            haptics.heavyClick()
-            sentReplies.add(clean)
-            replyText = ""
+        isSubmitting = true
+        try {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            val ok = NotificationService.sendDirectReply(context, notif, clean)
+            if (ok) {
+                haptics.heavyClick()
+                sentReplies.add(clean)
+                replyText = ""
+            }
+        } catch (_: Throwable) {
+        } finally {
+            isSubmitting = false
         }
     }
 
@@ -517,7 +531,11 @@ private fun NiagaraNotificationReplyCard(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                         keyboardActions = KeyboardActions(
-                            onSend = { submitReply(replyText) }
+                            onSend = {
+                                try {
+                                    submitReply(replyText)
+                                } catch (_: Throwable) {}
+                            }
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )

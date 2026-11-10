@@ -181,6 +181,7 @@ class NotificationService : NotificationListenerService() {
                 var replyAct: Notification.Action? = null
                 var readAct: Notification.Action? = null
                 notif.actions?.forEach { act ->
+                    if (act == null) return@forEach
                     val inputs = act.remoteInputs
                     if (inputs != null && inputs.isNotEmpty() && act.actionIntent != null && replyAct == null) {
                         replyAct = act

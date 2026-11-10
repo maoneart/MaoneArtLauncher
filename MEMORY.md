@@ -371,3 +371,23 @@
       - Kartu notifikasi dibuat ultra-kompak (ikon 15dp, teks 8.5-9.5sp, tombol 13dp).
     - **Bumping Versi**:
       - `versionCode 35`, `versionName "1.0.34"`. Target APK siap update langsung tanpa uninstall.
+  - **Windows 11 File Explorer Interaktif & Immersive Navbar (Release v1.0.35 - 10 Nov 2026)**:
+    - Jendela File Explorer otentik Windows 11 dengan pemutar musik sample ("Tulus - Manusia Kuat.mp3") dan pratinjau dokumen CV Hermawan.
+    - Status penyimpanan C: dinamis dan penanganan immersive navigation bars.
+  - **Pratinjau Pesan Gaya Niagara & Direct Reply Balas Langsung (Release v1.0.36 & v1.0.37 - 10 Nov 2026)**:
+    - Pratinjau teks pesan WhatsApp/Telegram langsung di baris item aplikasi Flow Launcher.
+    - Tombol "↩ Balas" terisolasi rapi di kolom kiri tanpa melebar ke kanan.
+    - Dialog balas langsung via RemoteInput PendingIntent.
+  - **Penambalan Force Close pada Enter & Penguncian Default Flow Mode (Release v1.0.38 - 10 Nov 2026)**:
+    - **Solusi Ganti ke Windows 11 saat Crash/Restart**:
+      - Root Cause: Default fallback `Keys.LAUNCHER_MODE` dan initial state `HomeUiState` serta `LauncherAppearance` sebelumnya terprogram `"win11"`. Setiap kali crash atau restart proses, launcher memuat Windows 11 alih-alih Flow (Niagara).
+      - Solusi: Mengunci default fallback permanen ke `"flow"` di `PreferencesRepository`, `HomeViewModel`, dan `LauncherSettingsBottomSheet`.
+    - **Solusi Force Close Saat Menekan Enter / Enter Ganda**:
+      - Root Cause: Penekanan tombol Enter/Search pada `FlowSearchBar` dan Direct Reply `AppActionBottomSheet` memicu pembersihan state/penutupan instan saat soft keyboard masih aktif atau mengirim follow-up `KEYCODE_ENTER` kedua ke view node yang sudah terdisposisi, menyebabkan unhandled Compose IME session crash.
+      - Solusi:
+        1. Menambahkan pembersihan fokus dan keyboard (`keyboardController?.hide()` & `focusManager.clearFocus()`) sebelum aksi peluncuran aplikasi atau pengiriman balasan.
+        2. Menerapkan debounce 450ms pada `launchApp` di `HomeViewModel` dan lock `isSubmitting` pada reply input card.
+        3. Menambahkan pengaman `dispatchKeyEvent` di `MainActivity.kt` yang menyerap error event Enter tak tertangani.
+        4. Memasang Global Uncaught Exception Handler di `MaoneArtFlowApp` dengan logging otomatis ke `launcher_crash.log` dan auto-recovery mulus ke Flow launcher.
+    - **Bumping Versi**:
+      - `versionCode 39`, `versionName "1.0.38"`. Target APK siap update langsung tanpa uninstall.

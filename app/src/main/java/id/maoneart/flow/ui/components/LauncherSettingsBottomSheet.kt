@@ -54,7 +54,7 @@ import id.maoneart.flow.ui.theme.FlowTextSecondary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LauncherSettingsBottomSheet(
-    launcherMode: String = "win11",
+    launcherMode: String = "flow",
     onSelectLauncherMode: (String) -> Unit = {},
     showBanner: Boolean,
     onToggleShowBanner: (Boolean) -> Unit,

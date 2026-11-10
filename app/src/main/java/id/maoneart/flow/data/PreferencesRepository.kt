@@ -127,7 +127,7 @@ class PreferencesRepository(private val context: Context) {
     }
 
     val launcherModeFlow: Flow<String> = safePreferences.map { prefs ->
-        prefs[Keys.LAUNCHER_MODE] ?: "win11"
+        prefs[Keys.LAUNCHER_MODE] ?: "flow"
     }
 
     val win11WallpaperFlow: Flow<String> = safePreferences.map { prefs ->

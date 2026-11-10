@@ -58,6 +58,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -93,6 +95,8 @@ fun Win11StartMenu(
 ) {
     val haptics = rememberFlowHaptics()
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     var isAllAppsView by remember { mutableStateOf(false) }
     var isPowerMenuOpen by remember { mutableStateOf(false) }
 
@@ -170,6 +174,10 @@ fun Win11StartMenu(
                         ),
                         keyboardActions = KeyboardActions(
                             onSearch = {
+                                try {
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
+                                } catch (_: Throwable) {}
                                 val filtered = allApps.filter {
                                     it.label.contains(searchQuery.trim(), ignoreCase = true) ||
                                             it.packageName.contains(searchQuery.trim(), ignoreCase = true)

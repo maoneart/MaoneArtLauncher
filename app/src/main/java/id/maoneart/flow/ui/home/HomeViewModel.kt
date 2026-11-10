@@ -2,6 +2,7 @@ package id.maoneart.flow.ui.home
 
 import android.app.Application
 import android.graphics.drawable.Drawable
+import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import id.maoneart.flow.data.AppRepository
@@ -43,7 +44,7 @@ data class HomeUiState(
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
     val searchLongPressAction: String = "menu",
-    val launcherMode: String = "win11",
+    val launcherMode: String = "flow",
     val isAiAssistantSheetOpen: Boolean = false,
     val isGeminiInstalled: Boolean = false,
     val isChatGptInstalled: Boolean = false,
@@ -69,7 +70,7 @@ private data class AppearanceSettings(
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
     val searchLongPressAction: String = "menu",
-    val launcherMode: String = "win11"
+    val launcherMode: String = "flow"
 )
 
 private data class GeneralSettings(
@@ -509,7 +510,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private var lastLaunchTime: Long = 0L
+
     fun launchApp(app: AppInfo): Boolean {
+        val now = SystemClock.uptimeMillis()
+        if (now - lastLaunchTime < 450L) {
+            // Rapid double-tap/enter debounce: prevent opening activity multiple times or crashing
+            return false
+        }
+        lastLaunchTime = now
+
         if (app.packageName == getApplication<Application>().packageName) {
             _isSettingsOpen.value = true
             return true

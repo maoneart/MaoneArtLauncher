@@ -42,7 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import id.maoneart.flow.ui.util.rememberFlowHaptics
 import androidx.compose.ui.text.font.FontWeight
@@ -213,12 +215,26 @@ fun HomeScreen(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
+                val keyboardController = LocalSoftwareKeyboardController.current
+                val focusManager = LocalFocusManager.current
                 FlowSearchBar(
                     query = uiState.searchQuery,
                     onQueryChange = viewModel::onSearchQueryChange,
                     autoFocus = uiState.isSearching,
-                    onCloseClick = if (uiState.searchAsIcon) { { viewModel.setSearchActive(false) } } else null,
+                    onCloseClick = if (uiState.searchAsIcon) {
+                        {
+                            try {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                            } catch (_: Throwable) {}
+                            viewModel.setSearchActive(false)
+                        }
+                    } else null,
                     onSearchAction = {
+                        try {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        } catch (_: Throwable) {}
                         if (uiState.displayApps.isNotEmpty()) {
                             viewModel.launchApp(uiState.displayApps.first())
                         }
