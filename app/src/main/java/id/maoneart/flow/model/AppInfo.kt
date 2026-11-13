@@ -47,6 +47,7 @@ data class AppInfo(
     val installTime: Long = 0L
 ) {
     val id: String get() = "$packageName/$activityName"
+    val searchIndex: String = "$label $packageName".lowercase()
 
     companion object {
         fun computeFirstLetter(name: String): Char {

@@ -2,6 +2,7 @@ package id.maoneart.flow.ui.home
 
 import android.app.Application
 import android.graphics.drawable.Drawable
+import androidx.compose.ui.graphics.ImageBitmap
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -318,18 +319,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             visibleApps.filter { it.categoryId == catId }
         }
 
+        val isSearching = query.isNotBlank() || isSearchActive
+
         val finalDisplayApps = if (query.isBlank()) {
             categoryFilteredApps
         } else {
             val q = query.trim().lowercase()
-            // When searching, query across all visible apps
-            visibleApps.filter {
-                it.label.lowercase().contains(q) || it.packageName.lowercase().contains(q)
-            }
+            visibleApps.filter { it.searchIndex.contains(q) }
         }
 
-        val letters = finalDisplayApps.map { it.firstLetter }.toSet()
-        val indices = computeAlphabetIndices(finalDisplayApps)
+        val letters = if (isSearching) emptySet() else finalDisplayApps.map { it.firstLetter }.toSet()
+        val indices = if (isSearching) emptyMap() else computeAlphabetIndices(finalDisplayApps)
 
         HomeUiState(
             allApps = visibleApps,
@@ -342,7 +342,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             availableLetters = letters,
             letterIndices = indices,
             searchQuery = query,
-            isSearching = query.isNotBlank() || isSearchActive,
+            isSearching = isSearching,
             is24Hour = general.is24Hour,
             hapticsEnabled = general.hapticsEnabled,
             alphabetSide = general.alphabetSide,
@@ -606,6 +606,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun getAppIcon(packageName: String): Drawable? {
         return appRepository.getAppIcon(packageName)
+    }
+
+    fun getAppIconBitmap(packageName: String): ImageBitmap? {
+        return appRepository.getAppIconBitmap(packageName)
     }
 
     fun toggleFavorite(app: AppInfo) {

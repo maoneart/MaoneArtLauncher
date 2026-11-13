@@ -7,7 +7,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -38,11 +42,13 @@ class AppRepository(private val context: Context) {
         @Volatile
         private var cachedApps: List<AppInfo>? = null
         private val iconCache = ConcurrentHashMap<String, Drawable>(256)
+        private val bitmapCache = ConcurrentHashMap<String, ImageBitmap>(256)
 
         fun getCachedApps(): List<AppInfo>? = cachedApps
 
         fun clearPackageIcon(packageName: String) {
             iconCache.remove(packageName)
+            bitmapCache.remove(packageName)
         }
     }
 
@@ -58,6 +64,10 @@ class AppRepository(private val context: Context) {
                     val apps = fetchInstalledApps()
                     cachedApps = apps
                     trySend(apps)
+                    // Pre-warm bitmap cache in background IO thread for buttery 120 FPS scroll
+                    for (app in apps) {
+                        getAppIconBitmap(app.packageName)
+                    }
                 } catch (_: Throwable) {}
             }
         }
@@ -238,6 +248,21 @@ class AppRepository(private val context: Context) {
             val icon = packageManager.getApplicationIcon(packageName)
             iconCache[packageName] = icon
             icon
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    fun getAppIconBitmap(packageName: String): ImageBitmap? {
+        bitmapCache[packageName]?.let { return it }
+        val drawable = getAppIcon(packageName) ?: return null
+        return try {
+            val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth.coerceIn(96, 144) else 120
+            val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight.coerceIn(96, 144) else 120
+            val bmp = drawable.toBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val img = bmp.asImageBitmap()
+            bitmapCache[packageName] = img
+            img
         } catch (_: Throwable) {
             null
         }

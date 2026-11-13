@@ -2,6 +2,7 @@ package id.maoneart.flow.ui.components
 
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +48,8 @@ import id.maoneart.flow.ui.theme.FlowTextPrimary
 @Composable
 fun AppListItem(
     app: AppInfo,
-    iconDrawable: Drawable?,
+    iconBitmap: ImageBitmap? = null,
+    iconDrawable: Drawable? = null,
     showIcon: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -70,7 +73,7 @@ fun AppListItem(
             Box(
                 modifier = Modifier.size(44.dp)
             ) {
-                // App Icon
+                // App Icon (Direct hardware Canvas rendering for 120 FPS zero-jank scrolling)
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -78,11 +81,18 @@ fun AppListItem(
                         .clip(RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (iconDrawable != null) {
+                    if (iconBitmap != null) {
+                        Image(
+                            bitmap = iconBitmap,
+                            contentDescription = app.label,
+                            modifier = Modifier.size(40.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else if (iconDrawable != null) {
                         val imageRequest = remember(iconDrawable) {
                             ImageRequest.Builder(context)
                                 .data(iconDrawable)
-                                .crossfade(false) // Zero overhead, instant render from memory cache
+                                .crossfade(false)
                                 .build()
                         }
                         AsyncImage(

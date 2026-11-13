@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -323,17 +324,21 @@ fun HomeScreen(
             }
 
             // Safe scroll handler with bounds checking & cancellation protection to prevent FC
+            var lastTargetIndex by remember { mutableStateOf(-1) }
             val safeScrollToLetter: (Char) -> Unit = { letter ->
                 uiState.letterIndices[letter]?.let { appIndex ->
                     val headerOffset = if (uiState.selectedCategoryId == "all" && uiState.favorites.isNotEmpty()) {
                         uiState.favorites.size + 3
                     } else 1
                     val targetIndex = (headerOffset + appIndex).coerceAtLeast(0)
-                    scrollJob?.cancel()
-                    scrollJob = scope.launch {
-                        try {
-                            listState.scrollToItem(targetIndex)
-                        } catch (_: Throwable) {}
+                    if (targetIndex != lastTargetIndex) {
+                        lastTargetIndex = targetIndex
+                        scrollJob?.cancel()
+                        scrollJob = scope.launch {
+                            try {
+                                listState.scrollToItem(targetIndex)
+                            } catch (_: Throwable) {}
+                        }
                     }
                 }
             }
@@ -379,13 +384,13 @@ fun HomeScreen(
                                     )
                                 }
 
-                                itemsIndexed(
+                                items(
                                     items = uiState.favorites,
-                                    key = { index, app -> "fav_${app.id}_$index" }
-                                ) { _, app ->
+                                    key = { app -> "fav_${app.id}" }
+                                ) { app ->
                                     AppListItem(
                                         app = app,
-                                        iconDrawable = viewModel.getAppIcon(app.packageName),
+                                        iconBitmap = viewModel.getAppIconBitmap(app.packageName),
                                         showIcon = uiState.showIcons,
                                         twoLineAppNames = uiState.twoLineAppNames,
                                         onClick = { viewModel.launchApp(app) },
@@ -448,13 +453,13 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        itemsIndexed(
+                        items(
                             items = uiState.displayApps,
-                            key = { index, app -> "${app.id}_$index" }
-                        ) { _, app ->
+                            key = { app -> app.id }
+                        ) { app ->
                             AppListItem(
                                 app = app,
-                                iconDrawable = viewModel.getAppIcon(app.packageName),
+                                iconBitmap = viewModel.getAppIconBitmap(app.packageName),
                                 showIcon = uiState.showIcons,
                                 twoLineAppNames = uiState.twoLineAppNames,
                                 onClick = { viewModel.launchApp(app) },
