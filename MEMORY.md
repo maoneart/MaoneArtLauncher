@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.39)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.40)
 
 ---
 
@@ -407,3 +407,14 @@
       - Menambahkan kontrol switch "Widget Pemutar Musik (Now Playing)" di `LauncherSettingsBottomSheet.kt` dan preferensi persisten `show_music_widget` di DataStore.
     - **Bumping Versi**:
       - `versionCode 40`, `versionName "1.0.39"`. Target APK siap update langsung tanpa uninstall.
+  - **Refactor Music Player Widget Setengah Layar Wallpaper-Safe (Release v1.0.40 - 13 Nov 2026)**:
+    - **Isolasi Kolom Kiri Setengah Layar (Anti-Bleed Kanan)**:
+      - Memenuhi permintaan desain: *"witget puter musicnya setwnga layar lah kan semuanyabjuga gitu kan jgn lebar lebar ke kanan"*.
+      - Mengubah arsitektur layout `FlowMusicPlayerWidget.kt` dari `fillMaxWidth()` horizontal penuh menjadi kartu kompak vertikal 2-baris yang terkunci di kolom kiri (`widthIn(min = 195.dp, max = 224.dp)`).
+      - Menyelaraskan padding kiri ke `start = 24.dp` (identik dengan batas margin header jam dan item aplikasi).
+      - Menyisakan ~45% area kanan layar 100% terbuka transparan, sehingga karakter anime / ilustrasi wallpaper pengguna tidak tertutup sama sekali.
+    - **Tata Letak 2-Baris Kompak & Elegan**:
+      - Baris 1: Cover album 36dp + Judul lagu 12.5sp & Artis 10.5sp + Mini Live 3-Bar Equalizer Wave.
+      - Baris 2: Badge pill nama aplikasi pemutar musik (`FlowCyan`) + Kontrol lengkap (*Previous* 28dp, *Play/Pause* glowing cyan 30dp, *Next* 28dp).
+    - **Bumping Versi**:
+      - `versionCode 41`, `versionName "1.0.40"`. Target APK siap update langsung tanpa uninstall.
