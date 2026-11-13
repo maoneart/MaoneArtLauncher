@@ -58,6 +58,8 @@ fun LauncherSettingsBottomSheet(
     onSelectLauncherMode: (String) -> Unit = {},
     showBanner: Boolean,
     onToggleShowBanner: (Boolean) -> Unit,
+    showMusicWidget: Boolean = true,
+    onToggleShowMusicWidget: (Boolean) -> Unit = {},
     searchAsIcon: Boolean,
     onToggleSearchAsIcon: (Boolean) -> Unit,
     searchLongPressAction: String = "menu",
@@ -208,6 +210,13 @@ fun LauncherSettingsBottomSheet(
                 subtitle = "Sembunyikan untuk tampilan minimalis bersih",
                 checked = showBanner,
                 onCheckedChange = onToggleShowBanner
+            )
+
+            SettingsSwitchRow(
+                title = "Widget Pemutar Musik (Now Playing)",
+                subtitle = "Kontrol lagu Spotify, YouTube Music, & MaoneArt Music di bawah jam",
+                checked = showMusicWidget,
+                onCheckedChange = onToggleShowMusicWidget
             )
 
             Spacer(modifier = Modifier.height(14.dp))

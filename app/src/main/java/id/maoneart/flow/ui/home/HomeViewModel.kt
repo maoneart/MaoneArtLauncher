@@ -10,6 +10,7 @@ import id.maoneart.flow.data.PreferencesRepository
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.model.CategoryItem
 import id.maoneart.flow.model.DefaultCategories
+import id.maoneart.flow.service.MediaTrackInfo
 import id.maoneart.flow.service.NotificationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,6 +45,7 @@ data class HomeUiState(
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
     val searchLongPressAction: String = "menu",
+    val showMusicWidget: Boolean = true,
     val launcherMode: String = "flow",
     val isAiAssistantSheetOpen: Boolean = false,
     val isGeminiInstalled: Boolean = false,
@@ -58,6 +60,7 @@ private data class InnerAppearance(
     val showCats: Boolean,
     val twoLine: Boolean,
     val longPressAction: String,
+    val showMusicWidget: Boolean,
     val launcherMode: String
 )
 
@@ -70,6 +73,7 @@ private data class AppearanceSettings(
     val showCategories: Boolean = true,
     val twoLineAppNames: Boolean = true,
     val searchLongPressAction: String = "menu",
+    val showMusicWidget: Boolean = true,
     val launcherMode: String = "flow"
 )
 
@@ -145,9 +149,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             preferencesRepository.showCategoriesFlow,
             preferencesRepository.twoLineAppNamesFlow,
             preferencesRepository.searchLongPressActionFlow,
-            preferencesRepository.launcherModeFlow
-        ) { pureBg, showCats, twoLine, longPressAction, mode ->
-            InnerAppearance(pureBg, showCats, twoLine, longPressAction, mode)
+            combine(
+                preferencesRepository.showMusicWidgetFlow,
+                preferencesRepository.launcherModeFlow
+            ) { music, mode -> Pair(music, mode) }
+        ) { pureBg, showCats, twoLine, longPressAction, (showMusic, mode) ->
+            InnerAppearance(pureBg, showCats, twoLine, longPressAction, showMusic, mode)
         }
     ) { banner, asIcon, theme, scroller, inner ->
         AppearanceSettings(
@@ -159,6 +166,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             showCategories = inner.showCats,
             twoLineAppNames = inner.twoLine,
             searchLongPressAction = inner.longPressAction,
+            showMusicWidget = inner.showMusicWidget,
             launcherMode = inner.launcherMode
         )
     }
@@ -348,6 +356,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             showCategories = appearance.showCategories,
             twoLineAppNames = appearance.twoLineAppNames,
             searchLongPressAction = appearance.searchLongPressAction,
+            showMusicWidget = appearance.showMusicWidget,
             launcherMode = appearance.launcherMode,
             isAiAssistantSheetOpen = isAiSheetOpen,
             isGeminiInstalled = isGeminiInstalled,
@@ -666,5 +675,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             preferencesRepository.setLauncherMode(mode)
         }
+    }
+
+    val mediaTrack: StateFlow<MediaTrackInfo> = NotificationService.currentMediaTrack
+
+    fun setShowMusicWidget(show: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setShowMusicWidget(show)
+        }
+    }
+
+    fun toggleMusicPlayPause(): Boolean {
+        return NotificationService.togglePlayPause()
+    }
+
+    fun skipMusicNext(): Boolean {
+        return NotificationService.skipToNext()
+    }
+
+    fun skipMusicPrevious(): Boolean {
+        return NotificationService.skipToPrevious()
+    }
+
+    fun openMusicApp(): Boolean {
+        return NotificationService.openPlayerApp(getApplication())
     }
 }

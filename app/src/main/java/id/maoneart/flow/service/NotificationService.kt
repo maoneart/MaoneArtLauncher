@@ -3,9 +3,18 @@ package id.maoneart.flow.service
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.RemoteInput
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.media.MediaMetadata
+import android.media.session.MediaController
+import android.media.session.MediaSession
+import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -13,6 +22,19 @@ import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+data class MediaTrackInfo(
+    val isPlaying: Boolean = false,
+    val title: String = "",
+    val artist: String = "",
+    val album: String = "",
+    val packageName: String = "",
+    val appName: String = "",
+    val artwork: Bitmap? = null,
+    val durationMs: Long = 0L,
+    val positionMs: Long = 0L,
+    val hasActiveSession: Boolean = false
+)
 
 data class ActiveNotification(
     val key: String,
@@ -35,6 +57,9 @@ class NotificationService : NotificationListenerService() {
 
         private val _activeNotificationList = MutableStateFlow<List<ActiveNotification>>(emptyList())
         val activeNotificationList: StateFlow<List<ActiveNotification>> = _activeNotificationList.asStateFlow()
+
+        private val _currentMediaTrack = MutableStateFlow(MediaTrackInfo())
+        val currentMediaTrack: StateFlow<MediaTrackInfo> = _currentMediaTrack.asStateFlow()
 
         var currentInstance: NotificationService? = null
             private set
@@ -102,6 +127,246 @@ class NotificationService : NotificationListenerService() {
                 false
             }
         }
+
+        fun togglePlayPause(): Boolean {
+            return try {
+                val controller = currentInstance?.getActiveController() ?: return false
+                val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+                if (isPlaying) {
+                    controller.transportControls?.pause()
+                } else {
+                    controller.transportControls?.play()
+                }
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
+
+        fun skipToNext(): Boolean {
+            return try {
+                val controller = currentInstance?.getActiveController() ?: return false
+                controller.transportControls?.skipToNext()
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
+
+        fun skipToPrevious(): Boolean {
+            return try {
+                val controller = currentInstance?.getActiveController() ?: return false
+                controller.transportControls?.skipToPrevious()
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
+
+        fun openPlayerApp(context: Context): Boolean {
+            return try {
+                val controller = currentInstance?.getActiveController()
+                val sessionActivity = controller?.sessionActivity
+                if (sessionActivity != null) {
+                    try {
+                        sessionActivity.send()
+                        return true
+                    } catch (_: Throwable) {}
+                }
+                val pkg = controller?.packageName
+                if (!pkg.isNullOrEmpty()) {
+                    val intent = context.packageManager.getLaunchIntentForPackage(pkg)
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                        return true
+                    }
+                }
+                false
+            } catch (_: Throwable) {
+                false
+            }
+        }
+    }
+
+    private var mediaSessionManager: MediaSessionManager? = null
+    private var activeMediaController: MediaController? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private val mediaCallback = object : MediaController.Callback() {
+        override fun onPlaybackStateChanged(state: PlaybackState?) {
+            updateMediaTrack()
+        }
+        override fun onMetadataChanged(metadata: MediaMetadata?) {
+            updateMediaTrack()
+        }
+        override fun onSessionDestroyed() {
+            activeMediaController = null
+            findAndBindActiveMediaSession()
+        }
+    }
+
+    private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener { _ ->
+        findAndBindActiveMediaSession()
+    }
+
+    fun getActiveController(): MediaController? {
+        if (activeMediaController == null) {
+            findAndBindActiveMediaSession()
+        }
+        return activeMediaController
+    }
+
+    fun findAndBindActiveMediaSession() {
+        try {
+            if (!isServiceConnected) {
+                _currentMediaTrack.value = MediaTrackInfo()
+                return
+            }
+            val mgr = mediaSessionManager ?: (getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager)
+            mediaSessionManager = mgr
+            if (mgr == null) {
+                _currentMediaTrack.value = MediaTrackInfo()
+                return
+            }
+
+            val component = ComponentName(this, NotificationService::class.java)
+            val controllers = try {
+                mgr.getActiveSessions(component)
+            } catch (_: Throwable) {
+                null
+            }
+
+            val targetController = controllers?.firstOrNull { controller ->
+                val state = controller.playbackState?.state
+                state == PlaybackState.STATE_PLAYING
+            } ?: controllers?.firstOrNull { controller ->
+                val state = controller.playbackState?.state
+                state == PlaybackState.STATE_PAUSED || state == PlaybackState.STATE_BUFFERING
+            } ?: controllers?.firstOrNull()
+
+            if (targetController != null) {
+                if (targetController != activeMediaController) {
+                    try {
+                        activeMediaController?.unregisterCallback(mediaCallback)
+                    } catch (_: Throwable) {}
+                    activeMediaController = targetController
+                    try {
+                        activeMediaController?.registerCallback(mediaCallback, mainHandler)
+                    } catch (_: Throwable) {}
+                }
+                updateMediaTrack()
+                return
+            }
+
+            // Fallback: check active notifications for EXTRA_MEDIA_SESSION token
+            val active = try { activeNotifications } catch (_: Throwable) { null }
+            if (active != null) {
+                for (sbn in active) {
+                    val extras = sbn.notification?.extras ?: continue
+                    val token = extras.getParcelable<MediaSession.Token>(Notification.EXTRA_MEDIA_SESSION)
+                    if (token != null) {
+                        try {
+                            val controller = MediaController(this, token)
+                            if (controller != activeMediaController) {
+                                try {
+                                    activeMediaController?.unregisterCallback(mediaCallback)
+                                } catch (_: Throwable) {}
+                                activeMediaController = controller
+                                try {
+                                    activeMediaController?.registerCallback(mediaCallback, mainHandler)
+                                } catch (_: Throwable) {}
+                            }
+                            updateMediaTrack()
+                            return
+                        } catch (_: Throwable) {}
+                    }
+                }
+            }
+
+            if (activeMediaController != null) {
+                try {
+                    activeMediaController?.unregisterCallback(mediaCallback)
+                } catch (_: Throwable) {}
+                activeMediaController = null
+            }
+            _currentMediaTrack.value = MediaTrackInfo()
+        } catch (_: Throwable) {
+            _currentMediaTrack.value = MediaTrackInfo()
+        }
+    }
+
+    private fun updateMediaTrack() {
+        try {
+            val controller = activeMediaController
+            if (controller == null) {
+                _currentMediaTrack.value = MediaTrackInfo()
+                return
+            }
+
+            val state = controller.playbackState
+            val playbackStateVal = state?.state ?: PlaybackState.STATE_NONE
+            val isPlaying = playbackStateVal == PlaybackState.STATE_PLAYING
+            val isPaused = playbackStateVal == PlaybackState.STATE_PAUSED
+            val isBuffering = playbackStateVal == PlaybackState.STATE_BUFFERING
+
+            if (playbackStateVal == PlaybackState.STATE_STOPPED || 
+                playbackStateVal == PlaybackState.STATE_NONE || 
+                playbackStateVal == PlaybackState.STATE_ERROR) {
+                _currentMediaTrack.value = MediaTrackInfo()
+                return
+            }
+
+            val metadata = controller.metadata
+            val title = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
+                ?: metadata?.getText(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)?.toString()
+                ?: ""
+
+            val artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
+                ?: metadata?.getText(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)?.toString()
+                ?: ""
+
+            val album = metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+
+            val artwork = try {
+                metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+                    ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART)
+            } catch (_: Throwable) {
+                null
+            }
+
+            val duration = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+            val position = state?.position ?: 0L
+
+            val pkg = controller.packageName ?: ""
+            val appName = try {
+                val pm = packageManager
+                val appInfo = pm.getApplicationInfo(pkg, 0)
+                pm.getApplicationLabel(appInfo).toString()
+            } catch (_: Throwable) {
+                pkg
+            }
+
+            if (title.isNotEmpty() || isPlaying || isPaused || isBuffering) {
+                _currentMediaTrack.value = MediaTrackInfo(
+                    isPlaying = isPlaying,
+                    title = title.ifEmpty { "Memutar Audio" },
+                    artist = artist.ifEmpty { appName },
+                    album = album,
+                    packageName = pkg,
+                    appName = appName,
+                    artwork = artwork,
+                    durationMs = duration.coerceAtLeast(0L),
+                    positionMs = position.coerceAtLeast(0L),
+                    hasActiveSession = true
+                )
+            } else {
+                _currentMediaTrack.value = MediaTrackInfo()
+            }
+        } catch (_: Throwable) {
+            _currentMediaTrack.value = MediaTrackInfo()
+        }
     }
 
     override fun onListenerConnected() {
@@ -109,24 +374,41 @@ class NotificationService : NotificationListenerService() {
         currentInstance = this
         isServiceConnected = true
         updateActiveNotifications()
+
+        try {
+            val mgr = getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager
+            mediaSessionManager = mgr
+            val component = ComponentName(this, NotificationService::class.java)
+            mgr?.addOnActiveSessionsChangedListener(sessionsChangedListener, component, mainHandler)
+            findAndBindActiveMediaSession()
+        } catch (_: Throwable) {}
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        try {
+            mediaSessionManager?.removeOnActiveSessionsChangedListener(sessionsChangedListener)
+            activeMediaController?.unregisterCallback(mediaCallback)
+        } catch (_: Throwable) {}
+        activeMediaController = null
+        mediaSessionManager = null
         currentInstance = null
         isServiceConnected = false
         _notificationCounts.value = emptyMap()
         _activeNotificationList.value = emptyList()
+        _currentMediaTrack.value = MediaTrackInfo()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         updateActiveNotifications()
+        findAndBindActiveMediaSession()
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
         updateActiveNotifications()
+        findAndBindActiveMediaSession()
     }
 
     fun dismissNotification(key: String) {

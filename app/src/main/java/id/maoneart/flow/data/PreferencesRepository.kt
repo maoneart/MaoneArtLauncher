@@ -38,6 +38,7 @@ class PreferencesRepository(private val context: Context) {
         val SHOW_CATEGORIES = booleanPreferencesKey("show_categories")
         val TWO_LINE_APP_NAMES = booleanPreferencesKey("two_line_app_names")
         val SEARCH_LONG_PRESS_ACTION = stringPreferencesKey("search_long_press_action")
+        val SHOW_MUSIC_WIDGET = booleanPreferencesKey("show_music_widget")
         val LAUNCHER_MODE = stringPreferencesKey("launcher_mode")
         val WIN11_WALLPAPER = stringPreferencesKey("win11_wallpaper")
         val WIN11_TASKBAR_ALIGN = stringPreferencesKey("win11_taskbar_align")
@@ -124,6 +125,10 @@ class PreferencesRepository(private val context: Context) {
 
     val searchLongPressActionFlow: Flow<String> = safePreferences.map { prefs ->
         prefs[Keys.SEARCH_LONG_PRESS_ACTION] ?: "menu"
+    }
+
+    val showMusicWidgetFlow: Flow<Boolean> = safePreferences.map { prefs ->
+        prefs[Keys.SHOW_MUSIC_WIDGET] ?: true
     }
 
     val launcherModeFlow: Flow<String> = safePreferences.map { prefs ->
@@ -336,6 +341,10 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun setSearchLongPressAction(action: String) {
         safeEdit { prefs -> prefs[Keys.SEARCH_LONG_PRESS_ACTION] = action }
+    }
+
+    suspend fun setShowMusicWidget(show: Boolean) {
+        safeEdit { prefs -> prefs[Keys.SHOW_MUSIC_WIDGET] = show }
     }
 
     suspend fun setLauncherMode(mode: String) {

@@ -63,6 +63,7 @@ import id.maoneart.flow.ui.components.CategoryChipBar
 import id.maoneart.flow.ui.components.CreateCategoryDialog
 import id.maoneart.flow.ui.components.DeleteCategoryDialog
 import id.maoneart.flow.ui.components.DigitalClockHeader
+import id.maoneart.flow.ui.components.FlowMusicPlayerWidget
 import id.maoneart.flow.ui.components.FlowSearchBar
 import id.maoneart.flow.ui.components.HiddenAppsBottomSheet
 import id.maoneart.flow.ui.components.LauncherSettingsBottomSheet
@@ -89,6 +90,7 @@ fun HomeScreen(
     val isCreateCategoryOpen by viewModel.isCreateCategoryOpen.collectAsState()
     val categoryToDelete by viewModel.categoryToDelete.collectAsState()
     val appForCategoryChange by viewModel.appForCategoryChange.collectAsState()
+    val mediaTrack by viewModel.mediaTrack.collectAsState()
 
     val listState = rememberLazyListState()
     val chipListState = rememberLazyListState()
@@ -206,6 +208,22 @@ fun HomeScreen(
                     showBanner = uiState.showMaoneArtBanner,
                     widgetTheme = uiState.widgetTheme,
                     onOpenSettings = { viewModel.openSettings(true) }
+                )
+            }
+
+            // 1.5. Live Music Player Widget (Spotify, YouTube Music, MaoneArt Music, etc.)
+            AnimatedVisibility(
+                visible = mediaTrack.hasActiveSession && uiState.showMusicWidget && !uiState.isSearching,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                FlowMusicPlayerWidget(
+                    track = mediaTrack,
+                    onPlayPause = viewModel::toggleMusicPlayPause,
+                    onNext = viewModel::skipMusicNext,
+                    onPrevious = viewModel::skipMusicPrevious,
+                    onOpenApp = viewModel::openMusicApp,
+                    modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
 
@@ -521,6 +539,8 @@ fun HomeScreen(
                 onSelectLauncherMode = viewModel::setLauncherMode,
                 showBanner = uiState.showMaoneArtBanner,
                 onToggleShowBanner = viewModel::setShowMaoneArtBanner,
+                showMusicWidget = uiState.showMusicWidget,
+                onToggleShowMusicWidget = viewModel::setShowMusicWidget,
                 searchAsIcon = uiState.searchAsIcon,
                 onToggleSearchAsIcon = viewModel::setSearchAsIcon,
                 searchLongPressAction = uiState.searchLongPressAction,

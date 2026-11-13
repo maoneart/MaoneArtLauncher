@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.34)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.39)
 
 ---
 
@@ -391,3 +391,19 @@
         4. Memasang Global Uncaught Exception Handler di `MaoneArtFlowApp` dengan logging otomatis ke `launcher_crash.log` dan auto-recovery mulus ke Flow launcher.
     - **Bumping Versi**:
       - `versionCode 39`, `versionName "1.0.38"`. Target APK siap update langsung tanpa uninstall.
+  - **Live Music Player Widget Integrasi Spotify, YouTube, & MaoneArt Music (Release v1.0.39 - 13 Nov 2026)**:
+    - **Now Playing Media Widget di Bawah Jam Digital (Gaya Niagara)**:
+      - Menambahkan komponen widget glassmorphic `FlowMusicPlayerWidget.kt` tepat di bawah header jam digital.
+      - Menampilkan cover album aktif (dari `MediaMetadata.METADATA_KEY_ALBUM_ART` / `ART`), judul lagu tebal satu baris anti-overflow, nama artis, dan badge nama aplikasi pemutar (`FlowCyan`).
+      - Dilengkapi animasi **Live 3-Bar Equalizer Wave** yang memantul dinamis secara real-time saat audio sedang diputar (`isPlaying == true`) dan tenang saat dijeda.
+      - Kontrol sentuh taktil haptic: tombol *Previous* (`⏮`), tombol *Play/Pause* aksen glowing cyan (`▶` / `⏸`), dan tombol *Next* (`⏭`).
+      - Sentuhan pada bodi widget / cover album langsung meluncurkan aplikasi pemutar musik terkait (Spotify, YouTube Music, MaoneArt Music, dll).
+    - **Mesin Arsitektur Dual-Layer Media Session (`NotificationService.kt`)**:
+      - Memanfaatkan privilege `NotificationListenerService` yang terpasang untuk mengikat `MediaSessionManager.getActiveSessions(component)` dan `addOnActiveSessionsChangedListener` secara otomatis.
+      - Dilengkapi fallback otomatis mendeteksi token `Notification.EXTRA_MEDIA_SESSION` dari notifikasi aktif jika ada pemutar yang tidak mendaftar di session manager.
+      - Menggunakan StateFlow reaktif `currentMediaTrack` yang zero-latency, zero-battery-drain, dan bebas thread blocking (berjalan di background event loop & main looper callback).
+      - Menghilang secara otomatis dan mulus via `AnimatedVisibility` (fade & fold vertical) jika pemutar berhenti/ditutup, mengembalikan layar ke ruang lega minimalis tanpa lag.
+    - **Pengaturan & Switch Kustomisasi**:
+      - Menambahkan kontrol switch "Widget Pemutar Musik (Now Playing)" di `LauncherSettingsBottomSheet.kt` dan preferensi persisten `show_music_widget` di DataStore.
+    - **Bumping Versi**:
+      - `versionCode 40`, `versionName "1.0.39"`. Target APK siap update langsung tanpa uninstall.
