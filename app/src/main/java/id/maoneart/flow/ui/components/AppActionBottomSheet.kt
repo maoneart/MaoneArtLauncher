@@ -302,6 +302,7 @@ fun AppActionBottomSheet(
                     title = "Hapus Instalasi (Uninstall)",
                     iconTint = FlowRed,
                     onClick = {
+                        haptics.heavyClick()
                         onDismiss()
                         onUninstall()
                     }

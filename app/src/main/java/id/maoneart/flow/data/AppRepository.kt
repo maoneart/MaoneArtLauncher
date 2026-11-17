@@ -87,6 +87,7 @@ class AppRepository(private val context: Context) {
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)
             addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
             addAction(Intent.ACTION_PACKAGE_CHANGED)
             addAction(Intent.ACTION_PACKAGE_REPLACED)
             addDataScheme("package")
@@ -310,13 +311,27 @@ class AppRepository(private val context: Context) {
     }
 
     fun uninstallApp(packageName: String) {
+        if (packageName.isBlank() || packageName == context.packageName) return
         try {
             val intent = Intent(Intent.ACTION_DELETE).apply {
-                data = Uri.fromParts("package", packageName, null)
+                data = Uri.parse("package:$packageName")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+            try {
+                @Suppress("DEPRECATION")
+                val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                    data = Uri.parse("package:$packageName")
+                    putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (_: Throwable) {
+                // Fallback: buka pengaturan info aplikasi agar pengguna tetap bisa uninstall / disable
+                openAppDetails(packageName)
+            }
+        }
     }
 
     fun isPackageInstalled(packageName: String): Boolean {

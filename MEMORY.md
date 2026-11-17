@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.41)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.42)
 
 ---
 
@@ -430,3 +430,15 @@
       - Throttling `safeScrollToLetter`: Menambahkan cache `lastTargetIndex` untuk mencegah lonjakan layout pass bertumpuk saat jempol meluncur cepat di atas ombak alfabet.
     - **Bumping Versi**:
       - `versionCode 42`, `versionName "1.0.41"`. Target APK siap update langsung tanpa uninstall.
+  - **Perbaikan Uninstall Aplikasi & Integrasi Izin REQUEST_DELETE_PACKAGES (Release v1.0.42 - 18 Nov 2026)**:
+    - **Solusi Tuntas Opsi 'Hapus Instalasi' Tidak Berfungsi / Diam Saja**:
+      - Root Cause: Pada Android 9+ (API 28+) dan targetSdk 34, pemanggilan `Intent.ACTION_DELETE` / `ACTION_UNINSTALL_PACKAGE` dengan skema `package:` secara ketat mewajibkan deklarasi izin `android.permission.REQUEST_DELETE_PACKAGES` di `AndroidManifest.xml`. Karena izin ini belum dideklarasikan dan error ditangkap oleh try-catch kosong, Android secara diam-diam melempar `SecurityException` tanpa memunculkan dialog konfirmasi pencopotan sistem.
+      - Solusi 1: Mendaftarkan izin `<uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />` di `AndroidManifest.xml` serta menambahkan filter intent `ACTION_DELETE` & `ACTION_UNINSTALL_PACKAGE` di tag `<queries>`.
+      - Solusi 2: Memperkuat mekanisme uninstallation di `AppRepository.kt` dengan 3-layer resilient fallback:
+        1. Primary: `Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))`.
+        2. Fallback 1: `Intent(Intent.ACTION_UNINSTALL_PACKAGE)`.
+        3. Fallback 2: `openAppDetails(packageName)` (membuka halaman detail setelan aplikasi untuk mencopot/menonaktifkan aplikasi sistem).
+      - Solusi 3: Menambahkan `ACTION_PACKAGE_FULLY_REMOVED` pada broadcast receiver agar daftar aplikasi langsung ter-refresh secara otomatis seketika setelah aplikasi dicopot.
+      - Solusi 4: Menambahkan efek sentuh taktil mantap (`haptics.heavyClick()`) saat opsi Hapus Instalasi dipilih di `AppActionBottomSheet.kt`.
+    - **Bumping Versi**:
+      - `versionCode 43`, `versionName "1.0.42"`. Target APK siap update langsung tanpa uninstall.
