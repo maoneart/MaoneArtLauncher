@@ -33,6 +33,9 @@
     <!-- Essential Android 9+ (API 28+) Package Uninstallation Permission -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- Expand / collapse status bar and quick settings panels for swipe-down gestures -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
     <!-- Haptic feedback tactile pulse -->
     <uses-permission android:name="android.permission.VIBRATE" />
 

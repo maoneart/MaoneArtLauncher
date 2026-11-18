@@ -1,48 +1,59 @@
 package id.maoneart.flow.ui.components
 
 import android.graphics.drawable.Drawable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import id.maoneart.flow.model.AppInfo
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowOrange
 import id.maoneart.flow.ui.theme.FlowTextPrimary
+import id.maoneart.flow.ui.theme.FlowTextSecondary
+import id.maoneart.flow.ui.util.rememberFlowHaptics
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -54,21 +65,99 @@ fun AppListItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    twoLineAppNames: Boolean = true
+    twoLineAppNames: Boolean = true,
+    swipeGestureEnabled: Boolean = true,
+    onSwipeRight: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
+    val haptics = rememberFlowHaptics()
 
-    Row(
+    var dragOffsetX by remember { mutableFloatStateOf(0f) }
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = dragOffsetX,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "app_swipe_offset"
+    )
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
-            .padding(horizontal = 24.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
+        // Background reveal pill when dragging to right (Niagara style)
+        if (animatedOffsetX > 3f) {
+            val isCustomAction = !app.swipeActionPackage.isNullOrEmpty()
+            val accentColor = if (isCustomAction) FlowOrange else FlowElectricBlue
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(accentColor.copy(alpha = 0.22f))
+                    .padding(start = 22.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (isCustomAction) "➔" else "⚡",
+                        fontSize = 17.sp,
+                        color = accentColor,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    if (animatedOffsetX > 30f) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isCustomAction) (app.swipeActionLabel ?: "Aplikasi") else "Pintasan",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = accentColor,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+
+        // Foreground sliding row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
+                .then(
+                    if (swipeGestureEnabled && onSwipeRight != null) {
+                        Modifier.pointerInput(app.packageName) {
+                            detectHorizontalDragGestures(
+                                onDragEnd = {
+                                    val threshold = 50.dp.toPx()
+                                    if (dragOffsetX >= threshold) {
+                                        haptics.heavyClick(view)
+                                        onSwipeRight()
+                                    }
+                                    dragOffsetX = 0f
+                                },
+                                onDragCancel = {
+                                    dragOffsetX = 0f
+                                },
+                                onHorizontalDrag = { change, dragAmount ->
+                                    val newOffset = (dragOffsetX + dragAmount).coerceIn(0f, 95.dp.toPx())
+                                    if (newOffset != dragOffsetX) {
+                                        dragOffsetX = newOffset
+                                        change.consume()
+                                    }
+                                }
+                            )
+                        }
+                    } else Modifier
+                )
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+                .padding(horizontal = 24.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
         if (showIcon) {
             Box(
                 modifier = Modifier.size(44.dp)
@@ -200,6 +289,27 @@ fun AppListItem(
                         )
                     }
                 }
+
+                // Assigned Swipe Action Badge Indicator (Compact & Wallpaper Safe)
+                if (!app.swipeActionPackage.isNullOrEmpty() && app.swipeActionLabel != null) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(FlowOrange.copy(alpha = 0.18f))
+                            .border(0.6.dp, FlowOrange.copy(alpha = 0.45f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = "➔ ${app.swipeActionLabel}",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = FlowOrange,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
 
@@ -226,4 +336,5 @@ fun AppListItem(
             }
         }
     }
+}
 }

@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,6 +45,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -60,6 +65,7 @@ import id.maoneart.flow.ui.components.AiAssistantBottomSheet
 import id.maoneart.flow.ui.components.AlphabetWaveScroller
 import id.maoneart.flow.ui.components.AppActionBottomSheet
 import id.maoneart.flow.ui.components.AppListItem
+import id.maoneart.flow.ui.components.AppShortcutsBottomSheet
 import id.maoneart.flow.ui.components.CategoryChipBar
 import id.maoneart.flow.ui.components.CreateCategoryDialog
 import id.maoneart.flow.ui.components.DeleteCategoryDialog
@@ -72,6 +78,7 @@ import id.maoneart.flow.ui.components.SelectCategoryBottomSheet
 import id.maoneart.flow.ui.win11.Win11Screen
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextSecondary
+import id.maoneart.flow.ui.util.SystemUiUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -97,6 +104,7 @@ fun HomeScreen(
     val chipListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val view = LocalView.current
+    val context = LocalContext.current
     val haptics = rememberFlowHaptics()
     var scrollJob by remember { mutableStateOf<Job?>(null) }
 
@@ -143,6 +151,9 @@ fun HomeScreen(
                 }
                 uiState.selectedApp != null -> {
                     viewModel.selectAppForAction(null)
+                }
+                uiState.shortcutsApp != null -> {
+                    viewModel.openShortcutsForApp(null)
                 }
                 uiState.isHiddenAppsSheetOpen -> {
                     viewModel.openHiddenAppsSheet(false)
@@ -195,6 +206,42 @@ fun HomeScreen(
                 }
             )
             .statusBarsPadding()
+            .then(
+                if (uiState.swipeDownGestureEnabled && !uiState.isSearching && uiState.selectedApp == null && uiState.shortcutsApp == null && !uiState.isSettingsOpen) {
+                    Modifier.pointerInput(listState) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown(pass = PointerEventPass.Initial)
+                            val startX = down.position.x
+                            val startY = down.position.y
+                            var triggered = false
+
+                            while (true) {
+                                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                                val change = event.changes.firstOrNull() ?: break
+                                if (!change.pressed) break
+
+                                val dy = change.position.y - startY
+                                val dx = change.position.x - startX
+
+                                val isAtTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset <= 0
+                                if (!triggered && isAtTop && dy > 52.dp.toPx() && dy > kotlin.math.abs(dx) * 1.5f) {
+                                    triggered = true
+                                    change.consume()
+                                    val isLeft = startX < size.width / 2f
+                                    if (isLeft) {
+                                        // Sisi Kiri: Buka Panel Tombol Pengaturan Cepat (Quick Settings)
+                                        SystemUiUtils.expandQuickSettings(context)
+                                    } else {
+                                        // Sisi Kanan: Buka Panel Notifikasi (Notifications Shade)
+                                        SystemUiUtils.expandNotifications(context)
+                                    }
+                                    haptics.heavyClick(view)
+                                }
+                            }
+                        }
+                    }
+                } else Modifier
+            )
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
@@ -393,10 +440,14 @@ fun HomeScreen(
                                         iconBitmap = viewModel.getAppIconBitmap(app.packageName),
                                         showIcon = uiState.showIcons,
                                         twoLineAppNames = uiState.twoLineAppNames,
+                                        swipeGestureEnabled = uiState.appSwipeGestureEnabled,
                                         onClick = { viewModel.launchApp(app) },
                                         onLongClick = {
                                             if (uiState.hapticsEnabled) haptics.heavyClick(view)
                                             viewModel.selectAppForAction(app)
+                                        },
+                                        onSwipeRight = {
+                                            viewModel.onAppSwipedRight(app)
                                         }
                                     )
                                 }
@@ -462,10 +513,14 @@ fun HomeScreen(
                                 iconBitmap = viewModel.getAppIconBitmap(app.packageName),
                                 showIcon = uiState.showIcons,
                                 twoLineAppNames = uiState.twoLineAppNames,
+                                swipeGestureEnabled = uiState.appSwipeGestureEnabled,
                                 onClick = { viewModel.launchApp(app) },
                                 onLongClick = {
                                     if (uiState.hapticsEnabled) haptics.heavyClick(view)
                                     viewModel.selectAppForAction(app)
+                                },
+                                onSwipeRight = {
+                                    viewModel.onAppSwipedRight(app)
                                 }
                             )
                         }
@@ -529,11 +584,35 @@ fun HomeScreen(
                     viewModel.selectAppForAction(null)
                     viewModel.openSettings(true)
                 },
+                onOpenShortcuts = {
+                    viewModel.openShortcutsForApp(app)
+                },
                 onToggleFavorite = { viewModel.toggleFavorite(app) },
                 onChangeCategory = { viewModel.openCategoryChangeDialog(app) },
                 onOpenInfo = { viewModel.openAppDetails(app) },
                 onUninstall = { viewModel.uninstallApp(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) }
+            )
+        }
+
+        // App Shortcuts & Swipe Action Bottom Sheet (Niagara Pop-up)
+        uiState.shortcutsApp?.let { app ->
+            val assignedTarget = remember(app.swipeActionPackage, uiState.allApps) {
+                app.swipeActionPackage?.let { pkg -> uiState.allApps.find { it.packageName == pkg } }
+            }
+            AppShortcutsBottomSheet(
+                app = app,
+                allApps = uiState.allApps,
+                iconDrawable = viewModel.getAppIcon(app.packageName),
+                assignedSwipeApp = assignedTarget,
+                onDismiss = { viewModel.openShortcutsForApp(null) },
+                onLaunchShortcut = { shortcutId ->
+                    viewModel.launchShortcut(shortcutId, app.packageName)
+                },
+                onAssignSwipeAction = { targetPkg ->
+                    viewModel.setAppSwipeAction(app.packageName, targetPkg)
+                },
+                getAppIconDrawable = viewModel::getAppIcon
             )
         }
 
@@ -569,6 +648,10 @@ fun HomeScreen(
                     if (enabled) haptics.click(view)
                     viewModel.setHapticsEnabled(enabled)
                 },
+                swipeDownGestureEnabled = uiState.swipeDownGestureEnabled,
+                onToggleSwipeDownGesture = viewModel::setSwipeDownGestureEnabled,
+                appSwipeGestureEnabled = uiState.appSwipeGestureEnabled,
+                onToggleAppSwipeGesture = viewModel::setAppSwipeGestureEnabled,
                 hasNotificationAccess = uiState.hasNotificationAccess,
                 onOpenNotificationSettings = viewModel::openNotificationSettings,
                 hiddenAppsCount = uiState.hiddenApps.size,

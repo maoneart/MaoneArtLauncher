@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.42)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.43)
 
 ---
 
@@ -440,5 +440,24 @@
         3. Fallback 2: `openAppDetails(packageName)` (membuka halaman detail setelan aplikasi untuk mencopot/menonaktifkan aplikasi sistem).
       - Solusi 3: Menambahkan `ACTION_PACKAGE_FULLY_REMOVED` pada broadcast receiver agar daftar aplikasi langsung ter-refresh secara otomatis seketika setelah aplikasi dicopot.
       - Solusi 4: Menambahkan efek sentuh taktil mantap (`haptics.heavyClick()`) saat opsi Hapus Instalasi dipilih di `AppActionBottomSheet.kt`.
+  - **Gestur Geser Turun System UI (Kiri Tombol & Kanan Notif) & App Swipe Actions Niagara (Release v1.0.43 - 18 Nov 2026)**:
+    - **Gestur Geser Turun System UI (Kiri Tombol Cepat, Kanan Notifikasi)**:
+      - Mengembangkan helper `SystemUiUtils.kt` berbasis `StatusBarManager`:
+        1. Sisi Kiri Layar (`down.x < screenWidth / 2`): Membuka panel tombol kontrol cepat (*Quick Settings / Control Center*) via `expandSettingsPanel`.
+        2. Sisi Kanan Layar (`down.x >= screenWidth / 2`): Membuka panel notifikasi (*Notification Shade*) via `expandNotificationsPanel`.
+      - Dilengkapi proteksi scroll: hanya aktif saat daftar berada di posisi paling atas (`firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset <= 0`) dengan ambang batas downward pull 52dp dan verifikasi strictly vertical (`dy > abs(dx) * 1.5`), bebas 100% bentrok dengan scroll vertikal LazyColumn.
+      - Menambahkan izin `<uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />` di `AndroidManifest.xml`.
+      - Disertai umpan balik getaran taktil mantap (`haptics.heavyClick()`).
+    - **Aksi Geser Kanan Aplikasi & Pop-up Pintasan Gaya Niagara (Niagara Pop-up)**:
+      - Mengembangkan gesture detektor geser horizontal ke kanan (`detectHorizontalDragGestures`) dengan fisika pegas elastis (*bouncy spring physics* 120 FPS) dan batas pergeseran dinamis 0-95dp di `AppListItem.kt`.
+      - Saat ditarik ke kanan, di balik item aplikasi muncul indikator kapsul glassmorphic beraksen neon (`➔` oranye untuk aksi aplikasi sekunder, `⚡` cyan untuk pintasan cepat).
+      - Menghubungkan Android App Shortcuts API (Android 7.1+ / API 25+) via `AppShortcutManager.kt` (`LauncherApps.getShortcuts` & `startShortcut`).
+      - Menyediakan bottom sheet modal pop-up `AppShortcutsBottomSheet.kt` bergaya glassmorphism:
+        1. Bagian *Pintasan Cepat*: Menampilkan daftar pintasan bawaan aplikasi (mis. WhatsApp "Chat Baru", "Kamera"; Chrome "Tab Baru", dll.) yang langsung meluncur seketika saat disentuh.
+        2. Bagian *Aksi Geser Kanan*: Pengguna dapat menautkan aplikasi sekunder apa pun (mis. geser Kamera buka Galeri Foto, geser Telepon buka WhatsApp). Tombol pemilih aplikasi (*SecondaryAppPickerView*) dilengkapi pencarian instan.
+      - Menambahkan badge indikator mini `➔ [Nama App]` di bawah nama aplikasi secara wallpaper-safe tanpa menabrak batas kolom kiri.
+      - Menyediakan menu "Pintasan & Aksi Geser" di `AppActionBottomSheet.kt` saat aplikasi ditekan lama.
+    - **Saklar Pengaturan di Launcher Settings**:
+      - Menyediakan toggle "Gestur Geser Turun (System UI)" dan "Aksi Geser Kanan Aplikasi" di `LauncherSettingsBottomSheet.kt`.
     - **Bumping Versi**:
-      - `versionCode 43`, `versionName "1.0.42"`. Target APK siap update langsung tanpa uninstall.
+      - `versionCode 44`, `versionName "1.0.43"`. Target APK siap update langsung tanpa uninstall.

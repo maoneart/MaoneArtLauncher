@@ -42,6 +42,9 @@ class PreferencesRepository(private val context: Context) {
         val LAUNCHER_MODE = stringPreferencesKey("launcher_mode")
         val WIN11_WALLPAPER = stringPreferencesKey("win11_wallpaper")
         val WIN11_TASKBAR_ALIGN = stringPreferencesKey("win11_taskbar_align")
+        val APP_SWIPE_ACTIONS = stringPreferencesKey("app_swipe_actions")
+        val SWIPE_DOWN_GESTURE_ENABLED = booleanPreferencesKey("swipe_down_gesture_enabled")
+        val APP_SWIPE_GESTURE_ENABLED = booleanPreferencesKey("app_swipe_gesture_enabled")
     }
 
     // IO-Safe preferences flow that catches any disk corruption gracefully without crashing the app
@@ -357,5 +360,55 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun setWin11TaskbarAlign(align: String) {
         safeEdit { prefs -> prefs[Keys.WIN11_TASKBAR_ALIGN] = align }
+    }
+
+    val appSwipeActionsFlow: Flow<Map<String, String>> = safePreferences.map { prefs ->
+        val rawJson = prefs[Keys.APP_SWIPE_ACTIONS] ?: "{}"
+        try {
+            val jsonObject = JSONObject(rawJson)
+            val result = mutableMapOf<String, String>()
+            val keys = jsonObject.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val value = jsonObject.optString(key, "")
+                if (value.isNotEmpty()) {
+                    result[key] = value
+                }
+            }
+            result
+        } catch (_: Throwable) {
+            emptyMap()
+        }
+    }
+
+    suspend fun setAppSwipeAction(sourcePackage: String, targetPackage: String?) {
+        safeEdit { prefs ->
+            val rawJson = prefs[Keys.APP_SWIPE_ACTIONS] ?: "{}"
+            try {
+                val jsonObject = JSONObject(rawJson)
+                if (targetPackage.isNullOrEmpty()) {
+                    jsonObject.remove(sourcePackage)
+                } else {
+                    jsonObject.put(sourcePackage, targetPackage)
+                }
+                prefs[Keys.APP_SWIPE_ACTIONS] = jsonObject.toString()
+            } catch (_: Throwable) {}
+        }
+    }
+
+    val swipeDownGestureEnabledFlow: Flow<Boolean> = safePreferences.map { prefs ->
+        prefs[Keys.SWIPE_DOWN_GESTURE_ENABLED] ?: true
+    }
+
+    suspend fun setSwipeDownGestureEnabled(enabled: Boolean) {
+        safeEdit { prefs -> prefs[Keys.SWIPE_DOWN_GESTURE_ENABLED] = enabled }
+    }
+
+    val appSwipeGestureEnabledFlow: Flow<Boolean> = safePreferences.map { prefs ->
+        prefs[Keys.APP_SWIPE_GESTURE_ENABLED] ?: true
+    }
+
+    suspend fun setAppSwipeGestureEnabled(enabled: Boolean) {
+        safeEdit { prefs -> prefs[Keys.APP_SWIPE_GESTURE_ENABLED] = enabled }
     }
 }

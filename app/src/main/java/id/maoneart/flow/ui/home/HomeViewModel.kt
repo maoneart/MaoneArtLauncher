@@ -53,7 +53,10 @@ data class HomeUiState(
     val isChatGptInstalled: Boolean = false,
     val isSettingsOpen: Boolean = false,
     val isHiddenAppsSheetOpen: Boolean = false,
-    val selectedApp: AppInfo? = null
+    val selectedApp: AppInfo? = null,
+    val swipeDownGestureEnabled: Boolean = true,
+    val appSwipeGestureEnabled: Boolean = true,
+    val shortcutsApp: AppInfo? = null
 )
 
 private data class InnerAppearance(
@@ -83,7 +86,9 @@ private data class GeneralSettings(
     val hapticsEnabled: Boolean = true,
     val alphabetSide: String = "right",
     val showIcons: Boolean = true,
-    val hasNotificationAccess: Boolean = true
+    val hasNotificationAccess: Boolean = true,
+    val swipeDownGestureEnabled: Boolean = true,
+    val appSwipeGestureEnabled: Boolean = true
 )
 
 private data class AppsAndCategoriesData(
@@ -123,6 +128,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isAiAssistantSheetOpen = MutableStateFlow(false)
     val isAiAssistantSheetOpen: StateFlow<Boolean> = _isAiAssistantSheetOpen.asStateFlow()
+
+    private val _shortcutsApp = MutableStateFlow<AppInfo?>(null)
+    val shortcutsApp: StateFlow<AppInfo?> = _shortcutsApp.asStateFlow()
 
     val isGeminiInstalled: Boolean
         get() = appRepository.isPackageInstalled("com.google.android.apps.bard")
@@ -177,9 +185,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         preferencesRepository.hapticsEnabledFlow,
         preferencesRepository.alphabetSideFlow,
         preferencesRepository.showIconsFlow,
-        _hasNotificationAccess
-    ) { is24H, haptics, side, showIcons, hasNotifAccess ->
-        GeneralSettings(is24H, haptics, side, showIcons, hasNotifAccess)
+        combine(
+            _hasNotificationAccess,
+            preferencesRepository.swipeDownGestureEnabledFlow,
+            preferencesRepository.appSwipeGestureEnabledFlow
+        ) { notifAccess, swipeDown, appSwipe -> Triple(notifAccess, swipeDown, appSwipe) }
+    ) { is24H, haptics, side, showIcons, (hasNotifAccess, swipeDown, appSwipe) ->
+        GeneralSettings(is24H, haptics, side, showIcons, hasNotifAccess, swipeDown, appSwipe)
     }
 
     private val settingsFlow = combine(
@@ -197,21 +209,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         Triple(overrides, customCats, hiddenCats)
     }
 
-    private val appsWithCategoriesFlow = combine(
-        appRepository.installedAppsFlow,
+    private val appPrefsFlow = combine(
         preferencesRepository.favoritesFlow,
         preferencesRepository.hiddenAppsFlow,
+        preferencesRepository.appSwipeActionsFlow
+    ) { favs, hidden, swipeActions -> Triple(favs, hidden, swipeActions) }
+
+    private val appsWithCategoriesFlow = combine(
+        appRepository.installedAppsFlow,
+        appPrefsFlow,
         categoryConfigFlow,
         combine(
             NotificationService.notificationCounts,
             NotificationService.activeNotificationList
         ) { counts, list -> Pair(counts, list) }
-    ) { rawApps, favs, hidden, (overrides, customCats, hiddenCats), (notifCounts, activeNotifs) ->
+    ) { rawApps, (favs, hidden, swipeActions), (overrides, customCats, hiddenCats), (notifCounts, activeNotifs) ->
+
+        val rawAppMap = rawApps.associateBy { it.packageName }
 
         // Group active notifications by package for instant Niagara-style preview & direct reply lookup
         val latestNotifByPkg = activeNotifs.groupBy { it.packageName }
 
-        // 1. Filter out hidden apps and apply favorite & category overrides & notification counts
+        // 1. Filter out hidden apps and apply favorite, swipe action, category overrides & notification counts
         val processedApps = rawApps
             .filter { !hidden.contains(it.packageName) }
             .map { app ->
@@ -228,6 +247,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 } else ""
                 val canReply = pkgNotifs.any { it.canReply }
+
+                val swipePkg = swipeActions[app.packageName]
+                val swipeLabel = swipePkg?.let { rawAppMap[it]?.label }
 
                 val overrideCat = overrides[app.packageName]
                 if (overrideCat != null) {
@@ -248,14 +270,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         categoryIcon = icon,
                         notificationCount = notifCount,
                         notificationPreview = previewStr,
-                        canReplyDirectly = canReply
+                        canReplyDirectly = canReply,
+                        swipeActionPackage = swipePkg,
+                        swipeActionLabel = swipeLabel
                     )
                 } else {
                     app.copy(
                         isFavorite = favs.contains(app.packageName),
                         notificationCount = notifCount,
                         notificationPreview = previewStr,
-                        canReplyDirectly = canReply
+                        canReplyDirectly = canReply,
+                        swipeActionPackage = swipePkg,
+                        swipeActionLabel = swipeLabel
                     )
                 }
             }
@@ -303,11 +329,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         appsWithCategoriesFlow,
         settingsFlow,
         combine(_searchQuery, _selectedCategoryId, _isSearchActive) { q, c, active -> Triple(q, c, active) },
-        _selectedApp,
+        combine(_selectedApp, _shortcutsApp) { selApp, scApp -> Pair(selApp, scApp) },
         combine(_isSettingsOpen, _isHiddenAppsSheetOpen, _isAiAssistantSheetOpen) { settings, hiddenApps, aiSheet ->
             Triple(settings, hiddenApps, aiSheet)
         }
-    ) { appsData, (appearance, general), (query, catId, isSearchActive), selApp, (isSettingsOpen, isHiddenAppsOpen, isAiSheetOpen) ->
+    ) { appsData, (appearance, general), (query, catId, isSearchActive), (selApp, scApp), (isSettingsOpen, isHiddenAppsOpen, isAiSheetOpen) ->
 
         val visibleApps = appsData.apps
         val favoritesList = visibleApps.filter { it.isFavorite }
@@ -363,7 +389,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             isChatGptInstalled = isChatGptInstalled,
             isSettingsOpen = isSettingsOpen,
             isHiddenAppsSheetOpen = isHiddenAppsOpen,
-            selectedApp = selApp
+            selectedApp = selApp,
+            swipeDownGestureEnabled = general.swipeDownGestureEnabled,
+            appSwipeGestureEnabled = general.appSwipeGestureEnabled,
+            shortcutsApp = scApp
         )
     }.stateIn(
         scope = viewModelScope,
@@ -543,6 +572,45 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openSettings(open: Boolean) {
         _isSettingsOpen.value = open
+    }
+
+    fun openShortcutsForApp(app: AppInfo?) {
+        _shortcutsApp.value = app
+    }
+
+    fun setAppSwipeAction(sourcePackage: String, targetPackage: String?) {
+        viewModelScope.launch {
+            preferencesRepository.setAppSwipeAction(sourcePackage, targetPackage)
+        }
+    }
+
+    fun launchShortcut(shortcutId: String, packageName: String): Boolean {
+        return id.maoneart.flow.data.AppShortcutManager.launchShortcut(getApplication(), packageName, shortcutId)
+    }
+
+    fun onAppSwipedRight(app: AppInfo) {
+        val targetPkg = app.swipeActionPackage
+        if (!targetPkg.isNullOrEmpty()) {
+            val targetApp = uiState.value.allApps.find { it.packageName == targetPkg }
+            if (targetApp != null) {
+                launchApp(targetApp)
+                return
+            }
+        }
+        // If no custom swipe action target is assigned, reveal the Niagara-style Pop-up Shortcuts sheet!
+        openShortcutsForApp(app)
+    }
+
+    fun setSwipeDownGestureEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setSwipeDownGestureEnabled(enabled)
+        }
+    }
+
+    fun setAppSwipeGestureEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setAppSwipeGestureEnabled(enabled)
+        }
     }
 
     fun openHiddenAppsSheet(open: Boolean) {

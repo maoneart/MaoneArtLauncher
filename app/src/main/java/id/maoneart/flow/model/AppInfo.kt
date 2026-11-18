@@ -1,6 +1,18 @@
 package id.maoneart.flow.model
 
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Immutable
+
+@Immutable
+data class FlowShortcutItem(
+    val id: String,
+    val packageName: String,
+    val shortLabel: String,
+    val longLabel: String? = null,
+    val icon: Drawable? = null,
+    val isDynamic: Boolean = false,
+    val isManifest: Boolean = false
+)
 
 @Immutable
 data class CategoryItem(
@@ -44,7 +56,9 @@ data class AppInfo(
     val notificationCount: Int = 0,
     val notificationPreview: String = "",
     val canReplyDirectly: Boolean = false,
-    val installTime: Long = 0L
+    val installTime: Long = 0L,
+    val swipeActionPackage: String? = null,
+    val swipeActionLabel: String? = null
 ) {
     val id: String get() = "$packageName/$activityName"
     val searchIndex: String = "$label $packageName".lowercase()

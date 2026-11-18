@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Reply
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Shortcut
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -93,7 +94,8 @@ fun AppActionBottomSheet(
     onOpenInfo: () -> Unit,
     onUninstall: () -> Unit,
     onToggleHidden: () -> Unit,
-    onOpenSettings: (() -> Unit)? = null
+    onOpenSettings: (() -> Unit)? = null,
+    onOpenShortcuts: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
@@ -251,6 +253,19 @@ fun AppActionBottomSheet(
                         onLaunch()
                     }
                 )
+
+                // Action: App Shortcuts & Swipe Action
+                if (onOpenShortcuts != null) {
+                    ActionItem(
+                        icon = Icons.Rounded.Shortcut,
+                        title = "Pintasan & Aksi Geser",
+                        iconTint = FlowElectricBlue,
+                        onClick = {
+                            onDismiss()
+                            onOpenShortcuts()
+                        }
+                    )
+                }
 
                 // Action: Favorite Toggle
                 ActionItem(

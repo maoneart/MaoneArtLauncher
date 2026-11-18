@@ -80,6 +80,10 @@ fun LauncherSettingsBottomSheet(
     onToggleIs24Hour: (Boolean) -> Unit,
     hapticsEnabled: Boolean,
     onToggleHaptics: (Boolean) -> Unit,
+    swipeDownGestureEnabled: Boolean = true,
+    onToggleSwipeDownGesture: (Boolean) -> Unit = {},
+    appSwipeGestureEnabled: Boolean = true,
+    onToggleAppSwipeGesture: (Boolean) -> Unit = {},
     hasNotificationAccess: Boolean,
     onOpenNotificationSettings: () -> Unit,
     hiddenAppsCount: Int = 0,
@@ -327,6 +331,20 @@ fun LauncherSettingsBottomSheet(
                 onCheckedChange = onToggleHaptics
             )
 
+            SettingsSwitchRow(
+                title = "Gestur Geser Turun (System UI)",
+                subtitle = "Geser turun di layar beranda: sisi kiri buka tombol pengaturan cepat, sisi kanan buka notifikasi",
+                checked = swipeDownGestureEnabled,
+                onCheckedChange = onToggleSwipeDownGesture
+            )
+
+            SettingsSwitchRow(
+                title = "Aksi Geser Kanan Aplikasi",
+                subtitle = "Geser ke kanan pada item aplikasi untuk langsung membuka aksi sekunder atau menu pintasan",
+                checked = appSwipeGestureEnabled,
+                onCheckedChange = onToggleAppSwipeGesture
+            )
+
             // Akses Notifikasi Banner Card
             Box(
                 modifier = Modifier
@@ -445,7 +463,7 @@ fun LauncherSettingsBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "MaoneArt Flow v1.0.24 • By MaoneArt",
+                text = "MaoneArt Flow v1.0.43 • By MaoneArt",
                 fontSize = 11.sp,
                 color = FlowTextSecondary.copy(alpha = 0.5f),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
