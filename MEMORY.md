@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.44)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.45)
 
 ---
 
@@ -488,3 +488,20 @@
       - Menambahkan tombol satu tap "Pasang GTA ke Sistem HP" via `WallpaperManager` dan izin `SET_WALLPAPER` di `AndroidManifest.xml` untuk memasang wallpaper GTA ke seluruh sistem ponsel Android.
     - **Bumping Versi**:
       - `versionCode 45`, `versionName "1.0.44"`. Target APK siap update langsung tanpa uninstall.
+  - **Penyelarasan Presisi Ekspektasi GTA VI: Logo Grafiti Besar, Header Brush Tag Favorit, & Logo Asli Rockstar Games (Release v1.0.45 - 19 Nov 2026)**:
+    - **Logo Grafiti MAONEART FLOW Skala Penuh & Sejajar Kiri Tebing Batu**:
+      - Memperbaiki keluhan pengguna: *"ko maoneartnya ga kaya di gambar ya agak kecil sama text favlrite beda"*.
+      - Pada tema GTA, logo `maoneart_graffiti_gta.png` (tipografi brush putih tajam, mahkota emas 3-puncak, dan tulisan pink FLOW berlelehan cat) kini disejajarkan ke kiri (`Alignment.CenterStart`) tepat di atas puncak tebing batu wallpaper dengan dimensi gagah (lebar 225dp, tinggi 130dp), 100% identik dengan berkas konsep `Expetasi.png`.
+    - **Header Brush Script "FAVORIT" Asli Hot-Pink GTA**:
+      - Mengganti teks biasa "FAVORIT" pada tema GTA dengan aset gambar vektor brush tag transparan `ic_gta_favorit_header.png` (tinggi 32dp) lengkap dengan goresan garis bawah (*underline brush slash*) hot-pink neon, bertengger tepat di atas slot rak batu pertama.
+    - **Pembersihan Layout Header & Keselarasan 6 Rak Batu**:
+      - Menonaktifkan tampilan Niagara Trio Pills (Today, Hari & Tanggal, Weather) dan bilah kategori saat tema GTA aktif, sehingga area tebing batu tetap bersih tanpa desakan layout.
+      - Hasilnya: Jarak vertikal dari atas layar ke slot 1 hingga slot 6 tepat presisi 53dp per slot, sehingga keenam aplikasi favorit duduk pas di atas masing-masing rak batu wallpaper tanpa meleset.
+    - **Logo Resmi Asli Rockstar Games R* Tanpa Monokrom Tint**:
+      - Memperbaiki keluhan: *"logo rnya juga kurang mirip"*.
+      - Mengganti ikon vektor sebelumnya dengan logo resmi asli Rockstar Games: lencana sudut melengkung kuning khas Rockstar (`#FFFFAB00`), bingkai hitam tebal (`#FF040301`), huruf R tebal dengan cutout bintang, dan bintang putih 5-sudut asli.
+      - Menghapus override `tint = Color.White` pada Jetpack Compose agar warna asli lencana kuning emas, huruf R hitam, dan bintang putih tampil otentik dan bersinar di tombol mengambang bawah layar.
+    - **Otomasi Sembunyikan Scroller Huruf A-Z di Layar Utama GTA**:
+      - Saat tema GTA aktif, Alphabet Wave Scroller otomatis disembunyikan di layar utama agar karakter Jason, Lucia, dan mobil klasik GTA di sisi kanan wallpaper tampil bersih 100% tanpa terhalang huruf A-Z, sesuai gambar konsep `Expetasi.png`.
+    - **Bumping Versi**:
+      - `versionCode 46`, `versionName "1.0.45"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

@@ -143,51 +143,69 @@ fun DigitalClockHeader(
         }
     }
 
+    val isGta = widgetTheme == "gta"
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = if (showBanner) 8.dp else 6.dp)
+            .padding(
+                horizontal = 24.dp,
+                vertical = if (isGta) 2.dp else if (showBanner) 8.dp else 6.dp
+            )
     ) {
         // --- 1. EXCLUSIVE "MAONEART FLOW" GRAFFITI LOGO (Can be hidden via Settings) ---
-        if (showBanner) {
+        if (showBanner || isGta) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 4.dp)
+                    .padding(bottom = if (isGta) 0.dp else 4.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {
                         onOpenSettings?.invoke()
                     },
-                contentAlignment = Alignment.Center
+                contentAlignment = if (isGta) Alignment.CenterStart else Alignment.Center
             ) {
-                val logoDrawable = if (widgetTheme == "gta") R.drawable.maoneart_graffiti_gta else R.drawable.maoneart_graffiti_logo
-                Image(
-                    painter = painterResource(id = logoDrawable),
-                    contentDescription = "MaoneArt Flow",
-                    modifier = Modifier
-                        .fillMaxWidth(0.98f)
-                        .height(106.dp),
-                    contentScale = ContentScale.Fit,
-                    alignment = Alignment.Center
-                )
+                if (isGta) {
+                    Image(
+                        painter = painterResource(id = R.drawable.maoneart_graffiti_gta),
+                        contentDescription = "MaoneArt Flow GTA",
+                        modifier = Modifier
+                            .width(225.dp)
+                            .height(130.dp),
+                        contentScale = ContentScale.Fit,
+                        alignment = Alignment.CenterStart
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.maoneart_graffiti_logo),
+                        contentDescription = "MaoneArt Flow",
+                        modifier = Modifier
+                            .fillMaxWidth(0.98f)
+                            .height(106.dp),
+                        contentScale = ContentScale.Fit,
+                        alignment = Alignment.Center
+                    )
+                }
             }
         }
 
-        if (widgetTheme == "niagara_pills" || widgetTheme == "gta") {
-            val isGta = widgetTheme == "gta"
-            // Color palette: GTA Vice City vs Niagara standard
-            val pill1Color = if (isGta) Color(0xFF00E5FF) else Color(0xFF00E676)
-            val pill2Color = if (isGta) Color(0xFFFF2A85) else Color(0xFFFFD600)
-            val pill3Color = if (isGta) Color(0xFFFFD600) else Color(0xFF00B0FF)
+        if (widgetTheme == "gta") {
+            // In GTA Theme, the authentic graffiti logo sits directly on top of the rock
+            // Clean layout matching Expetasi.png so Favorites line up with the 6 rock shelves!
+        } else if (widgetTheme == "niagara_pills") {
+            // Niagara standard
+            val pill1Color = Color(0xFF00E676)
+            val pill2Color = Color(0xFFFFD600)
+            val pill3Color = Color(0xFF00B0FF)
 
-            // --- 2A. NIAGARA / GTA TRIO PILLS THEME ---
+            // --- 2A. NIAGARA TRIO PILLS THEME ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = if (isGta) 2.dp else 4.dp),
-                verticalArrangement = Arrangement.spacedBy(if (isGta) 8.dp else 10.dp)
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Pill 1: TODAY
                 Row(

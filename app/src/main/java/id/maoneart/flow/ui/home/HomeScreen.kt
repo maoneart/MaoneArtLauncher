@@ -414,6 +414,7 @@ fun HomeScreen(
             }
 
             // 5. Main Content Row: Apps List + Alphabet Wave Scroller (Protected by navigationBarsPadding)
+            val showScroller = uiState.showAlphabetScroller && (!isGtaTheme || uiState.isSearching)
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -422,7 +423,7 @@ fun HomeScreen(
             ) {
 
                 // Left-Handed Alphabet Wave Scroller (if configured & enabled)
-                if (uiState.showAlphabetScroller && uiState.alphabetSide == "left" && !uiState.isSearching) {
+                if (showScroller && uiState.alphabetSide == "left" && !uiState.isSearching) {
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = safeScrollToLetter,
@@ -444,17 +445,29 @@ fun HomeScreen(
                         if (uiState.selectedCategoryId == "all") {
                             if (uiState.favorites.isNotEmpty()) {
                                 item(key = "favorites_title") {
-                                    Text(
-                                        text = "FAVORIT",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (isGtaTheme) Color(0xFFFF2A85) else FlowElectricBlue,
-                                        letterSpacing = if (isGtaTheme) 1.5.sp else 1.2.sp,
-                                        modifier = Modifier.padding(
-                                            horizontal = 24.dp,
-                                            vertical = if (isGtaCompact) 3.dp else 6.dp
+                                    if (isGtaTheme) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.ic_gta_favorit_header),
+                                            contentDescription = "Favorit",
+                                            modifier = Modifier
+                                                .padding(start = 24.dp, top = 2.dp, bottom = 4.dp)
+                                                .height(32.dp),
+                                            contentScale = ContentScale.Fit,
+                                            alignment = Alignment.CenterStart
                                         )
-                                    )
+                                    } else {
+                                        Text(
+                                            text = "FAVORIT",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = FlowElectricBlue,
+                                            letterSpacing = 1.2.sp,
+                                            modifier = Modifier.padding(
+                                                horizontal = 24.dp,
+                                                vertical = 6.dp
+                                            )
+                                        )
+                                    }
                                 }
 
                                 items(
@@ -555,7 +568,7 @@ fun HomeScreen(
                 }
 
                 // Right-Handed Alphabet Wave Scroller (Default - can be hidden via settings)
-                if (uiState.showAlphabetScroller && uiState.alphabetSide == "right" && !uiState.isSearching) {
+                if (showScroller && uiState.alphabetSide == "right" && !uiState.isSearching) {
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = safeScrollToLetter,
@@ -568,20 +581,24 @@ fun HomeScreen(
 
         // Floating Rockstar / Google Search Button (Active when searchAsIcon is true and not searching, comfortably above system navbar)
         if (uiState.searchAsIcon && !uiState.isSearching) {
-            val searchButtonEndPadding = if (uiState.showAlphabetScroller && uiState.alphabetSide == "right") 64.dp else 20.dp
+            val searchButtonEndPadding = if (showScroller && uiState.alphabetSide == "right") 64.dp else 20.dp
             val isRockstarIcon = uiState.searchButtonIcon == "rockstar" || isGtaTheme
-            val buttonBorderColor = if (isRockstarIcon) Color(0x66FFD600) else Color(0x3300E5FF)
+            val buttonShape = if (isRockstarIcon) RoundedCornerShape(12.dp) else CircleShape
 
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
                     .padding(end = searchButtonEndPadding, bottom = 48.dp)
-                    .size(52.dp)
-                    .shadow(14.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(Color(0xEE1A1B20))
-                    .border(1.2.dp, buttonBorderColor, CircleShape)
+                    .size(if (isRockstarIcon) 48.dp else 52.dp)
+                    .shadow(if (isRockstarIcon) 10.dp else 14.dp, buttonShape)
+                    .clip(buttonShape)
+                    .background(if (isRockstarIcon) Color.Transparent else Color(0xEE1A1B20))
+                    .then(
+                        if (!isRockstarIcon) {
+                            Modifier.border(1.2.dp, Color(0x3300E5FF), CircleShape)
+                        } else Modifier
+                    )
                     .combinedClickable(
                         onClick = {
                             if (uiState.hapticsEnabled) haptics.click(view)
@@ -595,11 +612,10 @@ fun HomeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (isRockstarIcon) {
-                    Icon(
+                    Image(
                         painter = painterResource(id = R.drawable.ic_rockstar_logo),
                         contentDescription = "Rockstar Games Search",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.fillMaxSize()
                     )
                 } else {
                     Text(

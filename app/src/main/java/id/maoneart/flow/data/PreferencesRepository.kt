@@ -347,6 +347,7 @@ class PreferencesRepository(private val context: Context) {
                 prefs[Keys.SEARCH_AS_ICON] = true
                 prefs[Keys.SHOW_MAONEART_BANNER] = true
                 prefs[Keys.PURE_TRANSPARENT_BG] = true
+                prefs[Keys.SHOW_CATEGORIES] = false
             }
         }
     }
