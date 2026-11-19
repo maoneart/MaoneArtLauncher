@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.47)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.48)
 
 ---
 
@@ -527,3 +527,13 @@
       - Menghapus pembatasan *force-hide* pada tema GTA (`val showScroller = uiState.showAlphabetScroller`). Tampilan Alphabet Wave Scroller kini 100% mengikuti saklar/toggle yang ada di Pengaturan Launcher (tampil jika aktif, sembunyi jika dinonaktifkan pengguna).
     - **Bumping Versi**:
       - `versionCode 48`, `versionName "1.0.47"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Perbaikan Transparansi Murni Navigation Bar Tembus Wallpaper (Release v1.0.48 - 20 Nov 2026)**:
+    - **Pemulihan Transparansi Penuh Sistem Navigation Bar**:
+      - Memenuhi keluhan pengguna: *"bntar ko navbarnya ga tempus wallpaper ya? transparan gitu, malah warna abu abu"*.
+      - Root Cause: Di `MainActivity.kt`, fungsi `enableEdgeToEdge` menyetel `navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.parseColor("#181C24"))` yang memaksakan bilah abu-abu gelap `#181C24` menimpa area navigation bar Android. Selain itu, `Row` konten memiliki `navigationBarsPadding()` yang memotong batas bawah sebelum area navbar.
+      - Solusi Arsitektur:
+        1. Mengubah `navigationBarStyle` menjadi `SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)` murni.
+        2. Menetapkan `window.navigationBarColor = Color.TRANSPARENT` dan `window.isNavigationBarContrastEnforced = false` (Android Q+ / One UI) untuk mematikan scrim abu-abu paksaan sistem.
+        3. Menghapus pembatas `navigationBarsPadding()` pada container utama `Row` dan mengalirkan `LazyColumn` serta wallpaper secara penuh ke tepi bawah layar (*true edge-to-edge*), sehingga wallpaper HP Samsung One UI tembus 100% transparan di balik baris tombol navigasi.
+    - **Bumping Versi**:
+      - `versionCode 49`, `versionName "1.0.48"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

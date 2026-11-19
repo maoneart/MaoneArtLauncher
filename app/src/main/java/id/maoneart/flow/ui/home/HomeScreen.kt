@@ -414,12 +414,11 @@ fun HomeScreen(
                 }
             }
 
-            // 5. Main Content Row: Apps List + Alphabet Wave Scroller (Protected by navigationBarsPadding)
+            // 5. Main Content Row: Apps List + Alphabet Wave Scroller (Edge-to-edge transparent navigation bar)
             Row(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .navigationBarsPadding()
             ) {
 
                 // Left-Handed Alphabet Wave Scroller (if configured & enabled)
@@ -427,18 +426,19 @@ fun HomeScreen(
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = safeScrollToLetter,
+                        modifier = Modifier.navigationBarsPadding(),
                         isRightSide = false,
                         hapticsEnabled = uiState.hapticsEnabled
                     )
                 }
 
-                // Vertical Apps List
+                // Vertical Apps List (Flows seamlessly behind transparent navigation bar)
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    contentPadding = PaddingValues(bottom = if (uiState.searchAsIcon) 80.dp else 16.dp)
+                    contentPadding = PaddingValues(bottom = if (uiState.searchAsIcon) 96.dp else 48.dp)
                 ) {
                     if (!uiState.isSearching) {
                         // In "All" category, show Favorites section first
@@ -572,6 +572,7 @@ fun HomeScreen(
                     AlphabetWaveScroller(
                         availableLetters = uiState.availableLetters,
                         onLetterSelected = safeScrollToLetter,
+                        modifier = Modifier.navigationBarsPadding(),
                         isRightSide = true,
                         hapticsEnabled = uiState.hapticsEnabled
                     )
