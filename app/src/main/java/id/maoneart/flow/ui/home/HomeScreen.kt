@@ -195,7 +195,7 @@ fun HomeScreen(
     val isGtaTheme = uiState.widgetTheme == "gta"
     val isGtaWallpaper = uiState.flowWallpaper == "gta"
     val isGtaCompact = isGtaTheme && uiState.gtaSlotAlignment
-    val showScroller = uiState.showAlphabetScroller && (!isGtaTheme || uiState.isSearching)
+    val showScroller = uiState.showAlphabetScroller
 
     Box(
         modifier = modifier.fillMaxSize()

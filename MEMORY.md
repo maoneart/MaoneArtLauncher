@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.46)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.47)
 
 ---
 
@@ -521,3 +521,9 @@
       - Mengubah tombol balas cepat WhatsApp menjadi kapsul pill frosted glass bundar (`CircleShape`, latar `Color(0x33FFFFFF)`, border `0.8.dp Color(0x66FFFFFF)`, ikon panah `↩` & teks `Balas` putih bersih `Color.White`), 100% presisi sesuai gambar konsep `Expetasi.png`.
     - **Bumping Versi**:
       - `versionCode 47`, `versionName "1.0.46"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Pengembalian Kontrol Penuh Tampilan Alphabet Wave Scroller (Release v1.0.47 - 20 Nov 2026)**:
+    - **Pemulihan Tampilan Scroller Huruf A-Z**:
+      - Memenuhi permintaan pengguna: *"ko tampilan scool di tema gta malah hilang kan itu ada hide dan shownha di oengaturan jadi ga usaah di hiden sepenuhnya"*.
+      - Menghapus pembatasan *force-hide* pada tema GTA (`val showScroller = uiState.showAlphabetScroller`). Tampilan Alphabet Wave Scroller kini 100% mengikuti saklar/toggle yang ada di Pengaturan Launcher (tampil jika aktif, sembunyi jika dinonaktifkan pengguna).
+    - **Bumping Versi**:
+      - `versionCode 48`, `versionName "1.0.47"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
