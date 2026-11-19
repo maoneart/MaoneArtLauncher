@@ -195,6 +195,7 @@ fun HomeScreen(
     val isGtaTheme = uiState.widgetTheme == "gta"
     val isGtaWallpaper = uiState.flowWallpaper == "gta" || isGtaTheme
     val isGtaCompact = isGtaTheme && uiState.gtaSlotAlignment
+    val showScroller = uiState.showAlphabetScroller && (!isGtaTheme || uiState.isSearching)
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -414,7 +415,6 @@ fun HomeScreen(
             }
 
             // 5. Main Content Row: Apps List + Alphabet Wave Scroller (Protected by navigationBarsPadding)
-            val showScroller = uiState.showAlphabetScroller && (!isGtaTheme || uiState.isSearching)
             Row(
                 modifier = Modifier
                     .weight(1f)
