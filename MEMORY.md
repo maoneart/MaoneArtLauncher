@@ -516,5 +516,8 @@
     - **Wallpaper Sistem Bawaan Samsung Penuh Tanpa Overlay Tema**:
       - Memenuhi permintaan pengguna: *"teerus wallpapernya udah dari settingan bawaan samusng aja ga ya jadi ga usah ada wallapr bawaan tema"*.
       - Tema GTA kini default ke `flow_wallpaper = "system"` dan latar belakang launcher 100% transparan (`Color.Transparent`) tanpa overlay gambar atau gradasi gelap, sehingga wallpaper bawaan HP Samsung pengguna yang sudah disetel di pengaturan One UI tampil penuh dan murni.
+    - **Penyelarasan Tombol Balas WhatsApp Glassmorphic Capsule**:
+      - Memenuhi permintaan pengguna: *"sama tombol balanya ga sesuai gambar coba cek lagi"*.
+      - Mengubah tombol balas cepat WhatsApp menjadi kapsul pill frosted glass bundar (`CircleShape`, latar `Color(0x33FFFFFF)`, border `0.8.dp Color(0x66FFFFFF)`, ikon panah `↩` & teks `Balas` putih bersih `Color.White`), 100% presisi sesuai gambar konsep `Expetasi.png`.
     - **Bumping Versi**:
       - `versionCode 47`, `versionName "1.0.46"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

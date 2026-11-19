@@ -10,10 +10,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -159,9 +161,15 @@ fun AppListItem(
                 )
                 .then(
                     if (isGtaCompact) {
-                        Modifier
-                            .height(53.dp)
-                            .padding(horizontal = 24.dp, vertical = 2.dp)
+                        if (app.notificationPreview.isNotBlank()) {
+                            Modifier
+                                .defaultMinSize(minHeight = 53.dp)
+                                .padding(horizontal = 24.dp, vertical = 2.dp)
+                        } else {
+                            Modifier
+                                .height(53.dp)
+                                .padding(horizontal = 24.dp, vertical = 2.dp)
+                        }
                     } else {
                         Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
                     }
@@ -249,7 +257,7 @@ fun AppListItem(
 
         // App Label + Niagara-style Inline Notification Preview (Strictly locked to left half so it never bleeds right)
         val hasInlinePreview = app.notificationPreview.isNotBlank()
-        val textMaxWidth = if (showIcon) (if (isGtaCompact) 124.dp else 118.dp) else 172.dp
+        val textMaxWidth = if (showIcon) (if (isGtaCompact) 155.dp else 140.dp) else 185.dp
 
         androidx.compose.foundation.layout.Column(
             modifier = if (twoLineAppNames) {
@@ -271,34 +279,45 @@ fun AppListItem(
             if (hasInlinePreview) {
                 Text(
                     text = app.notificationPreview,
-                    fontSize = if (isGtaCompact) 10.sp else 11.sp,
+                    fontSize = if (isGtaCompact) 10.5.sp else 11.5.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFFCBD5E1),
                     maxLines = 1,
-                    lineHeight = if (isGtaCompact) 12.sp else 14.sp,
+                    lineHeight = if (isGtaCompact) 13.sp else 14.sp,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = if (isGtaCompact) 0.dp else 1.dp)
+                    modifier = Modifier.padding(top = 1.dp)
                 )
 
                 if (app.canReplyDirectly) {
                     Box(
                         modifier = Modifier
-                            .padding(top = if (isGtaCompact) 1.5.dp else 3.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(FlowElectricBlue.copy(alpha = 0.18f))
-                            .border(0.8.dp, FlowElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                            .padding(top = if (isGtaCompact) 2.dp else 4.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x33FFFFFF))
+                            .border(0.8.dp, Color(0x66FFFFFF), CircleShape)
                             .combinedClickable(
                                 onClick = onLongClick,
                                 onLongClick = onLongClick
                             )
-                            .padding(horizontal = 5.dp, vertical = 0.5.dp)
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
-                        Text(
-                            text = "↩ Balas",
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = FlowElectricBlue
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(
+                                text = "↩",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Balas",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
 
