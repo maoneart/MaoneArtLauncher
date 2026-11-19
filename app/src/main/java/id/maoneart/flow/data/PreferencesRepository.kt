@@ -341,7 +341,7 @@ class PreferencesRepository(private val context: Context) {
         safeEdit { prefs ->
             prefs[Keys.WIDGET_THEME] = theme
             if (theme == "gta") {
-                prefs[Keys.FLOW_WALLPAPER] = "gta"
+                prefs[Keys.FLOW_WALLPAPER] = "system"
                 prefs[Keys.SEARCH_BUTTON_ICON] = "rockstar"
                 prefs[Keys.GTA_SLOT_ALIGNMENT] = true
                 prefs[Keys.SEARCH_AS_ICON] = true

@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.45)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.46)
 
 ---
 
@@ -505,3 +505,16 @@
       - Saat tema GTA aktif, Alphabet Wave Scroller otomatis disembunyikan di layar utama agar karakter Jason, Lucia, dan mobil klasik GTA di sisi kanan wallpaper tampil bersih 100% tanpa terhalang huruf A-Z, sesuai gambar konsep `Expetasi.png`.
     - **Bumping Versi**:
       - `versionCode 46`, `versionName "1.0.45"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Pengembalian Jam, Tanggal & Weather, serta Wallpaper Sistem Bawaan Samsung (Release v1.0.46 - 19 Nov 2026)**:
+    - **Pengembalian Trio Pills (Jam, Tanggal & Cuaca/Weather)**:
+      - Memenuhi permintaan pengguna: *"kenaoa jam, tanggall dan wateenya malah hilang?"*.
+      - Mengaktifkan kembali Trio Pills kapsul neon Vice City di bawah logo grafiti:
+        1. Kapsul Cyan (`#00E5FF`): `TODAY` + Jam `🕓 HH:mm`.
+        2. Kapsul Hot Pink (`#FF2A85`): Hari kapital + Tanggal `📅 MMM dd, yyyy`.
+        3. Kapsul Amber Gold (`#FFD600`): `WEATHER & POWER` + Baterai `⚡ XX% • Cerah XX°C`.
+      - Logo grafiti MaoneArt GTA diposisikan kompak dan anggun di sisi kiri atas (lebar 205dp, tinggi 100dp) di atas ketiga kapsul informasi.
+    - **Wallpaper Sistem Bawaan Samsung Penuh Tanpa Overlay Tema**:
+      - Memenuhi permintaan pengguna: *"teerus wallpapernya udah dari settingan bawaan samusng aja ga ya jadi ga usah ada wallapr bawaan tema"*.
+      - Tema GTA kini default ke `flow_wallpaper = "system"` dan latar belakang launcher 100% transparan (`Color.Transparent`) tanpa overlay gambar atau gradasi gelap, sehingga wallpaper bawaan HP Samsung pengguna yang sudah disetel di pengaturan One UI tampil penuh dan murni.
+    - **Bumping Versi**:
+      - `versionCode 47`, `versionName "1.0.46"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

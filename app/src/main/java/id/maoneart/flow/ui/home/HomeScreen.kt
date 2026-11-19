@@ -193,14 +193,14 @@ fun HomeScreen(
     }
 
     val isGtaTheme = uiState.widgetTheme == "gta"
-    val isGtaWallpaper = uiState.flowWallpaper == "gta" || isGtaTheme
+    val isGtaWallpaper = uiState.flowWallpaper == "gta"
     val isGtaCompact = isGtaTheme && uiState.gtaSlotAlignment
     val showScroller = uiState.showAlphabetScroller && (!isGtaTheme || uiState.isSearching)
 
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // GTA Vice City Theme Wallpaper (Pinned to start so rock shelves align on the left)
+        // Optional built-in wallpaper (only if explicitly chosen in settings; default is user's Samsung wallpaper)
         if (isGtaWallpaper) {
             Image(
                 painter = painterResource(id = R.drawable.wallpaper_gta),
@@ -215,7 +215,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .then(
-                    if (uiState.pureTransparentBg || isGtaWallpaper) {
+                    if (uiState.pureTransparentBg || isGtaTheme || isGtaWallpaper) {
                         Modifier.background(Color.Transparent)
                     } else {
                         Modifier.background(

@@ -172,8 +172,8 @@ fun DigitalClockHeader(
                         painter = painterResource(id = R.drawable.maoneart_graffiti_gta),
                         contentDescription = "MaoneArt Flow GTA",
                         modifier = Modifier
-                            .width(225.dp)
-                            .height(130.dp),
+                            .width(205.dp)
+                            .height(100.dp),
                         contentScale = ContentScale.Fit,
                         alignment = Alignment.CenterStart
                     )
@@ -191,21 +191,17 @@ fun DigitalClockHeader(
             }
         }
 
-        if (widgetTheme == "gta") {
-            // In GTA Theme, the authentic graffiti logo sits directly on top of the rock
-            // Clean layout matching Expetasi.png so Favorites line up with the 6 rock shelves!
-        } else if (widgetTheme == "niagara_pills") {
-            // Niagara standard
-            val pill1Color = Color(0xFF00E676)
-            val pill2Color = Color(0xFFFFD600)
-            val pill3Color = Color(0xFF00B0FF)
+        if (widgetTheme == "niagara_pills" || widgetTheme == "gta") {
+            val pill1Color = if (isGta) Color(0xFF00E5FF) else Color(0xFF00E676)
+            val pill2Color = if (isGta) Color(0xFFFF2A85) else Color(0xFFFFD600)
+            val pill3Color = if (isGta) Color(0xFFFFD600) else Color(0xFF00B0FF)
 
-            // --- 2A. NIAGARA TRIO PILLS THEME ---
+            // --- 2A. NIAGARA / GTA TRIO PILLS THEME (Jam, Tanggal, Weather) ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(vertical = if (isGta) 2.dp else 4.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isGta) 7.dp else 10.dp)
             ) {
                 // Pill 1: TODAY
                 Row(
