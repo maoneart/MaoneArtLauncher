@@ -66,6 +66,13 @@ fun LauncherSettingsBottomSheet(
     onSelectSearchLongPressAction: (String) -> Unit = {},
     widgetTheme: String,
     onSelectWidgetTheme: (String) -> Unit,
+    flowWallpaper: String = "system",
+    onSelectFlowWallpaper: (String) -> Unit = {},
+    searchButtonIcon: String = "rockstar",
+    onSelectSearchButtonIcon: (String) -> Unit = {},
+    gtaSlotAlignment: Boolean = true,
+    onToggleGtaSlotAlignment: (Boolean) -> Unit = {},
+    onApplyGtaSystemWallpaper: () -> Unit = {},
     showAlphabetScroller: Boolean,
     onToggleShowAlphabetScroller: (Boolean) -> Unit,
     pureTransparentBg: Boolean,
@@ -190,6 +197,7 @@ fun LauncherSettingsBottomSheet(
                 title = "Gaya Widget & Header",
                 subtitle = "Pilih desain jam digital & kartu informasi launcher",
                 selectedTitle = when (widgetTheme) {
+                    "gta" -> "Tema GTA VI (Vice City)"
                     "niagara_pills" -> "Niagara Trio Pills"
                     else -> "MaoneArt Classic"
                 },
@@ -203,6 +211,11 @@ fun LauncherSettingsBottomSheet(
                         key = "niagara_pills",
                         title = "Niagara Trio Pills",
                         subtitle = "Kartu kapsul neon cuaca, kalender, dan baterai"
+                    ),
+                    DropdownOption(
+                        key = "gta",
+                        title = "Tema GTA VI (Vice City)",
+                        subtitle = "Gaya Vice City neon, R* button, & presisi rak batu"
                     )
                 ),
                 selectedKey = widgetTheme,
@@ -229,16 +242,39 @@ fun LauncherSettingsBottomSheet(
             SettingsSectionHeader(title = "GAYA PENCARIAN & ASISTEN AI")
 
             SettingsSwitchRow(
-                title = "Tombol Cari Sebagai Ikon 'G'",
-                subtitle = "Tampilkan logo Google mengambang di pojok kanan bawah",
+                title = "Tombol Cari Sebagai Ikon Mengambang",
+                subtitle = "Tampilkan tombol bulat mengambang di pojok kanan bawah",
                 checked = searchAsIcon,
                 onCheckedChange = onToggleSearchAsIcon
             )
 
             if (searchAsIcon) {
                 SettingsDropdownRow(
-                    title = "Aksi Long-Press Tombol 'G'",
-                    subtitle = "Tindakan saat tombol logo 'G' ditekan lama",
+                    title = "Ikon Tombol Cari",
+                    subtitle = "Pilih logo tombol pencarian mengambang di pojok kanan bawah",
+                    selectedTitle = when (searchButtonIcon) {
+                        "google" -> "Google (G)"
+                        else -> "Rockstar Games (R*)"
+                    },
+                    options = listOf(
+                        DropdownOption(
+                            key = "rockstar",
+                            title = "Rockstar Games (R*)",
+                            subtitle = "Logo legendaris Rockstar Games R dengan bintang"
+                        ),
+                        DropdownOption(
+                            key = "google",
+                            title = "Google (G)",
+                            subtitle = "Logo klasik Google G minimalis"
+                        )
+                    ),
+                    selectedKey = searchButtonIcon,
+                    onSelect = onSelectSearchButtonIcon
+                )
+
+                SettingsDropdownRow(
+                    title = "Aksi Long-Press Tombol Cari",
+                    subtitle = "Tindakan saat tombol logo pencarian ditekan lama",
                     selectedTitle = when (searchLongPressAction) {
                         "gemini" -> "Google Gemini"
                         "chatgpt" -> "OpenAI ChatGPT"
@@ -276,6 +312,70 @@ fun LauncherSettingsBottomSheet(
 
             // --- 3. TAMPILAN & LATAR BELAKANG ---
             SettingsSectionHeader(title = "TAMPILAN & LATAR BELAKANG")
+
+            SettingsDropdownRow(
+                title = "Pilihan Wallpaper Launcher",
+                subtitle = "Pilih latar belakang beranda: wallpaper sistem HP atau tema khusus",
+                selectedTitle = when (flowWallpaper) {
+                    "gta" -> "GTA Vice City (Rak Batu & Skyline)"
+                    else -> "Wallpaper Sistem HP (Transparan)"
+                },
+                options = listOf(
+                    DropdownOption(
+                        key = "system",
+                        title = "Wallpaper Sistem HP (Transparan)",
+                        subtitle = "Mengikuti wallpaper Android yang sedang aktif di HP"
+                    ),
+                    DropdownOption(
+                        key = "gta",
+                        title = "GTA Vice City (Rak Batu & Skyline)",
+                        subtitle = "Wallpaper otentik GTA VI dengan ukiran rak batu di kiri"
+                    )
+                ),
+                selectedKey = flowWallpaper,
+                onSelect = onSelectFlowWallpaper
+            )
+
+            if (flowWallpaper == "gta" || widgetTheme == "gta") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0x22FF2A85))
+                        .border(1.dp, Color(0x66FF2A85), RoundedCornerShape(12.dp))
+                        .clickable { onApplyGtaSystemWallpaper() }
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "🖼️",
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Pasang GTA ke Sistem HP",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFF2A85)
+                            )
+                            Text(
+                                text = "Terapkan wallpaper GTA VI ini sebagai wallpaper utama Android",
+                                fontSize = 11.sp,
+                                color = FlowTextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+
+            SettingsSwitchRow(
+                title = "Kerapatan Presisi Slot Batu GTA",
+                subtitle = "Kunci tinggi item 53dp agar 6 aplikasi favorit pas di atas ukiran batu wallpaper GTA",
+                checked = gtaSlotAlignment,
+                onCheckedChange = onToggleGtaSlotAlignment
+            )
 
             SettingsSwitchRow(
                 title = "Background Murni Transparan",

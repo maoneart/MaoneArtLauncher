@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <!-- Iconic Rockstar R -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,18 L54,18 C67,18 76,26 76,38 C76,47 69,54 58,57 L74,84 L56,84 L43,60 L37,60 L37,84 L22,84 Z M37,32 L37,48 L52,48 C58,48 62,45 62,40 C62,35 58,32 52,32 Z" />
+    <!-- 5-pointed Star nestled at bottom right leg -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:strokeColor="#EE1A1B20"
+        android:strokeWidth="1.8"
+        android:pathData="M70,52 L73.5,62.8 L84.8,62.8 L75.7,69.4 L79.1,80.2 L70,73.6 L60.9,80.2 L64.3,69.4 L55.2,62.8 L66.5,62.8 Z" />
+</vector>

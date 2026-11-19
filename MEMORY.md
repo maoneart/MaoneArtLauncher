@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.43)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.44)
 
 ---
 
@@ -461,3 +461,30 @@
       - Menyediakan toggle "Gestur Geser Turun (System UI)" dan "Aksi Geser Kanan Aplikasi" di `LauncherSettingsBottomSheet.kt`.
     - **Bumping Versi**:
       - `versionCode 44`, `versionName "1.0.43"`. Target APK siap update langsung tanpa uninstall.
+  - **Integrasi Tema GTA VI Vice City, Presisi Kerapatan Slot Batu 53dp, & Ikon Search Tombol Rockstar Games R* (Release v1.0.44 - 19 Nov 2026)**:
+    - **Tema Lengkap GTA VI (Vice City Neon)**:
+      - Menambahkan tema `"gta"` di dropdown pilihan widget launcher (`LauncherSettingsBottomSheet.kt`).
+      - Banner Logo Grafiti MaoneArt Flow edisi GTA Vice City: Mahkota emas 3-puncak (`#FFD700`), tipografi graffiti putih-pink neon, serta badge `FLOW` hot magenta (`maoneart_graffiti_gta.png`).
+      - Trio Pills Kapsul Neon Vice City:
+        1. `TODAY`: Kapsul cyan neon (`#00E5FF`) + waktu `HH:mm`.
+        2. `HARI & TANGGAL`: Kapsul hot magenta / pink Vice City (`#FF2A85`) + kalender.
+        3. `WEATHER & POWER`: Kapsul amber neon (`#FFD600`) + persentase baterai & suhu hardware.
+      - Header "FAVORIT" beraksen hot magenta (`Color(0xFFFF2A85)`) dengan letter-spacing 1.5sp tebal.
+    - **Presisi Kerapatan Ikon Rak Batu Wallpaper (Slot Alignment 53dp Pitch)**:
+      - Root Cause: Di versi sebelumnya jarak antar item aplikasi favorit adalah 66dp, sehingga dari item 0 (Browser) hingga item 5 (WhatsApp), posisi aplikasi melorot hingga 70dp ke bawah dan menabrak area luar batu wallpaper.
+      - Solusi Arsitektur:
+        1. Menambahkan mode presisi `isGtaCompact` saat tema GTA aktif: mengunci tinggi baris item menjadi tepat `53dp` (sesuai interval slot ukiran batu di wallpaper `1795101905397.jpg`).
+        2. Merampingkan vertical padding item menjadi `2dp` dan kotak ikon menjadi `38dp` (gambar ikon `34dp`).
+        3. Menyelaraskan teks dan tombol direct reply WhatsApp agar kompak dalam 1 baris.
+        4. Keenam aplikasi favorit (Browser, Chrome, Play Store, Termux, Threads, WhatsApp) kini duduk 100% presisi dan simetris tepat di tengah 6 rak batu wallpaper.
+    - **Penggantian Tombol 'G' Menjadi Logo Resmi Rockstar Games (R*)**:
+      - Memenuhi permintaan: *"sama kan ada G ya gangi dengan logoa R RocStar ya"*.
+      - Mengganti huruf Google "G" pada floating action button di kanan bawah menjadi logo resmi Rockstar Games (`ic_rockstar_logo.xml`) berupa huruf kapital R dengan bintang 5-sudut (`★`) bertengger di kaki kanan huruf R.
+      - Border glowing amber gold (`#FFD600`) yang elegan dan kontras di atas wallpaper.
+      - Menyediakan opsi dropdown kustomisasi di Pengaturan: "Rockstar Games (R*)" vs "Google (G)".
+    - **Pilihan Wallpaper GTA & Integrasi Set System Wallpaper**:
+      - Menyematkan wallpaper resolusi tinggi GTA VI Vice City (`wallpaper_gta.jpg`) langsung ke dalam launcher dengan rendering GPU `ContentScale.Crop` dan `Alignment.CenterStart` (terkunci di sisi kiri).
+      - Menambahkan menu pilihan wallpaper di Pengaturan: "Wallpaper Sistem HP (Transparan)" vs "GTA Vice City (Rak Batu & Skyline)".
+      - Menambahkan tombol satu tap "Pasang GTA ke Sistem HP" via `WallpaperManager` dan izin `SET_WALLPAPER` di `AndroidManifest.xml` untuk memasang wallpaper GTA ke seluruh sistem ponsel Android.
+    - **Bumping Versi**:
+      - `versionCode 45`, `versionName "1.0.44"`. Target APK siap update langsung tanpa uninstall.

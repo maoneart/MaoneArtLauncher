@@ -162,8 +162,9 @@ fun DigitalClockHeader(
                     },
                 contentAlignment = Alignment.Center
             ) {
+                val logoDrawable = if (widgetTheme == "gta") R.drawable.maoneart_graffiti_gta else R.drawable.maoneart_graffiti_logo
                 Image(
-                    painter = painterResource(id = R.drawable.maoneart_graffiti_logo),
+                    painter = painterResource(id = logoDrawable),
                     contentDescription = "MaoneArt Flow",
                     modifier = Modifier
                         .fillMaxWidth(0.98f)
@@ -174,15 +175,21 @@ fun DigitalClockHeader(
             }
         }
 
-        if (widgetTheme == "niagara_pills") {
-            // --- 2A. NIAGARA TRIO PILLS THEME (Exact match with Bug screenshot) ---
+        if (widgetTheme == "niagara_pills" || widgetTheme == "gta") {
+            val isGta = widgetTheme == "gta"
+            // Color palette: GTA Vice City vs Niagara standard
+            val pill1Color = if (isGta) Color(0xFF00E5FF) else Color(0xFF00E676)
+            val pill2Color = if (isGta) Color(0xFFFF2A85) else Color(0xFFFFD600)
+            val pill3Color = if (isGta) Color(0xFFFFD600) else Color(0xFF00B0FF)
+
+            // --- 2A. NIAGARA / GTA TRIO PILLS THEME ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(vertical = if (isGta) 2.dp else 4.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isGta) 8.dp else 10.dp)
             ) {
-                // Pill 1: TODAY (Neon Green)
+                // Pill 1: TODAY
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -201,7 +208,7 @@ fun DigitalClockHeader(
                         modifier = Modifier
                             .size(width = 5.dp, height = 26.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF00E676))
+                            .background(pill1Color)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
@@ -220,7 +227,7 @@ fun DigitalClockHeader(
                     }
                 }
 
-                // Pill 2: DAY & DATE (Amber / Yellow)
+                // Pill 2: DAY & DATE
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -240,7 +247,7 @@ fun DigitalClockHeader(
                         modifier = Modifier
                             .size(width = 5.dp, height = 26.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFFD600))
+                            .background(pill2Color)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
@@ -259,7 +266,7 @@ fun DigitalClockHeader(
                     }
                 }
 
-                // Pill 3: WEATHER & BATTERY (Neon Cyan)
+                // Pill 3: WEATHER & BATTERY
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -278,7 +285,7 @@ fun DigitalClockHeader(
                         modifier = Modifier
                             .size(width = 5.dp, height = 26.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF00B0FF))
+                            .background(pill3Color)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {

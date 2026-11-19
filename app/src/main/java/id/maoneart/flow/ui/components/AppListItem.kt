@@ -67,6 +67,7 @@ fun AppListItem(
     modifier: Modifier = Modifier,
     twoLineAppNames: Boolean = true,
     swipeGestureEnabled: Boolean = true,
+    isGtaCompact: Boolean = false,
     onSwipeRight: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -155,26 +156,36 @@ fun AppListItem(
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
-                .padding(horizontal = 24.dp, vertical = 10.dp),
+                .then(
+                    if (isGtaCompact) {
+                        Modifier
+                            .height(53.dp)
+                            .padding(horizontal = 24.dp, vertical = 2.dp)
+                    } else {
+                        Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
+                    }
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
         if (showIcon) {
+            val iconBoxSize = if (isGtaCompact) 38.dp else 44.dp
+            val iconInnerSize = if (isGtaCompact) 34.dp else 40.dp
             Box(
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(iconBoxSize)
             ) {
                 // App Icon (Direct hardware Canvas rendering for 120 FPS zero-jank scrolling)
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(iconInnerSize)
                         .align(Alignment.BottomStart)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .clip(RoundedCornerShape(if (isGtaCompact) 8.dp else 10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     if (iconBitmap != null) {
                         Image(
                             bitmap = iconBitmap,
                             contentDescription = app.label,
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(iconInnerSize),
                             contentScale = ContentScale.Fit
                         )
                     } else if (iconDrawable != null) {
@@ -187,20 +198,20 @@ fun AppListItem(
                         AsyncImage(
                             model = imageRequest,
                             contentDescription = app.label,
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(iconInnerSize),
                             contentScale = ContentScale.Fit
                         )
                     } else {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .size(iconInnerSize)
+                                .clip(RoundedCornerShape(if (isGtaCompact) 8.dp else 10.dp))
                                 .background(Color(0x22FFFFFF)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = app.firstLetter.toString(),
-                                fontSize = 17.sp,
+                                fontSize = if (isGtaCompact) 15.sp else 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = FlowElectricBlue
                             )
@@ -232,12 +243,12 @@ fun AppListItem(
                     }
                 }
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(if (isGtaCompact) 12.dp else 16.dp))
         }
 
         // App Label + Niagara-style Inline Notification Preview (Strictly locked to left half so it never bleeds right)
         val hasInlinePreview = app.notificationPreview.isNotBlank()
-        val textMaxWidth = if (showIcon) 118.dp else 172.dp
+        val textMaxWidth = if (showIcon) (if (isGtaCompact) 124.dp else 118.dp) else 172.dp
 
         androidx.compose.foundation.layout.Column(
             modifier = if (twoLineAppNames) {
@@ -248,42 +259,42 @@ fun AppListItem(
         ) {
             Text(
                 text = app.label,
-                fontSize = 16.5.sp,
+                fontSize = if (isGtaCompact) 15.sp else 16.5.sp,
                 fontWeight = if (hasInlinePreview) FontWeight.SemiBold else FontWeight.Normal,
                 color = FlowTextPrimary,
                 maxLines = if (twoLineAppNames && !hasInlinePreview) 2 else 1,
-                lineHeight = 20.sp,
+                lineHeight = if (isGtaCompact) 18.sp else 20.sp,
                 overflow = TextOverflow.Ellipsis
             )
 
             if (hasInlinePreview) {
                 Text(
                     text = app.notificationPreview,
-                    fontSize = 11.sp,
+                    fontSize = if (isGtaCompact) 10.sp else 11.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFFCBD5E1),
                     maxLines = 1,
-                    lineHeight = 14.sp,
+                    lineHeight = if (isGtaCompact) 12.sp else 14.sp,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 1.dp)
+                    modifier = Modifier.padding(top = if (isGtaCompact) 0.dp else 1.dp)
                 )
 
                 if (app.canReplyDirectly) {
                     Box(
                         modifier = Modifier
-                            .padding(top = 3.dp)
-                            .clip(RoundedCornerShape(5.dp))
+                            .padding(top = if (isGtaCompact) 1.5.dp else 3.dp)
+                            .clip(RoundedCornerShape(4.dp))
                             .background(FlowElectricBlue.copy(alpha = 0.18f))
-                            .border(0.8.dp, FlowElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(5.dp))
+                            .border(0.8.dp, FlowElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                             .combinedClickable(
                                 onClick = onLongClick,
                                 onLongClick = onLongClick
                             )
-                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                            .padding(horizontal = 5.dp, vertical = 0.5.dp)
                     ) {
                         Text(
                             text = "↩ Balas",
-                            fontSize = 9.5.sp,
+                            fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = FlowElectricBlue
                         )

@@ -13,6 +13,12 @@ import id.maoneart.flow.model.CategoryItem
 import id.maoneart.flow.model.DefaultCategories
 import id.maoneart.flow.service.MediaTrackInfo
 import id.maoneart.flow.service.NotificationService
+import android.app.WallpaperManager
+import android.graphics.BitmapFactory
+import android.widget.Toast
+import id.maoneart.flow.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,7 +62,18 @@ data class HomeUiState(
     val selectedApp: AppInfo? = null,
     val swipeDownGestureEnabled: Boolean = true,
     val appSwipeGestureEnabled: Boolean = true,
-    val shortcutsApp: AppInfo? = null
+    val shortcutsApp: AppInfo? = null,
+    val flowWallpaper: String = "system",
+    val searchButtonIcon: String = "rockstar",
+    val gtaSlotAlignment: Boolean = true
+)
+
+private data class GtaAppearanceTuple(
+    val music: Boolean,
+    val mode: String,
+    val wp: String,
+    val icon: String,
+    val align: Boolean
 )
 
 private data class InnerAppearance(
@@ -65,7 +82,10 @@ private data class InnerAppearance(
     val twoLine: Boolean,
     val longPressAction: String,
     val showMusicWidget: Boolean,
-    val launcherMode: String
+    val launcherMode: String,
+    val flowWallpaper: String,
+    val searchButtonIcon: String,
+    val gtaSlotAlignment: Boolean
 )
 
 private data class AppearanceSettings(
@@ -78,7 +98,10 @@ private data class AppearanceSettings(
     val twoLineAppNames: Boolean = true,
     val searchLongPressAction: String = "menu",
     val showMusicWidget: Boolean = true,
-    val launcherMode: String = "flow"
+    val launcherMode: String = "flow",
+    val flowWallpaper: String = "system",
+    val searchButtonIcon: String = "rockstar",
+    val gtaSlotAlignment: Boolean = true
 )
 
 private data class GeneralSettings(
@@ -160,10 +183,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             preferencesRepository.searchLongPressActionFlow,
             combine(
                 preferencesRepository.showMusicWidgetFlow,
-                preferencesRepository.launcherModeFlow
-            ) { music, mode -> Pair(music, mode) }
-        ) { pureBg, showCats, twoLine, longPressAction, (showMusic, mode) ->
-            InnerAppearance(pureBg, showCats, twoLine, longPressAction, showMusic, mode)
+                preferencesRepository.launcherModeFlow,
+                preferencesRepository.flowWallpaperFlow,
+                preferencesRepository.searchButtonIconFlow,
+                preferencesRepository.gtaSlotAlignmentFlow
+            ) { music, mode, wp, icon, align -> GtaAppearanceTuple(music, mode, wp, icon, align) }
+        ) { pureBg, showCats, twoLine, longPressAction, gtaTuple ->
+            InnerAppearance(
+                pureBg = pureBg,
+                showCats = showCats,
+                twoLine = twoLine,
+                longPressAction = longPressAction,
+                showMusicWidget = gtaTuple.music,
+                launcherMode = gtaTuple.mode,
+                flowWallpaper = gtaTuple.wp,
+                searchButtonIcon = gtaTuple.icon,
+                gtaSlotAlignment = gtaTuple.align
+            )
         }
     ) { banner, asIcon, theme, scroller, inner ->
         AppearanceSettings(
@@ -176,7 +212,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             twoLineAppNames = inner.twoLine,
             searchLongPressAction = inner.longPressAction,
             showMusicWidget = inner.showMusicWidget,
-            launcherMode = inner.launcherMode
+            launcherMode = inner.launcherMode,
+            flowWallpaper = inner.flowWallpaper,
+            searchButtonIcon = inner.searchButtonIcon,
+            gtaSlotAlignment = inner.gtaSlotAlignment
         )
     }
 
@@ -392,7 +431,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             selectedApp = selApp,
             swipeDownGestureEnabled = general.swipeDownGestureEnabled,
             appSwipeGestureEnabled = general.appSwipeGestureEnabled,
-            shortcutsApp = scApp
+            shortcutsApp = scApp,
+            flowWallpaper = appearance.flowWallpaper,
+            searchButtonIcon = appearance.searchButtonIcon,
+            gtaSlotAlignment = appearance.gtaSlotAlignment
         )
     }.stateIn(
         scope = viewModelScope,
@@ -771,5 +813,43 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openMusicApp(): Boolean {
         return NotificationService.openPlayerApp(getApplication())
+    }
+
+    fun setFlowWallpaper(wallpaper: String) {
+        viewModelScope.launch {
+            preferencesRepository.setFlowWallpaper(wallpaper)
+        }
+    }
+
+    fun setSearchButtonIcon(icon: String) {
+        viewModelScope.launch {
+            preferencesRepository.setSearchButtonIcon(icon)
+        }
+    }
+
+    fun setGtaSlotAlignment(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setGtaSlotAlignment(enabled)
+        }
+    }
+
+    fun applyGtaAsSystemWallpaper() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val context = getApplication<Application>()
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.wallpaper_gta)
+                if (bitmap != null) {
+                    val wallpaperManager = WallpaperManager.getInstance(context)
+                    wallpaperManager.setBitmap(bitmap)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Wallpaper GTA VI berhasil dipasang ke sistem HP!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Throwable) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(getApplication(), "Gagal memasang wallpaper: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 }

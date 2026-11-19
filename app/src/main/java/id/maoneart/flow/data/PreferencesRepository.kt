@@ -45,6 +45,9 @@ class PreferencesRepository(private val context: Context) {
         val APP_SWIPE_ACTIONS = stringPreferencesKey("app_swipe_actions")
         val SWIPE_DOWN_GESTURE_ENABLED = booleanPreferencesKey("swipe_down_gesture_enabled")
         val APP_SWIPE_GESTURE_ENABLED = booleanPreferencesKey("app_swipe_gesture_enabled")
+        val FLOW_WALLPAPER = stringPreferencesKey("flow_wallpaper")
+        val SEARCH_BUTTON_ICON = stringPreferencesKey("search_button_icon")
+        val GTA_SLOT_ALIGNMENT = booleanPreferencesKey("gta_slot_alignment")
     }
 
     // IO-Safe preferences flow that catches any disk corruption gracefully without crashing the app
@@ -144,6 +147,18 @@ class PreferencesRepository(private val context: Context) {
 
     val win11TaskbarAlignFlow: Flow<String> = safePreferences.map { prefs ->
         prefs[Keys.WIN11_TASKBAR_ALIGN] ?: "center"
+    }
+
+    val flowWallpaperFlow: Flow<String> = safePreferences.map { prefs ->
+        prefs[Keys.FLOW_WALLPAPER] ?: "system"
+    }
+
+    val searchButtonIconFlow: Flow<String> = safePreferences.map { prefs ->
+        prefs[Keys.SEARCH_BUTTON_ICON] ?: "rockstar"
+    }
+
+    val gtaSlotAlignmentFlow: Flow<Boolean> = safePreferences.map { prefs ->
+        prefs[Keys.GTA_SLOT_ALIGNMENT] ?: true
     }
 
     val customCategoriesFlow: Flow<List<String>> = safePreferences.map { prefs ->
@@ -323,7 +338,29 @@ class PreferencesRepository(private val context: Context) {
     }
 
     suspend fun setWidgetTheme(theme: String) {
-        safeEdit { prefs -> prefs[Keys.WIDGET_THEME] = theme }
+        safeEdit { prefs ->
+            prefs[Keys.WIDGET_THEME] = theme
+            if (theme == "gta") {
+                prefs[Keys.FLOW_WALLPAPER] = "gta"
+                prefs[Keys.SEARCH_BUTTON_ICON] = "rockstar"
+                prefs[Keys.GTA_SLOT_ALIGNMENT] = true
+                prefs[Keys.SEARCH_AS_ICON] = true
+                prefs[Keys.SHOW_MAONEART_BANNER] = true
+                prefs[Keys.PURE_TRANSPARENT_BG] = true
+            }
+        }
+    }
+
+    suspend fun setFlowWallpaper(wallpaper: String) {
+        safeEdit { prefs -> prefs[Keys.FLOW_WALLPAPER] = wallpaper }
+    }
+
+    suspend fun setSearchButtonIcon(icon: String) {
+        safeEdit { prefs -> prefs[Keys.SEARCH_BUTTON_ICON] = icon }
+    }
+
+    suspend fun setGtaSlotAlignment(enabled: Boolean) {
+        safeEdit { prefs -> prefs[Keys.GTA_SLOT_ALIGNMENT] = enabled }
     }
 
     suspend fun setShowAlphabetScroller(show: Boolean) {

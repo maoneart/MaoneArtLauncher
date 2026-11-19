@@ -6,6 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +31,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,7 +49,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import id.maoneart.flow.R
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -187,25 +192,43 @@ fun HomeScreen(
         } catch (_: Throwable) {}
     }
 
+    val isGtaTheme = uiState.widgetTheme == "gta"
+    val isGtaWallpaper = uiState.flowWallpaper == "gta" || isGtaTheme
+    val isGtaCompact = isGtaTheme && uiState.gtaSlotAlignment
+
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .then(
-                if (uiState.pureTransparentBg) {
-                    Modifier.background(Color.Transparent)
-                } else {
-                    Modifier.background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0x99000000),
-                                Color(0xB3000000),
-                                Color(0xCC000000)
+        modifier = modifier.fillMaxSize()
+    ) {
+        // GTA Vice City Theme Wallpaper (Pinned to start so rock shelves align on the left)
+        if (isGtaWallpaper) {
+            Image(
+                painter = painterResource(id = R.drawable.wallpaper_gta),
+                contentDescription = "GTA Vice City Wallpaper",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.CenterStart
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (uiState.pureTransparentBg || isGtaWallpaper) {
+                        Modifier.background(Color.Transparent)
+                    } else {
+                        Modifier.background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0x99000000),
+                                    Color(0xB3000000),
+                                    Color(0xCC000000)
+                                )
                             )
                         )
-                    )
-                }
-            )
-            .statusBarsPadding()
+                    }
+                )
+                .statusBarsPadding()
             .then(
                 if (uiState.swipeDownGestureEnabled && !uiState.isSearching && uiState.selectedApp == null && uiState.shortcutsApp == null && !uiState.isSettingsOpen) {
                     Modifier.pointerInput(listState) {
@@ -424,10 +447,13 @@ fun HomeScreen(
                                     Text(
                                         text = "FAVORIT",
                                         fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = FlowElectricBlue,
-                                        letterSpacing = 1.2.sp,
-                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (isGtaTheme) Color(0xFFFF2A85) else FlowElectricBlue,
+                                        letterSpacing = if (isGtaTheme) 1.5.sp else 1.2.sp,
+                                        modifier = Modifier.padding(
+                                            horizontal = 24.dp,
+                                            vertical = if (isGtaCompact) 3.dp else 6.dp
+                                        )
                                     )
                                 }
 
@@ -441,6 +467,7 @@ fun HomeScreen(
                                         showIcon = uiState.showIcons,
                                         twoLineAppNames = uiState.twoLineAppNames,
                                         swipeGestureEnabled = uiState.appSwipeGestureEnabled,
+                                        isGtaCompact = isGtaCompact,
                                         onClick = { viewModel.launchApp(app) },
                                         onLongClick = {
                                             if (uiState.hapticsEnabled) haptics.heavyClick(view)
@@ -539,9 +566,12 @@ fun HomeScreen(
             }
         }
 
-        // Floating Google/Search Button (Active when searchAsIcon is true and not searching, comfortably above system navbar)
+        // Floating Rockstar / Google Search Button (Active when searchAsIcon is true and not searching, comfortably above system navbar)
         if (uiState.searchAsIcon && !uiState.isSearching) {
             val searchButtonEndPadding = if (uiState.showAlphabetScroller && uiState.alphabetSide == "right") 64.dp else 20.dp
+            val isRockstarIcon = uiState.searchButtonIcon == "rockstar" || isGtaTheme
+            val buttonBorderColor = if (isRockstarIcon) Color(0x66FFD600) else Color(0x3300E5FF)
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -551,7 +581,7 @@ fun HomeScreen(
                     .shadow(14.dp, CircleShape)
                     .clip(CircleShape)
                     .background(Color(0xEE1A1B20))
-                    .border(1.2.dp, Color(0x3300E5FF), CircleShape)
+                    .border(1.2.dp, buttonBorderColor, CircleShape)
                     .combinedClickable(
                         onClick = {
                             if (uiState.hapticsEnabled) haptics.click(view)
@@ -564,12 +594,21 @@ fun HomeScreen(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "G",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
+                if (isRockstarIcon) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_rockstar_logo),
+                        contentDescription = "Rockstar Games Search",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                } else {
+                    Text(
+                        text = "G",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                }
             }
         }
 
@@ -631,6 +670,13 @@ fun HomeScreen(
                 onSelectSearchLongPressAction = viewModel::setSearchLongPressAction,
                 widgetTheme = uiState.widgetTheme,
                 onSelectWidgetTheme = viewModel::setWidgetTheme,
+                flowWallpaper = uiState.flowWallpaper,
+                onSelectFlowWallpaper = viewModel::setFlowWallpaper,
+                searchButtonIcon = uiState.searchButtonIcon,
+                onSelectSearchButtonIcon = viewModel::setSearchButtonIcon,
+                gtaSlotAlignment = uiState.gtaSlotAlignment,
+                onToggleGtaSlotAlignment = viewModel::setGtaSlotAlignment,
+                onApplyGtaSystemWallpaper = viewModel::applyGtaAsSystemWallpaper,
                 showAlphabetScroller = uiState.showAlphabetScroller,
                 onToggleShowAlphabetScroller = viewModel::setShowAlphabetScroller,
                 pureTransparentBg = uiState.pureTransparentBg,
