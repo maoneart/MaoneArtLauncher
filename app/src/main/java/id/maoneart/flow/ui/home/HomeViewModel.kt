@@ -387,7 +387,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val isSearching = query.isNotBlank() || isSearchActive
 
         val finalDisplayApps = if (query.isBlank()) {
-            categoryFilteredApps
+            if (isSearching) visibleApps else categoryFilteredApps
         } else {
             val q = query.trim().lowercase()
             visibleApps.filter { it.searchIndex.contains(q) }

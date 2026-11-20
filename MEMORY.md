@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.48)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.49)
 
 ---
 
@@ -537,3 +537,18 @@
         3. Menghapus pembatas `navigationBarsPadding()` pada container utama `Row` dan mengalirkan `LazyColumn` serta wallpaper secara penuh ke tepi bawah layar (*true edge-to-edge*), sehingga wallpaper HP Samsung One UI tembus 100% transparan di balik baris tombol navigasi.
     - **Bumping Versi**:
       - `versionCode 49`, `versionName "1.0.48"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Penyempurnaan Huruf 'T' Logo Grafiti GTA & Mode Pencarian Anti-Kosong (Release v1.0.49 - 20 Nov 2026)**:
+    - **Penyempurnaan Huruf 'T' pada Teks Grafiti MaoneArt GTA**:
+      - Memenuhi keluhan pengguna: *"samadi tema gta text MaoneArt nya kurang T tuh kayaknya"*.
+      - Root Cause: Aset gambar grafiti sebelumnya dipotong terlalu sempit (hanya 330px), memotong huruf terakhir "T" yang membentang di koordinat X=370..477.
+      - Solusi Arsitektur:
+        1. Diekstrak ulang aset grafiti murni resolusi tinggi 497x350 RGBA (`maoneart_graffiti_gta.png`) yang mencakup mahkota emas, kata utuh `MAONEART` (lengkap dengan huruf **T**), serta teks brush script pink `FLOW` dengan lelehan cat otentik.
+        2. Dimensi rendering di `DigitalClockHeader.kt` disesuaikan ke `width(220.dp).height(115.dp)` dengan `ContentScale.Fit` dan `Alignment.CenterStart` agar seluruh logo tampil proporsional tanpa terpotong.
+    - **Perbaikan Mode Pencarian (Stay Tampilkan Semua Aplikasi Saat Kosong/Dihapus)**:
+      - Memenuhi keluhan pengguna: *"perbaiki kalau pas mode search kan awalalnya kosong las sayahapus dia kaya namlilin yidak ada aplikasskk gitu giyu kan mending ga usaah ada udahah aja pas saya klikhapus las kosong ga yerjadi apa apa stay di liatin sememua aplikassj yg ada"*.
+      - Root Cause: Saat kolom pencarian kosong atau setelah kata kunci dihapus (`query.isBlank()`), logika `finalDisplayApps` di `HomeViewModel.kt` mengembalikan `categoryFilteredApps` yang bisa kosong jika kategori tidak memiliki aplikasi, dan `HomeScreen.kt` langsung menampilkan teks status *"Aplikasi tidak ditemukan"* jika `displayApps.isEmpty()` padahal pencarian belum dilakukan.
+      - Solusi Arsitektur:
+        1. Di `HomeViewModel.kt`, saat `isSearching` aktif dan `query.isBlank()`, `finalDisplayApps` dipastikan selalu mengembalikan `visibleApps` (seluruh aplikasi yang terpasang di perangkat).
+        2. Di `HomeScreen.kt`, teks *"Aplikasi tidak ditemukan"* diisolasi hanya tampil saat pengguna benar-benar mengetikkan kata kunci (`uiState.searchQuery.isNotBlank()`) dan tidak ada aplikasi yang cocok. Ketika kolom pencarian kosong atau tombol silang (clear) ditekan, daftar tetap menampilkan seluruh aplikasi tanpa jeda atau teks pesan kosong.
+    - **Bumping Versi**:
+      - `versionCode 50`, `versionName "1.0.49"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

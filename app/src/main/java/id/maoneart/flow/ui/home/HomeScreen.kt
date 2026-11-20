@@ -529,18 +529,35 @@ fun HomeScreen(
 
                     // Display Apps
                     if (uiState.displayApps.isEmpty()) {
-                        item(key = "empty_state") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 48.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (uiState.isSearching) "Aplikasi tidak ditemukan" else "Tidak ada aplikasi di kategori ini",
-                                    fontSize = 15.sp,
-                                    color = FlowTextSecondary
-                                )
+                        if (uiState.searchQuery.isNotBlank()) {
+                            item(key = "empty_state") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 48.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Aplikasi tidak ditemukan",
+                                        fontSize = 15.sp,
+                                        color = FlowTextSecondary
+                                    )
+                                }
+                            }
+                        } else if (!uiState.isSearching) {
+                            item(key = "empty_state") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 48.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Tidak ada aplikasi di kategori ini",
+                                        fontSize = 15.sp,
+                                        color = FlowTextSecondary
+                                    )
+                                }
                             }
                         }
                     } else {

@@ -172,8 +172,8 @@ fun DigitalClockHeader(
                         painter = painterResource(id = R.drawable.maoneart_graffiti_gta),
                         contentDescription = "MaoneArt Flow GTA",
                         modifier = Modifier
-                            .width(205.dp)
-                            .height(100.dp),
+                            .width(220.dp)
+                            .height(115.dp),
                         contentScale = ContentScale.Fit,
                         alignment = Alignment.CenterStart
                     )
