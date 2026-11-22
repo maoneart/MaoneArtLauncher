@@ -11,8 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,14 +65,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DigitalClockHeader(
     is24Hour: Boolean = true,
     showBanner: Boolean = true,
     widgetTheme: String = "classic",
     onOpenSettings: (() -> Unit)? = null,
-    onDoubleTap: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -204,12 +200,12 @@ fun DigitalClockHeader(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = if (isGta) 0.dp else 4.dp)
-                    .combinedClickable(
+                    .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { onOpenSettings?.invoke() },
-                        onDoubleClick = if (onDoubleTap != null) { { onDoubleTap.invoke() } } else null
-                    ),
+                        indication = null
+                    ) {
+                        onOpenSettings?.invoke()
+                    },
                 contentAlignment = if (isGta) Alignment.CenterStart else Alignment.Center
             ) {
                 if (isGta) {

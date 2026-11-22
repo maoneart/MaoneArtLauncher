@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.50)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.51)
 
 ---
 
@@ -568,3 +568,12 @@
       - Menyertakan modal MaoneArt Glassmorphism 2-kolom simetris (`LockPermissionDialog.kt`) jika layanan aksesibilitas belum diaktifkan pengguna.
     - **Bumping Versi**:
       - `versionCode 51`, `versionName "1.0.50"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Pembersihan Fitur Double Tap to Lock & Accessibility Service (Release v1.0.51 - 23 Nov 2026)**:
+    - **Penyebab Pemblokiran Play Protect**: Fitur double tap to lock mengandalkan `FlowAccessibilityService` dengan izin `BIND_ACCESSIBILITY_SERVICE` di AndroidManifest, yang langsung memicu flag keamanan Play Protect / Android OS sebagai aplikasi berisiko aksesibilitas.
+    - **Solusi Tuntas**:
+      - Menghapus total `FlowAccessibilityService.kt`, `LockPermissionDialog.kt`, dan `accessibility_service_config.xml`.
+      - Menghapus deklarasi service aksesibilitas dari `AndroidManifest.xml` dan string deskripsinya dari `strings.xml`.
+      - Menghapus preferensi `doubleTapLockEnabledFlow`, toggle switch di `LauncherSettingsBottomSheet.kt`, dan deteksi gesture double-tap di `HomeScreen.kt` & `DigitalClockHeader.kt`.
+      - Menjaga sinkronisasi jam dan kalender real-time OS broadcast receiver tetap 100% aktif dan berjalan optimal.
+    - **Bumping Versi**:
+      - `versionCode 52`, `versionName "1.0.51"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

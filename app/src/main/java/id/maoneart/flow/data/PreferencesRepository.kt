@@ -48,7 +48,6 @@ class PreferencesRepository(private val context: Context) {
         val FLOW_WALLPAPER = stringPreferencesKey("flow_wallpaper")
         val SEARCH_BUTTON_ICON = stringPreferencesKey("search_button_icon")
         val GTA_SLOT_ALIGNMENT = booleanPreferencesKey("gta_slot_alignment")
-        val DOUBLE_TAP_LOCK_ENABLED = booleanPreferencesKey("double_tap_lock_enabled")
     }
 
     // IO-Safe preferences flow that catches any disk corruption gracefully without crashing the app
@@ -449,13 +448,5 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun setAppSwipeGestureEnabled(enabled: Boolean) {
         safeEdit { prefs -> prefs[Keys.APP_SWIPE_GESTURE_ENABLED] = enabled }
-    }
-
-    val doubleTapLockEnabledFlow: Flow<Boolean> = safePreferences.map { prefs ->
-        prefs[Keys.DOUBLE_TAP_LOCK_ENABLED] ?: true
-    }
-
-    suspend fun setDoubleTapLockEnabled(enabled: Boolean) {
-        safeEdit { prefs -> prefs[Keys.DOUBLE_TAP_LOCK_ENABLED] = enabled }
     }
 }

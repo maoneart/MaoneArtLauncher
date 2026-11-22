@@ -62,7 +62,6 @@ data class HomeUiState(
     val selectedApp: AppInfo? = null,
     val swipeDownGestureEnabled: Boolean = true,
     val appSwipeGestureEnabled: Boolean = true,
-    val doubleTapLockEnabled: Boolean = true,
     val shortcutsApp: AppInfo? = null,
     val flowWallpaper: String = "system",
     val searchButtonIcon: String = "rockstar",
@@ -112,8 +111,7 @@ private data class GeneralSettings(
     val showIcons: Boolean = true,
     val hasNotificationAccess: Boolean = true,
     val swipeDownGestureEnabled: Boolean = true,
-    val appSwipeGestureEnabled: Boolean = true,
-    val doubleTapLockEnabled: Boolean = true
+    val appSwipeGestureEnabled: Boolean = true
 )
 
 private data class AppsAndCategoriesData(
@@ -229,17 +227,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         combine(
             _hasNotificationAccess,
             preferencesRepository.swipeDownGestureEnabledFlow,
-            preferencesRepository.appSwipeGestureEnabledFlow,
-            preferencesRepository.doubleTapLockEnabledFlow
-        ) { notifAccess, swipeDown, appSwipe, doubleTap ->
-            listOf(notifAccess, swipeDown, appSwipe, doubleTap)
+            preferencesRepository.appSwipeGestureEnabledFlow
+        ) { notifAccess, swipeDown, appSwipe ->
+            Triple(notifAccess, swipeDown, appSwipe)
         }
-    ) { is24H, haptics, side, showIcons, gestures ->
-        val notifAccess = gestures[0] as Boolean
-        val swipeDown = gestures[1] as Boolean
-        val appSwipe = gestures[2] as Boolean
-        val doubleTap = gestures[3] as Boolean
-        GeneralSettings(is24H, haptics, side, showIcons, notifAccess, swipeDown, appSwipe, doubleTap)
+    ) { is24H, haptics, side, showIcons, (notifAccess, swipeDown, appSwipe) ->
+        GeneralSettings(is24H, haptics, side, showIcons, notifAccess, swipeDown, appSwipe)
     }
 
     private val settingsFlow = combine(
@@ -440,7 +433,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             selectedApp = selApp,
             swipeDownGestureEnabled = general.swipeDownGestureEnabled,
             appSwipeGestureEnabled = general.appSwipeGestureEnabled,
-            doubleTapLockEnabled = general.doubleTapLockEnabled,
             shortcutsApp = scApp,
             flowWallpaper = appearance.flowWallpaper,
             searchButtonIcon = appearance.searchButtonIcon,
@@ -662,12 +654,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun setAppSwipeGestureEnabled(enabled: Boolean) {
         viewModelScope.launch {
             preferencesRepository.setAppSwipeGestureEnabled(enabled)
-        }
-    }
-
-    fun setDoubleTapLockEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            preferencesRepository.setDoubleTapLockEnabled(enabled)
         }
     }
 
