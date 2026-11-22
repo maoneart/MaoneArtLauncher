@@ -96,6 +96,21 @@
             </intent-filter>
         </service>
 
+        <!-- Accessibility Service for Double Tap to Lock Screen without disabling Fingerprint / Biometrics -->
+        <service
+            android:name=".service.FlowAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:label="@string/accessibility_service_label"
+            android:description="@string/accessibility_service_description"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
 
 </manifest>

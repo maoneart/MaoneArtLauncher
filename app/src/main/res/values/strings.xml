@@ -16,4 +16,6 @@
     <string name="alphabet_side">Posisi Navigasi Huruf</string>
     <string name="right_side">Kanan (Standar)</string>
     <string name="left_side">Kiri (Kidal)</string>
+    <string name="accessibility_service_label">Kunci Layar MaoneArt Flow</string>
+    <string name="accessibility_service_description">Layanan aksesibilitas ringan untuk mengunci layar saat Anda mengetuk layar dua kali (Double Tap to Lock) tanpa mematikan sensor sidik jari (Fingerprint).</string>
 </resources>

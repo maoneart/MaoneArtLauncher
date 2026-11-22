@@ -46,6 +46,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -84,6 +87,7 @@ fun Win11Taskbar(
 ) {
     val haptics = rememberFlowHaptics()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     // Live Clock & Date formatted ala Windows 11
     var timeText by remember { mutableStateOf("") }
@@ -92,14 +96,52 @@ fun Win11Taskbar(
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
+    val updateTimeAndDate: () -> Unit = {
+        val now = Date()
+        timeText = timeFormat.format(now)
+        dateText = dateFormat.format(now)
+    }
+
+    DisposableEffect(context, lifecycleOwner) {
+        updateTimeAndDate()
+
+        val timeReceiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context?, intent: Intent?) {
+                updateTimeAndDate()
+            }
+        }
+        val timeFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            addAction(Intent.ACTION_DATE_CHANGED)
+        }
+        try {
+            context.registerReceiver(timeReceiver, timeFilter)
+        } catch (_: Throwable) {}
+
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                updateTimeAndDate()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            try {
+                context.unregisterReceiver(timeReceiver)
+            } catch (_: Throwable) {}
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     LaunchedEffect(Unit) {
+        updateTimeAndDate()
         while (true) {
-            val now = Date()
-            timeText = timeFormat.format(now)
-            dateText = dateFormat.format(now)
             val nowMs = System.currentTimeMillis()
             val delayMs = 60000L - (nowMs % 60000L)
             delay(delayMs.coerceAtLeast(1000L))
+            updateTimeAndDate()
         }
     }
 

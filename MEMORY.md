@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.49)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.50)
 
 ---
 
@@ -552,3 +552,19 @@
         2. Di `HomeScreen.kt`, teks *"Aplikasi tidak ditemukan"* diisolasi hanya tampil saat pengguna benar-benar mengetikkan kata kunci (`uiState.searchQuery.isNotBlank()`) dan tidak ada aplikasi yang cocok. Ketika kolom pencarian kosong atau tombol silang (clear) ditekan, daftar tetap menampilkan seluruh aplikasi tanpa jeda atau teks pesan kosong.
     - **Bumping Versi**:
       - `versionCode 50`, `versionName "1.0.49"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Perbaikan Jam & Kalender Real-Time Anti-Freeze dan Fitur Double Tap to Lock (Release v1.0.50 - 22 Nov 2026)**:
+    - **Perbaikan Jam & Tanggal Macet (Real-Time System Broadcast & Lifecycle Observer)**:
+      - Memenuhi keluhan pengguna: *"sama itu ko asa jam daan kalender cuma yhl 19 nov ga jalan kah?"*.
+      - Root Cause: Jam dan tanggal sebelumnya hanya mengandalkan coroutine loop `delay()` di Compose. Saat perangkat masuk mode Doze / deep sleep atau launcher masuk `onStop()` di background, coroutine tertahan/mati dan tidak pernah me-refresh saat layar dinyalakan kembali, menyebabkan tanggal tetap membeku di 19 Nov 2026.
+      - Solusi Arsitektur:
+        1. Di `DigitalClockHeader.kt` dan `Win11Taskbar.kt`, ditambahkan `BroadcastReceiver` Android OS untuk `ACTION_TIME_TICK` (dijamin dipicu sistem setiap pergantian menit :00), `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED`, dan `ACTION_DATE_CHANGED` (pergantian hari otomatis pukul 00:00).
+        2. Ditambahkan `LifecycleEventObserver` pada event `ON_RESUME` sehingga setiap kali ponsel dibuka kuncinya atau pengguna kembali ke home screen, jam dan kalender langsung diperbarui instan (0ms delay).
+        3. Format tanggal diselaraskan menjadi `d MMM yyyy` (misal: *"22 Nov 2026"*).
+    - **Fitur Baru: Double Tap to Lock & Gestur Layar**:
+      - Menyematkan `FlowAccessibilityService` ringan (`GLOBAL_ACTION_LOCK_SCREEN` Android 9+) yang mengunci layar secara instan saat pengguna mengetuk layar 2 kali.
+      - **Keunggulan**: Sensor sidik jari (Fingerprint / Face Unlock) tetap 100% aktif saat menyalakan ponsel kembali (berbeda dengan Device Admin yang memaksa input PIN).
+      - Deteksi ketukan ganda (*double tap*) pada area kosong layar/wallpaper dan header logo grafiti tanpa mengganggu responsivitas klik aplikasi maupun scrolling daftar.
+      - Menambahkan toggle "Ketuk 2x Kunci Layar (Double Tap to Lock)" di Pengaturan Launcher (`LauncherSettingsBottomSheet.kt`).
+      - Menyertakan modal MaoneArt Glassmorphism 2-kolom simetris (`LockPermissionDialog.kt`) jika layanan aksesibilitas belum diaktifkan pengguna.
+    - **Bumping Versi**:
+      - `versionCode 51`, `versionName "1.0.50"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

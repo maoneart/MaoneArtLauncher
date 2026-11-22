@@ -91,6 +91,8 @@ fun LauncherSettingsBottomSheet(
     onToggleSwipeDownGesture: (Boolean) -> Unit = {},
     appSwipeGestureEnabled: Boolean = true,
     onToggleAppSwipeGesture: (Boolean) -> Unit = {},
+    doubleTapLockEnabled: Boolean = true,
+    onToggleDoubleTapLock: (Boolean) -> Unit = {},
     hasNotificationAccess: Boolean,
     onOpenNotificationSettings: () -> Unit,
     hiddenAppsCount: Int = 0,
@@ -443,6 +445,13 @@ fun LauncherSettingsBottomSheet(
                 subtitle = "Geser ke kanan pada item aplikasi untuk langsung membuka aksi sekunder atau menu pintasan",
                 checked = appSwipeGestureEnabled,
                 onCheckedChange = onToggleAppSwipeGesture
+            )
+
+            SettingsSwitchRow(
+                title = "Ketuk 2x Kunci Layar (Double Tap to Lock)",
+                subtitle = "Ketuk dua kali di area kosong layar untuk mengunci ponsel tanpa mematikan sensor sidik jari (Fingerprint)",
+                checked = doubleTapLockEnabled,
+                onCheckedChange = onToggleDoubleTapLock
             )
 
             // Akses Notifikasi Banner Card

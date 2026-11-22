@@ -11,6 +11,8 @@ import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +47,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -62,15 +67,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DigitalClockHeader(
     is24Hour: Boolean = true,
     showBanner: Boolean = true,
     widgetTheme: String = "classic",
     onOpenSettings: (() -> Unit)? = null,
+    onDoubleTap: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var timeString by remember { mutableStateOf("") }
     var dayOfWeekString by remember { mutableStateOf("") }
     var dateString by remember { mutableStateOf("") }
@@ -78,6 +86,54 @@ fun DigitalClockHeader(
     var batteryLevel by remember { mutableIntStateOf(100) }
     var batteryTemp by remember { mutableIntStateOf(28) }
     var isCharging by remember { mutableStateOf(false) }
+
+    val updateTimeAndDate: () -> Unit = {
+        val localeId = Locale("id", "ID")
+        val timeFormat = SimpleDateFormat(if (is24Hour) "HH:mm" else "hh:mm a", localeId)
+        val dayFormat = SimpleDateFormat("EEEE", localeId)
+        val shortDateFormat = SimpleDateFormat("d MMM yyyy", localeId)
+        val fullDateFormat = SimpleDateFormat("EEEE, d MMMM", localeId)
+
+        val now = Date()
+        timeString = timeFormat.format(now)
+        dayOfWeekString = dayFormat.format(now).uppercase()
+        dateString = shortDateFormat.format(now)
+        fullDateString = fullDateFormat.format(now)
+    }
+
+    // High-precision system time receiver + Lifecycle resume listener (0ms lag, anti-freeze)
+    DisposableEffect(context, lifecycleOwner, is24Hour) {
+        updateTimeAndDate()
+
+        val timeReceiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context?, intent: Intent?) {
+                updateTimeAndDate()
+            }
+        }
+        val timeFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            addAction(Intent.ACTION_DATE_CHANGED)
+        }
+        try {
+            context.registerReceiver(timeReceiver, timeFilter)
+        } catch (_: Throwable) {}
+
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                updateTimeAndDate()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            try {
+                context.unregisterReceiver(timeReceiver)
+            } catch (_: Throwable) {}
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Instant real-time battery & charging listener (0ms reaction when charger is plugged or unplugged)
     DisposableEffect(context) {
@@ -123,23 +179,12 @@ fun DigitalClockHeader(
     }
 
     LaunchedEffect(is24Hour) {
-        val localeId = Locale("id", "ID")
-        val timeFormat = SimpleDateFormat(if (is24Hour) "HH:mm" else "hh:mm a", localeId)
-        val dayFormat = SimpleDateFormat("EEEE", localeId)
-        val shortDateFormat = SimpleDateFormat("MMM dd, yyyy", localeId)
-        val fullDateFormat = SimpleDateFormat("EEEE, d MMMM", localeId)
-
+        updateTimeAndDate()
         while (true) {
-            val now = Date()
-            timeString = timeFormat.format(now)
-            dayOfWeekString = dayFormat.format(now).uppercase()
-            dateString = shortDateFormat.format(now)
-            fullDateString = fullDateFormat.format(now)
-
-            // Synchronize delay exactly to the start of the next minute (sub-second accuracy with Android status bar)
             val nowMs = System.currentTimeMillis()
             val delayUntilNextMinute = (60000L - (nowMs % 60000L) + 50L).coerceIn(1000L, 60000L)
             delay(delayUntilNextMinute)
+            updateTimeAndDate()
         }
     }
 
@@ -159,12 +204,12 @@ fun DigitalClockHeader(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = if (isGta) 0.dp else 4.dp)
-                    .clickable(
+                    .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        onOpenSettings?.invoke()
-                    },
+                        indication = null,
+                        onClick = { onOpenSettings?.invoke() },
+                        onDoubleClick = if (onDoubleTap != null) { { onDoubleTap.invoke() } } else null
+                    ),
                 contentAlignment = if (isGta) Alignment.CenterStart else Alignment.Center
             ) {
                 if (isGta) {

@@ -66,6 +66,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.shadow
+import android.os.SystemClock
+import id.maoneart.flow.service.FlowAccessibilityService
+import id.maoneart.flow.ui.components.LockPermissionDialog
 import id.maoneart.flow.ui.components.AiAssistantBottomSheet
 import id.maoneart.flow.ui.components.AlphabetWaveScroller
 import id.maoneart.flow.ui.components.AppActionBottomSheet
@@ -112,6 +115,17 @@ fun HomeScreen(
     val context = LocalContext.current
     val haptics = rememberFlowHaptics()
     var scrollJob by remember { mutableStateOf<Job?>(null) }
+    var showLockPermissionDialog by remember { mutableStateOf(false) }
+
+    val handleLockScreen: () -> Unit = {
+        if (uiState.doubleTapLockEnabled) {
+            haptics.heavyClick(view)
+            val locked = FlowAccessibilityService.lockScreen()
+            if (!locked) {
+                showLockPermissionDialog = true
+            }
+        }
+    }
 
     // Auto refresh notification access permission on launcher resume
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -231,13 +245,20 @@ fun HomeScreen(
                 )
                 .statusBarsPadding()
             .then(
-                if (uiState.swipeDownGestureEnabled && !uiState.isSearching && uiState.selectedApp == null && uiState.shortcutsApp == null && !uiState.isSettingsOpen) {
-                    Modifier.pointerInput(listState) {
+                if (!uiState.isSearching && uiState.selectedApp == null && uiState.shortcutsApp == null && !uiState.isSettingsOpen &&
+                    (uiState.swipeDownGestureEnabled || uiState.doubleTapLockEnabled)) {
+                    Modifier.pointerInput(listState, uiState.swipeDownGestureEnabled, uiState.doubleTapLockEnabled) {
+                        var lastTapTime = 0L
+                        var lastTapX = 0f
+                        var lastTapY = 0f
+
                         awaitEachGesture {
                             val down = awaitFirstDown(pass = PointerEventPass.Initial)
                             val startX = down.position.x
                             val startY = down.position.y
-                            var triggered = false
+                            val startTime = SystemClock.uptimeMillis()
+                            var isDrag = false
+                            var triggeredSwipe = false
 
                             while (true) {
                                 val event = awaitPointerEvent(pass = PointerEventPass.Initial)
@@ -247,9 +268,13 @@ fun HomeScreen(
                                 val dy = change.position.y - startY
                                 val dx = change.position.x - startX
 
+                                if (kotlin.math.abs(dx) > 16.dp.toPx() || kotlin.math.abs(dy) > 16.dp.toPx()) {
+                                    isDrag = true
+                                }
+
                                 val isAtTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset <= 0
-                                if (!triggered && isAtTop && dy > 52.dp.toPx() && dy > kotlin.math.abs(dx) * 1.5f) {
-                                    triggered = true
+                                if (uiState.swipeDownGestureEnabled && !triggeredSwipe && isAtTop && dy > 52.dp.toPx() && dy > kotlin.math.abs(dx) * 1.5f) {
+                                    triggeredSwipe = true
                                     change.consume()
                                     val isLeft = startX < size.width / 2f
                                     if (isLeft) {
@@ -260,6 +285,25 @@ fun HomeScreen(
                                         SystemUiUtils.expandNotifications(context)
                                     }
                                     haptics.heavyClick(view)
+                                }
+                            }
+
+                            // Wait for Final pass of the up event to see if child item consumed the click
+                            val finalEvent = awaitPointerEvent(pass = PointerEventPass.Final)
+                            val upChange = finalEvent.changes.firstOrNull()
+                            val wasConsumedByChild = upChange?.isConsumed ?: false
+                            val elapsed = SystemClock.uptimeMillis() - startTime
+
+                            if (!isDrag && !triggeredSwipe && !wasConsumedByChild && elapsed < 350L && uiState.doubleTapLockEnabled) {
+                                val now = SystemClock.uptimeMillis()
+                                val dist = kotlin.math.hypot((startX - lastTapX).toDouble(), (startY - lastTapY).toDouble()).toFloat()
+                                if (now - lastTapTime < 380L && dist < 48.dp.toPx()) {
+                                    lastTapTime = 0L
+                                    handleLockScreen()
+                                } else {
+                                    lastTapTime = now
+                                    lastTapX = startX
+                                    lastTapY = startY
                                 }
                             }
                         }
@@ -279,7 +323,8 @@ fun HomeScreen(
                     is24Hour = uiState.is24Hour,
                     showBanner = uiState.showMaoneArtBanner,
                     widgetTheme = uiState.widgetTheme,
-                    onOpenSettings = { viewModel.openSettings(true) }
+                    onOpenSettings = { viewModel.openSettings(true) },
+                    onDoubleTap = handleLockScreen
                 )
             }
 
@@ -732,6 +777,8 @@ fun HomeScreen(
                 onToggleSwipeDownGesture = viewModel::setSwipeDownGestureEnabled,
                 appSwipeGestureEnabled = uiState.appSwipeGestureEnabled,
                 onToggleAppSwipeGesture = viewModel::setAppSwipeGestureEnabled,
+                doubleTapLockEnabled = uiState.doubleTapLockEnabled,
+                onToggleDoubleTapLock = viewModel::setDoubleTapLockEnabled,
                 hasNotificationAccess = uiState.hasNotificationAccess,
                 onOpenNotificationSettings = viewModel::openNotificationSettings,
                 hiddenAppsCount = uiState.hiddenApps.size,
@@ -799,6 +846,16 @@ fun HomeScreen(
                     viewModel.launchVoiceAssistant(rememberChoice)
                 },
                 onDismiss = { viewModel.openAiAssistantSheet(false) }
+            )
+        }
+
+        // Lock Screen Accessibility Permission Modal (Rule 5 MaoneArt Standard)
+        if (showLockPermissionDialog) {
+            LockPermissionDialog(
+                onDismiss = { showLockPermissionDialog = false },
+                onOpenSettings = {
+                    FlowAccessibilityService.openAccessibilitySettings(context)
+                }
             )
         }
     }
