@@ -31,8 +31,9 @@ data class HomeUiState(
     val allApps: List<AppInfo> = emptyList(),
     val favorites: List<AppInfo> = emptyList(),
     val displayApps: List<AppInfo> = emptyList(),
+    val isAppsLoaded: Boolean = false,
     val hiddenApps: List<AppInfo> = emptyList(),
-    val categories: List<CategoryItem> = emptyList(),
+    val categories: List<CategoryItem> = DefaultCategories.LIST,
     val hasHiddenCategories: Boolean = false,
     val selectedCategoryId: String = "all",
     val availableLetters: Set<Char> = emptySet(),
@@ -402,6 +403,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             allApps = visibleApps,
             favorites = favoritesList,
             displayApps = finalDisplayApps,
+            isAppsLoaded = true,
             hiddenApps = appsData.hiddenApps,
             categories = appsData.categories,
             hasHiddenCategories = appsData.hasHiddenCategories,
@@ -442,12 +444,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = run {
-            val cached = AppRepository.getCachedApps() ?: emptyList()
-            val letters = cached.map { it.firstLetter }.toSet()
-            val indices = computeAlphabetIndices(cached)
+            val cached = AppRepository.getCachedApps()
+            val list = cached ?: emptyList()
+            val letters = list.map { it.firstLetter }.toSet()
+            val indices = computeAlphabetIndices(list)
             HomeUiState(
-                allApps = cached,
-                displayApps = cached,
+                allApps = list,
+                displayApps = list,
+                isAppsLoaded = cached != null,
+                categories = DefaultCategories.LIST,
                 availableLetters = letters,
                 letterIndices = indices
             )

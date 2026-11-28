@@ -57,12 +57,19 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -99,6 +106,23 @@ fun Win11StartMenu(
     val focusManager = LocalFocusManager.current
     var isAllAppsView by remember { mutableStateOf(false) }
     var isPowerMenuOpen by remember { mutableStateOf(false) }
+    var searchFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = searchQuery,
+                selection = TextRange(searchQuery.length)
+            )
+        )
+    }
+
+    LaunchedEffect(searchQuery) {
+        if (searchQuery != searchFieldValue.text) {
+            searchFieldValue = TextFieldValue(
+                text = searchQuery,
+                selection = TextRange(searchQuery.length)
+            )
+        }
+    }
 
     LaunchedEffect(autoFocusSearch) {
         if (autoFocusSearch) {
@@ -160,8 +184,13 @@ fun Win11StartMenu(
                     Spacer(modifier = Modifier.width(10.dp))
 
                     BasicTextField(
-                        value = searchQuery,
-                        onValueChange = onSearchQueryChange,
+                        value = searchFieldValue,
+                        onValueChange = { newValue ->
+                            searchFieldValue = newValue
+                            if (newValue.text != searchQuery) {
+                                onSearchQueryChange(newValue.text)
+                            }
+                        },
                         singleLine = true,
                         textStyle = TextStyle(
                             color = Color(0xFFF1F5F9),
@@ -179,8 +208,8 @@ fun Win11StartMenu(
                                     focusManager.clearFocus()
                                 } catch (_: Throwable) {}
                                 val filtered = allApps.filter {
-                                    it.label.contains(searchQuery.trim(), ignoreCase = true) ||
-                                            it.packageName.contains(searchQuery.trim(), ignoreCase = true)
+                                    it.label.contains(searchFieldValue.text.trim(), ignoreCase = true) ||
+                                            it.packageName.contains(searchFieldValue.text.trim(), ignoreCase = true)
                                 }
                                 filtered.firstOrNull()?.let { firstApp ->
                                     onAppClick(firstApp)
@@ -192,7 +221,7 @@ fun Win11StartMenu(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.CenterStart
                             ) {
-                                if (searchQuery.isEmpty()) {
+                                if (searchFieldValue.text.isEmpty()) {
                                     Text(
                                         text = "Ketik di sini untuk mencari...",
                                         color = Color(0xFF718096),
@@ -205,11 +234,17 @@ fun Win11StartMenu(
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(focusRequester)
+                            .onPreviewKeyEvent { keyEvent ->
+                                keyEvent.type == KeyEventType.KeyDown &&
+                                    keyEvent.key == Key.Backspace &&
+                                    searchFieldValue.text.isEmpty()
+                            }
                     )
 
-                    if (searchQuery.isNotEmpty()) {
+                    if (searchFieldValue.text.isNotEmpty()) {
                         IconButton(
                             onClick = {
+                                searchFieldValue = TextFieldValue("")
                                 onSearchQueryChange("")
                                 try { focusRequester.requestFocus() } catch (_: Throwable) {}
                             },

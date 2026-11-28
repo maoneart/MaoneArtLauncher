@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.51)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.52)
 
 ---
 
@@ -577,3 +577,14 @@
       - Menjaga sinkronisasi jam dan kalender real-time OS broadcast receiver tetap 100% aktif dan berjalan optimal.
     - **Bumping Versi**:
       - `versionCode 52`, `versionName "1.0.51"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+- **28 Nov 2026**:
+  - **Perbaikan Crash & Layar Kosong (`+ Kategori` / `"Tidak ada aplikasi di kategori ini"`) Saat Hapus Berlebihan di Pencarian (Release v1.0.52)**:
+    - **Root Cause**:
+      1. `BasicTextField` di [`SearchBar.kt`](file:///sdcard/www/MaoneArtLauncher/app/src/main/java/id/maoneart/flow/ui/components/SearchBar.kt) (dan [`Win11StartMenu.kt`](file:///sdcard/www/MaoneArtLauncher/app/src/main/java/id/maoneart/flow/ui/win11/Win11StartMenu.kt)) sebelumnya memakai `String` langsung dari `StateFlow` (`combine` + `stateIn`), yang memiliki jeda asinkron. Saat tombol hapus (Backspace) ditekan cepat/berlebihan hingga teks kosong, desinkronisasi buffer teks IME dan Compose `EditProcessor` memicu crash tak tertangani di UI/Choreographer dan membuat `MaoneArtFlowApp` me-restart proses launcher.
+      2. Setelah proses restart, `HomeUiState` `initialValue` menyetel `categories = emptyList()` (sehingga tab `"Semua"` hilang dan hanya tersisa `+ Kategori`) serta `displayApps = emptyList()` (sehingga tampil `"Tidak ada aplikasi di kategori ini"`). Selain itu `AppRepository.updateApps()` tidak mengirim fallback jika terjadi error saat pemuatan awal.
+    - **Solusi**:
+      1. Menggunakan `TextFieldValue` lokal sinkron di `FlowSearchBar` & `Win11StartMenu` serta mengonsumsi `Key.Backspace` secara aman saat teks sudah kosong via `.onPreviewKeyEvent`.
+      2. Mengisi `initialValue.categories = DefaultCategories.LIST` di `HomeViewModel.kt`, menambahkan flag `isAppsLoaded` agar tidak memunculkan pesan *"Tidak ada aplikasi di kategori ini"* saat masih memuat, serta fallback aman di `AppRepository.kt`.
+      3. Menggunakan `itemsIndexed` dengan key berindeks di `HomeScreen.kt` untuk mencegah duplikasi key pada `LazyColumn`.
+    - **Bumping Versi**:
+      - `versionCode 53`, `versionName "1.0.52"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

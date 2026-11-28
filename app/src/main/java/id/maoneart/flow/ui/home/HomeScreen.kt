@@ -470,10 +470,10 @@ fun HomeScreen(
                                     }
                                 }
 
-                                items(
+                                itemsIndexed(
                                     items = uiState.favorites,
-                                    key = { app -> "fav_${app.id}" }
-                                ) { app ->
+                                    key = { index, app -> "fav_${app.id}_$index" }
+                                ) { _, app ->
                                     AppListItem(
                                         app = app,
                                         iconBitmap = viewModel.getAppIconBitmap(app.packageName),
@@ -553,7 +553,7 @@ fun HomeScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "Tidak ada aplikasi di kategori ini",
+                                        text = if (uiState.isAppsLoaded) "Tidak ada aplikasi di kategori ini" else "Memuat aplikasi...",
                                         fontSize = 15.sp,
                                         color = FlowTextSecondary
                                     )
@@ -561,10 +561,10 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        items(
+                        itemsIndexed(
                             items = uiState.displayApps,
-                            key = { app -> app.id }
-                        ) { app ->
+                            key = { index, app -> "app_${app.id}_$index" }
+                        ) { _, app ->
                             AppListItem(
                                 app = app,
                                 iconBitmap = viewModel.getAppIconBitmap(app.packageName),

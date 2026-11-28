@@ -24,17 +24,27 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.maoneart.flow.ui.theme.FlowDarkSurface
@@ -52,6 +62,23 @@ fun FlowSearchBar(
     onSearchAction: () -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = query,
+                selection = TextRange(query.length)
+            )
+        )
+    }
+
+    LaunchedEffect(query) {
+        if (query != textFieldValue.text) {
+            textFieldValue = TextFieldValue(
+                text = query,
+                selection = TextRange(query.length)
+            )
+        }
+    }
 
     LaunchedEffect(autoFocus) {
         if (autoFocus) {
@@ -86,7 +113,7 @@ fun FlowSearchBar(
             Spacer(modifier = Modifier.width(10.dp))
 
             Box(modifier = Modifier.weight(1f)) {
-                if (query.isEmpty()) {
+                if (textFieldValue.text.isEmpty()) {
                     Text(
                         text = "Cari aplikasi…",
                         fontSize = 15.sp,
@@ -95,8 +122,13 @@ fun FlowSearchBar(
                 }
 
                 BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
+                    value = textFieldValue,
+                    onValueChange = { newValue ->
+                        textFieldValue = newValue
+                        if (newValue.text != query) {
+                            onQueryChange(newValue.text)
+                        }
+                    },
                     singleLine = true,
                     textStyle = TextStyle(
                         fontSize = 15.sp,
@@ -114,12 +146,25 @@ fun FlowSearchBar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
+                        .onPreviewKeyEvent { keyEvent ->
+                            if (keyEvent.type == KeyEventType.KeyDown &&
+                                keyEvent.key == Key.Backspace &&
+                                textFieldValue.text.isEmpty()
+                            ) {
+                                true
+                            } else {
+                                false
+                            }
+                        }
                 )
             }
 
-            if (query.isNotEmpty()) {
+            if (textFieldValue.text.isNotEmpty()) {
                 IconButton(
-                    onClick = { onQueryChange("") },
+                    onClick = {
+                        textFieldValue = TextFieldValue("")
+                        onQueryChange("")
+                    },
                     modifier = Modifier.size(28.dp)
                 ) {
                     Icon(

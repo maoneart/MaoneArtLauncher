@@ -60,15 +60,19 @@ class AppRepository(private val context: Context) {
 
         fun updateApps() {
             scope.launch(Dispatchers.IO) {
-                try {
-                    val apps = fetchInstalledApps()
-                    cachedApps = apps
-                    trySend(apps)
-                    // Pre-warm bitmap cache in background IO thread for buttery 120 FPS scroll
-                    for (app in apps) {
+                val apps = try {
+                    fetchInstalledApps()
+                } catch (_: Throwable) {
+                    cachedApps ?: emptyList()
+                }
+                cachedApps = apps
+                trySend(apps)
+                // Pre-warm bitmap cache in background IO thread for buttery 120 FPS scroll
+                for (app in apps) {
+                    try {
                         getAppIconBitmap(app.packageName)
-                    }
-                } catch (_: Throwable) {}
+                    } catch (_: Throwable) {}
+                }
             }
         }
 
