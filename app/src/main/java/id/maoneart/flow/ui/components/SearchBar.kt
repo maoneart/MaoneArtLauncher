@@ -1,8 +1,19 @@
 package id.maoneart.flow.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import android.content.Context
+import android.graphics.Typeface
+import android.os.Build
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.KeyEvent
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputConnectionWrapper
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -13,44 +24,78 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import id.maoneart.flow.ui.theme.FlowDarkSurface
 import id.maoneart.flow.ui.theme.FlowElectricBlue
 import id.maoneart.flow.ui.theme.FlowTextPrimary
 import id.maoneart.flow.ui.theme.FlowTextSecondary
+import kotlinx.coroutines.delay
+
+/**
+ * Native EditText tailored for Flow Search Bar:
+ * - Immune to Compose BasicTextField / IME async StateFlow crashes on rapid backspace.
+ * - Consumes excess Backspace / KEYCODE_DEL when already empty so it stays calmly on standby.
+ */
+private class SafeSearchEditText(context: Context) : EditText(context) {
+    var isSyncingFromState: Boolean = false
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_DEL && text.isNullOrEmpty()) {
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_DEL && text.isNullOrEmpty()) {
+            return true
+        }
+        return super.onKeyUp(keyCode, event)
+    }
+
+    override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
+        val baseIc = super.onCreateInputConnection(outAttrs) ?: return null
+        return object : InputConnectionWrapper(baseIc, true) {
+            override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {
+                if (text.isNullOrEmpty() && beforeLength > 0 && afterLength == 0) {
+                    return true
+                }
+                return super.deleteSurroundingText(beforeLength, afterLength)
+            }
+
+            override fun deleteSurroundingTextInCodePoints(beforeLength: Int, afterLength: Int): Boolean {
+                if (text.isNullOrEmpty() && beforeLength > 0 && afterLength == 0) {
+                    return true
+                }
+                return super.deleteSurroundingTextInCodePoints(beforeLength, afterLength)
+            }
+
+            override fun sendKeyEvent(event: KeyEvent?): Boolean {
+                if (event?.keyCode == KeyEvent.KEYCODE_DEL && text.isNullOrEmpty()) {
+                    return true
+                }
+                return super.sendKeyEvent(event)
+            }
+        }
+    }
+}
 
 @Composable
 fun FlowSearchBar(
@@ -61,30 +106,20 @@ fun FlowSearchBar(
     onCloseClick: (() -> Unit)? = null,
     onSearchAction: () -> Unit = {}
 ) {
-    val focusRequester = remember { FocusRequester() }
-    var textFieldValue by remember {
-        mutableStateOf(
-            TextFieldValue(
-                text = query,
-                selection = TextRange(query.length)
-            )
-        )
-    }
+    var editTextRef by remember { mutableStateOf<SafeSearchEditText?>(null) }
+    val latestOnQueryChange by rememberUpdatedState(onQueryChange)
+    val latestOnSearchAction by rememberUpdatedState(onSearchAction)
 
-    LaunchedEffect(query) {
-        if (query != textFieldValue.text) {
-            textFieldValue = TextFieldValue(
-                text = query,
-                selection = TextRange(query.length)
-            )
-        }
-    }
-
-    LaunchedEffect(autoFocus) {
+    LaunchedEffect(autoFocus, editTextRef) {
         if (autoFocus) {
-            try {
-                focusRequester.requestFocus()
-            } catch (_: Throwable) {}
+            delay(50)
+            editTextRef?.let { et ->
+                try {
+                    et.requestFocus()
+                    val imm = et.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                    imm?.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT)
+                } catch (_: Throwable) {}
+            }
         }
     }
 
@@ -112,57 +147,87 @@ fun FlowSearchBar(
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            Box(modifier = Modifier.weight(1f)) {
-                if (textFieldValue.text.isEmpty()) {
-                    Text(
-                        text = "Cari aplikasi…",
-                        fontSize = 15.sp,
-                        color = FlowTextSecondary
-                    )
-                }
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                AndroidView(
+                    modifier = Modifier.fillMaxWidth(),
+                    factory = { ctx ->
+                        SafeSearchEditText(ctx).apply {
+                            background = null
+                            setPadding(0, 0, 0, 0)
+                            gravity = Gravity.CENTER_VERTICAL
+                            isSingleLine = true
+                            maxLines = 1
+                            hint = "Cari aplikasi…"
+                            setTextColor(FlowTextPrimary.toArgb())
+                            setHintTextColor(FlowTextSecondary.toArgb())
+                            highlightColor = FlowElectricBlue.copy(alpha = 0.35f).toArgb()
+                            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_FILTER
+                            imeOptions = EditorInfo.IME_ACTION_SEARCH or EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                try {
+                                    textCursorDrawable?.setTint(FlowElectricBlue.toArgb())
+                                } catch (_: Throwable) {}
+                            }
 
-                BasicTextField(
-                    value = textFieldValue,
-                    onValueChange = { newValue ->
-                        textFieldValue = newValue
-                        if (newValue.text != query) {
-                            onQueryChange(newValue.text)
+                            if (query.isNotEmpty()) {
+                                isSyncingFromState = true
+                                setText(query)
+                                setSelection(query.length)
+                                isSyncingFromState = false
+                            }
+
+                            addTextChangedListener(object : TextWatcher {
+                                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                                override fun afterTextChanged(s: Editable?) {
+                                    if (!isSyncingFromState) {
+                                        latestOnQueryChange(s?.toString() ?: "")
+                                    }
+                                }
+                            })
+
+                            setOnEditorActionListener { _, actionId, event ->
+                                if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                                    actionId == EditorInfo.IME_ACTION_DONE ||
+                                    (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+                                ) {
+                                    latestOnSearchAction()
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+
+                            editTextRef = this
                         }
                     },
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = FlowTextPrimary
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Search,
-                        keyboardType = KeyboardType.Text
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { onSearchAction() }
-                    ),
-                    cursorBrush = SolidColor(FlowElectricBlue),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
-                        .onPreviewKeyEvent { keyEvent ->
-                            if (keyEvent.type == KeyEventType.KeyDown &&
-                                keyEvent.key == Key.Backspace &&
-                                textFieldValue.text.isEmpty()
-                            ) {
-                                true
-                            } else {
-                                false
-                            }
+                    update = { et ->
+                        editTextRef = et
+                        val currentText = et.text?.toString() ?: ""
+                        // Only sync externally when cleared to empty or when field is not actively focused
+                        if (query != currentText && (query.isEmpty() || !et.isFocused)) {
+                            et.isSyncingFromState = true
+                            et.setText(query)
+                            et.setSelection(query.length.coerceAtMost(et.text?.length ?: 0))
+                            et.isSyncingFromState = false
                         }
+                    }
                 )
             }
 
-            if (textFieldValue.text.isNotEmpty()) {
+            if (query.isNotEmpty()) {
                 IconButton(
                     onClick = {
-                        textFieldValue = TextFieldValue("")
+                        editTextRef?.let { et ->
+                            et.isSyncingFromState = true
+                            et.setText("")
+                            et.isSyncingFromState = false
+                        }
                         onQueryChange("")
                     },
                     modifier = Modifier.size(28.dp)
@@ -176,7 +241,16 @@ fun FlowSearchBar(
                 }
             } else if (onCloseClick != null) {
                 IconButton(
-                    onClick = onCloseClick,
+                    onClick = {
+                        editTextRef?.let { et ->
+                            try {
+                                et.clearFocus()
+                                val imm = et.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                                imm?.hideSoftInputFromWindow(et.windowToken, 0)
+                            } catch (_: Throwable) {}
+                        }
+                        onCloseClick()
+                    },
                     modifier = Modifier.size(28.dp)
                 ) {
                     Icon(

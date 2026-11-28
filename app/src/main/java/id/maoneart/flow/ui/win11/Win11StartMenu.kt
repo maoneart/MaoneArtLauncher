@@ -116,10 +116,10 @@ fun Win11StartMenu(
     }
 
     LaunchedEffect(searchQuery) {
-        if (searchQuery != searchFieldValue.text) {
+        if (searchQuery.isEmpty() && searchFieldValue.text.isNotEmpty()) {
             searchFieldValue = TextFieldValue(
-                text = searchQuery,
-                selection = TextRange(searchQuery.length)
+                text = "",
+                selection = TextRange(0)
             )
         }
     }
@@ -235,8 +235,7 @@ fun Win11StartMenu(
                             .weight(1f)
                             .focusRequester(focusRequester)
                             .onPreviewKeyEvent { keyEvent ->
-                                keyEvent.type == KeyEventType.KeyDown &&
-                                    keyEvent.key == Key.Backspace &&
+                                (keyEvent.key == Key.Backspace || keyEvent.key == Key.Delete) &&
                                     searchFieldValue.text.isEmpty()
                             }
                     )

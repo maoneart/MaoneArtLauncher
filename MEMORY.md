@@ -3,7 +3,7 @@
 > **Repository**: [https://github.com/maoneart/MaoneArtLauncher](https://github.com/maoneart/MaoneArtLauncher)  
 > **Workspace**: `/sdcard/www/MaoneArtLauncher`  
 > **Package**: `id.maoneart.flow`  
-> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.52)
+> **Target Release APK**: `/sdcard/Download/MaoneArtFlow.apk` (v1.0.53)
 
 ---
 
@@ -588,3 +588,9 @@
       3. Menggunakan `itemsIndexed` dengan key berindeks di `HomeScreen.kt` untuk mencegah duplikasi key pada `LazyColumn`.
     - **Bumping Versi**:
       - `versionCode 53`, `versionName "1.0.52"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.
+  - **Penggantian `BasicTextField` ke `SafeSearchEditText` Berbasis `InputConnectionWrapper` (Release v1.0.53)**:
+    - **Solusi Permanen Backspace Kosong Standby & Zero Crash IME**:
+      1. Mengganti Compose `BasicTextField` di [`SearchBar.kt`](file:///sdcard/www/MaoneArtLauncher/app/src/main/java/id/maoneart/flow/ui/components/SearchBar.kt) dengan native Android `SafeSearchEditText` (`AndroidView`) + `InputConnectionWrapper` yang mencegat `deleteSurroundingText`, `deleteSurroundingTextInCodePoints`, dan `KEYCODE_DEL` (`onKeyDown` / `onKeyUp` / `sendKeyEvent`) ketika kotak pencarian sudah kosong. Saat kolom kosong, menekan Backspace berulang kali tidak melakukan aksi apa pun (tetap standby menampilkan seluruh aplikasi) hingga teks diketik kembali.
+      2. Mengunci `AppRepository.fetchInstalledApps()` dengan `@Synchronized` dan menambahkan auto-scroll ke atas saat query pencarian berubah di `HomeScreen.kt`.
+    - **Bumping Versi**:
+      - `versionCode 54`, `versionName "1.0.53"`. Target APK siap diunduh ke `/sdcard/Download/MaoneArtFlow.apk`.

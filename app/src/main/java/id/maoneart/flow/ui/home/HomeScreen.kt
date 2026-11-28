@@ -127,11 +127,18 @@ fun HomeScreen(
         }
     }
 
-    // Smooth instant reset scroll position on category change to prevent layout freeze
+    // Smooth instant reset scroll position on category change or search query change
     LaunchedEffect(uiState.selectedCategoryId) {
         try {
             listState.scrollToItem(0)
         } catch (_: Throwable) {}
+    }
+    LaunchedEffect(uiState.searchQuery) {
+        if (uiState.isSearching) {
+            try {
+                listState.scrollToItem(0)
+            } catch (_: Throwable) {}
+        }
     }
 
     // Back Navigation Hierarchy (Strict Zero Leakage Focus):

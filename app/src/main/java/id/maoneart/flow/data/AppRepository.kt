@@ -117,6 +117,7 @@ class AppRepository(private val context: Context) {
         }
     }.flowOn(Dispatchers.IO)
 
+    @Synchronized
     fun fetchInstalledApps(): List<AppInfo> {
         val launcherIntent = Intent(Intent.ACTION_MAIN, null).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
